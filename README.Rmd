@@ -1,0 +1,18 @@
+---
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# ML vs. homology
+
+Effectiveness of AMP prediction using machine learning versus sequence similarity 
+
+
+- [Create databases for model training and homology searches](01_create_databases.md) : Rmd file [01_create_databases.Rmd](01_create_databases.Rmd)
+- [Execute BLAST searches and AMP predictions](02_blast.md) : Rmd file [02_blast.Rmd](02_blast.Rmd)
+- Collate BLAST and AMP models results
+
+
