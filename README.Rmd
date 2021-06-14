@@ -12,7 +12,7 @@ Effectiveness of AMP prediction using machine learning versus sequence similarit
 
 
 - [Create databases for model training and homology searches](01_create_databases.md) : Rmd file [01_create_databases.Rmd](01_create_databases.Rmd)
-- [Execute BLAST searches and AMP predictions](02_blast.md) : Rmd file [02_blast.Rmd](02_blast.Rmd)
+- [Execute BLAST searches and AMP predictions](02_blast_and_prediction.md) : Rmd file [02_blast_and_prediction.Rmd](02_blast_and_prediction.Rmd)
 - Collate BLAST and AMP models results
 
 
