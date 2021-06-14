@@ -21,17 +21,15 @@ swissprot_nonamps <- read_tsv("data/uniprot-NOT+keyword_Antimicrobial+[KW-0929]+
 
 ```
 
-Sequences that contained non standard amino acids were removed
-```{r}
+Sequences that contained non standard amino acids were removed and the remaining sequences were saved as FASTA files to process with CD-HIT
+```{r, eval = FALSE}
 swissprot_amps_standardaa <- swissprot_amps %>% select("Entry_name", "Sequence") %>% as.data.frame() %>% remove_nonstandard_aa()
 swissprot_nonamps_standardaa <- swissprot_nonamps %>% select("Entry_name", "Sequence") %>% as.data.frame() %>% remove_nonstandard_aa()
-```
 
-Save data to FASTA files to process with CD-HIT
-```{r, eval = FALSE}
 df_to_faa(swissprot_amps_standardaa, "cache/swissprot_amps_standardaa.fasta")
 df_to_faa(swissprot_nonamps_standardaa, "cache/swissprot_nonamps_standardaa.fasta")
 ```
+
 
 This command was used on the HPC for both datasets as the nonAMPs file contained many sequences. 
 
@@ -45,7 +43,7 @@ swissprot_amps_standardaa90 <- read_faa("data/swissprot_amps_standardaa_90.fasta
 swissprot_nonamps_standardaa90 <- read_faa("data/swissprot_nonamps_standardaa_90.fasta") %>% left_join(swissprot_nonamps, by = c("seq_name" = "Entry_name")) %>% add_column(Label = "Neg") %>% filter(between(Length, 50, 500))
 ```
 
-## Organisms with the most reviewed AMPs
+## Mammals with the most reviewed AMPs
 
 
 ```{r}
@@ -58,7 +56,7 @@ swissprot_amps_summary <- swissprot_amps %>%
 ```
 
 
-```{r, fig.width=9, fig.height=20}
+```{r, fig.width=9, fig.height=20, echo = FALSE}
 ggplot(swissprot_amps_summary %>% pivot_longer(cols = starts_with("AMP")), aes(x = reorder(Organism, value), y = value)) +
   geom_bar(stat = "identity", aes(fill = name), position = "dodge") +
   coord_flip() +
@@ -70,7 +68,7 @@ ggplot(swissprot_amps_summary %>% pivot_longer(cols = starts_with("AMP")), aes(x
 ```
 
 
-```{r,fig.width=9, fig.height=6}
+```{r,fig.width=9, fig.height=6, echo = FALSE}
 swissprot_amps %>%
   mutate(in_90 = Entry_name %in% swissprot_amps_standardaa90$seq_name) %>%
   filter(grepl("Mammalia", Taxonomic_lineage)) %>%
@@ -91,24 +89,9 @@ swissprot_amps %>%
 ```
 
 
+The effectiveness of statistical learning (or machine learning) classification models on finding AMPs was compared with homology. To do this a training dataset was constructed to train a AMP classification model for a given organism, which contained all the AMPs in the SwissProt database **excluding the given organism**, as well as general protein sequences which exclude AMPs. To perform BLAST searches, a FASTA file containing *only* the AMPs in the SwissProt database that **exclude the given organism**.
 
-```{r}
-group_amps <- swissprot_amps_standardaa90 %>% filter(Organism != "Mus musculus") %>% select("seq_name", "seq_aa", "Label")
-
-group_amps %>% select("seq_name", "seq_aa") %>% df_to_faa("cache/mouse_query.fasta")
-
-
-
-group_nonamps <- swissprot_nonamps_standardaa90 %>% filter(Organism != "Mus musculus") %>% select("seq_name", "seq_aa", "Label") %>% slice_sample(n = 10*nrow(group_amps))
-
-group_posandneg <- rbind(group_amps, group_nonamps)
-
-group_features <- group_posandneg %>% calculate_features() %>% mutate(Label = group_posandneg$Label)
-
-saveRDS(group_features, "cache/mouse_features.rds")
-```
-
-To 
+A function was written that details the abovementioned process which can be used for any organism in the SwissProt database:
 
 1. Extract all AMPs excluding the targeted organism
 2. Save AMPs to serve as BLAST query dataset
@@ -119,7 +102,7 @@ To
 
 
 ```{r}
-get_training_and_query_data <- function(organism) {
+save_training_and_query_data <- function(organism) {
   
   if(!(organism %in% swissprot_amps_standardaa90$Organism )) {
     
@@ -146,12 +129,12 @@ get_training_and_query_data <- function(organism) {
 ```
 
 ```{r, eval = FALSE}
-get_training_and_query_data("Mus_musculus")
+save_training_and_query_data("Mus_musculus")
 
-get_training_and_query_data("Homo_sapiens")
+save_training_and_query_data("Homo_sapiens")
 
-get_training_and_query_data("Rattus_norvegicus")
+save_training_and_query_data("Rattus_norvegicus")
 
-get_training_and_query_data("Bos_taurus")
+save_training_and_query_data("Bos_taurus")
 
 ```

@@ -9,9 +9,8 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 # Using BLAST to find AMPs from AMP query database on proteomes
 
 ```{r, echo = FALSE}
-
 library(tidyverse)
-
+library(ampir)
 ```
 
 ## Proteomes
@@ -23,9 +22,14 @@ The proteomes were downloaded from [UniProt](https://www.uniprot.org/proteomes) 
 | Organism Name | Reference proteome ID | Total proteins | Reviewed | Unreviewed |
 | --------------- | --------------- | --------------- | --------------- | --------------- |
 | *Mus musculus* | [UP000000589](https://www.uniprot.org/proteomes/UP000000589) | 55,470 | 17,068 | 38,402 |
+| *Homo sapiens* | | | | | |
+| *Rattus norvegicus* | | | | | |
+|*Bos taurus* | | | | | |
 | | | | | | |
-| | | | | | |
-| | | | | | |
+
+```{r}
+mouse_proteome <- read_faa("data/proteomes/M_musculus-proteome-UP000000589.fasta.gz")
+```
 
 ## BLAST searches
 
@@ -38,8 +42,10 @@ gunzip -dc data/proteomes/M_musculus-proteome-UP000000589.fasta.gz | makeblastdb
 
 
 ```{bash, eval = FALSE}
-blastp -db cache/M_musculus-proteome-UP000000589.fasta -query cache/Mus_musculus.fasta -outfmt 6 -max_target_seqs 5 -evalue=0.00001 > data/blastp_results/Mus_musculus.blastp
+blastp -db cache/M_musculus-proteome-UP000000589.fasta -query cache/Mus_musculus.fasta -outfmt 6 -max_target_seqs 5 -evalue=10 > data/blastp_results/Mus_musculus.blastp
 ```
+
+*also do it the other way around, make mus_musculus.fasta the database and query it against M_musculus proteome
 
             
 1. qaccver - Query accession.version (AMPs list ID)
@@ -62,10 +68,22 @@ blast_colnames <- c("qaccver","saccver","pident","length","mismatch","gapopen","
 
 mouse_amps_blast <- read_tsv("data/blastp_results/Mus_musculus.blastp", col_names = blast_colnames)
 
-mouse_amps_blast %>% group_by(qaccver) %>% slice_max(n = 2, order_by = bitscore)
-
-
+mouse_amps_blast %>% group_by(qaccver) %>% slice_max(n = 1, order_by = bitscore)
 
 ```
 
+
+```{r}
+mouse_model <- readRDS("models/Mus_musculus_model.rds")
+
+```
+
+```{r, eval=FALSE}
+mouse_pred <- predict_amps(mouse_proteome, n_cores = 2, model = mouse_model)
+```
+
+
+```{r}
+mouse_pred <- mouse_pred %>% separate(seq_name, into = c("ID", "Description"), sep = "\\s", extra = "merge")
+```
 
