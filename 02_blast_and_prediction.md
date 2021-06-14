@@ -15,6 +15,15 @@ The proteomes were downloaded from
 |                |                                                              |                |          |            |
 |                |                                                              |                |          |            |
 
+## BLAST searches
+
+The [BLAST+](https://pubmed.ncbi.nlm.nih.gov/20003500/) version used was
+blast 2.11.0, build Nov 17 2020 for MacOS.
+
+Each proteome was used to make a local BLAST database using
+`makeblastdb`. This proteome database was then used to query the AMP
+dataset with `blastp`, Protein-Protein BLAST 2.11.0+
+
 ``` bash
 gunzip -dc data/proteomes/M_musculus-proteome-UP000000589.fasta.gz | makeblastdb -in - -title M_musculus-proteome-UP000000589 -dbtype prot -out cache/M_musculus-proteome-UP000000589.fasta
 ```
