@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```{r, echo = FALSE}
 library(tidyverse)
 library(ampir)
+library(patchwork)
 ```
 
 ## Proteomes
@@ -58,7 +59,14 @@ gunzip -dc data/proteomes/M_musculus-proteome-UP000000589.fasta.gz | makeblastdb
 blastp -db cache/M_musculus-proteome-UP000000589.fasta -query cache/Mus_musculus.fasta -outfmt 6 -max_target_seqs 5 -evalue=10 > data/blastp_results/Mus_musculus.blastp
 ```
 
-BLAST was also performed the other way around, using Mus_musculus.fasta as the database and query it against M_musculus proteome. This was done on the HPC. See [blastAMPsagainstproteome.sh](/scripts/blastAMPsagainstproteome.sh) for the script used.
+```{bash, eval = FALSE}
+gunzip -dc data/proteomes/B_taurus-proteome-UP000009136.fasta.gz | makeblastdb -in - -title B_taurus-proteome-UP000009136 -dbtype prot -out cache/B_taurus-proteome-UP000009136.fasta 
+
+blastp -db cache/B_taurus-proteome-UP000009136.fasta -query cache/Bos_taurus.fasta -outfmt 6 -max_target_seqs 5 -evalue=10 > data/blastp_results/Bos_taurus.blastp
+```
+
+
+BLAST was also performed the other way around, using Mus_musculus.fasta as the database and query it against M_musculus proteome (referred to as the BLAST2 method) This was done on the HPC. See [blastAMPsagainstproteome.sh](/scripts/blastAMPsagainstproteome.sh) for the script used.
 
             
 1. qaccver - Query accession.version (AMPs list ID)
@@ -77,18 +85,30 @@ BLAST was also performed the other way around, using Mus_musculus.fasta as the d
         
 
 ```{r}
-blast_colnames <- c("qaccver","saccver","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore")
-
-mouse_amps_blast <- read_tsv("data/blastp_results/Mus_musculus.blastp", col_names = blast_colnames) %>% 
+parse_blast_results <- function(blast_results_path, metadata) {
+  
+  blast_colnames <- c("qaccver","saccver","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore")
+  
+  read_tsv(blast_results_path, col_names = blast_colnames) %>% 
   group_by(qaccver) %>% 
   slice_max(n = 1, order_by = bitscore) %>%
   separate(saccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
-  right_join(mouse_proteome_metadata, by = "Entry_name") %>% 
+  right_join(metadata, by = "Entry_name") %>% 
   mutate(bitscore = replace_na(bitscore, 0)) %>% # 
   filter(Status == "reviewed")
+}
+
+mouse_amps_blast <- parse_blast_results("data/blastp_results/Mus_musculus.blastp", mouse_proteome_metadata)
 
 
-  
+cow_amps_blast <- parse_blast_results("data/blastp_results/Bos_taurus.blastp", cow_proteome_metadata)
+```
+
+*BLAST2 method:*
+```{r}
+blast_colnames <- c("qaccver","saccver","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore")
+
+
 mouse_proteome_blast <- read_tsv("data/blastp_results/Mus_musculus_proteome.blastp", col_names = blast_colnames) %>% 
   group_by(qaccver) %>% 
   slice_max(n = 1, order_by = bitscore) %>%
@@ -98,21 +118,64 @@ mouse_proteome_blast <- read_tsv("data/blastp_results/Mus_musculus_proteome.blas
   filter(Status == "reviewed")
 
 
+cow_proteome_blast <- read_tsv("data/blastp_results/Bos_taurus_proteome.blastp", col_names = blast_colnames) %>% 
+  group_by(qaccver) %>% 
+  slice_max(n = 1, order_by = bitscore) %>%
+  separate(qaccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
+  right_join(cow_proteome_metadata, by = "Entry_name") %>% 
+  mutate(bitscore = replace_na(bitscore, 0)) %>% # 
+  filter(Status == "reviewed")
 ```
-
-```{r}
-#not checked if this works yet
-mouse_proteome_blast2_roc <- map_df(seq(0, 1000, 1), calc_cm_metrics_from_bitscore, mouse_amps_blast) %>% add_column(Organism = "Mus_musculus")
-
-```
-*combine above blast rocs into 1? add method = "blast1" vs blast2, put on same plot*
 
 "For average length proteins, a bit score of 50 is almost always significant. A bit score of 40 is only significant (E() < 0.001) in searches of protein databases with fewer than 7000 entries"[Pearson 2013, pp. 4-5](https://doi.org/10.1002/0471250953.bi0301s42)
 
+```{r}
+max(mouse_proteome_blast$bitscore)
+min(mouse_proteome_blast$bitscore)
+```
 
 ```{r}
-max(mouse_amps_blast$bitscore)
-min(mouse_amps_blast$bitscore)
+organisms = c("Mus_musculus","Bos_taurus")
+
+source("scripts/calc_cm_metrics_from_bitscore.R")
+
+get_blast_roc <- function(data, method){
+  do.call(rbind,lapply(organisms,function(org){ 
+    map_df(seq(0, 1000, 1), calc_cm_metrics_from_bitscore, data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
+  add_column(Method = method)
+}
+
+source("scripts/calc_cm_metrics_from_prob.R")
+
+get_proteome_roc <- function(data, method){
+  do.call(rbind,lapply(organisms,function(org){ 
+    map_df(c(seq(0.01, 0.99, 0.01),seq(0.99, 0.990, 0.001)), calc_cm_metrics_from_prob, data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
+  add_column(Method = method)
+}
+```
+
+```{r, eval = FALSE}
+mouse_amps_blast1_roc <- get_blast_roc(mouse_amps_blast, method = "BLAST1")
+
+mouse_proteome_blast2_roc <- get_blast_roc(mouse_proteome_blast, method = "BLAST2")
+
+
+cow_amps_blast1_roc <- get_blast_roc(cow_amps_blast, method = "BLAST1")
+
+cow_proteome_blast2_roc <- get_blast_roc(cow_proteome_blast, method = "BLAST2")
+
+
+blast_roc <- rbind(mouse_amps_blast1_roc, mouse_proteome_blast2_roc, cow_amps_blast1_roc, cow_proteome_blast2_roc)
+
+saveRDS(blast_roc, "cache/blast_roc.rds")
+```
+
+```{r, echo = FALSE}
+blast_roc <- readRDS("cache/blast_roc.rds")
 ```
 
 
@@ -135,39 +198,61 @@ saveRDS(cow_pred, "cache/cow_pred.rds")
 
 ```{r, echo = FALSE}
 mouse_pred <- readRDS("cache/mouse_pred.rds")
-cow_pred <- readRDS("cache/cow_pred")
+cow_pred <- readRDS("cache/cow_pred.rds")
 ```
 
 Regex: Three steps to extract the `Entry_name` text that is between a Unix pipe and a space: 
 
 1. Lookbehind `(?<=\\|)` matches only if preceding character is a Unix pipe (\\|) 
 2. Match only alphanumerics and underscores `[a-zA-Z0-9_]*`
-3. Lookahead `(?=\\s)` Matches onnly if the next character is a space (\\s)
+3. Lookahead `(?=\\s)` Matches only if the next character is a space (\\s)
 
 ```{r}
-mouse_proteome_pred <- mouse_pred %>% 
+join_pred_with_metadata <- function(pred_data, metadata){
+  pred_data %>%
   mutate(Entry_name = str_extract(seq_name, "(?<=\\|)[a-zA-Z0-9_]*(?=\\s)")) %>% 
   select(Entry_name, seq_aa, prob_AMP) %>% 
-  mutate(length = nchar(seq_aa)) %>%
-  left_join(mouse_proteome_metadata, by = "Entry_name") %>%
+  left_join(metadata, by = "Entry_name") %>%
   filter(Status == "reviewed")
-
-cow_proteome_pred <- cow_pred %>% 
-  mutate(Entry_name = str_extract(seq_name, "(?<=\\|)[a-zA-Z0-9_]*(?=\\s)")) %>% 
-  select(Entry_name, seq_aa, prob_AMP) %>% 
-  mutate(length = nchar(seq_aa)) %>%
-  left_join(cow_proteome_metadata, by = "Entry_name") %>%
-  filter(Status == "reviewed")
-```
-
-```{r}
-mouse_proteome_roc <- map_df(c(seq(0.01, 0.99, 0.01),seq(0.99, 0.990, 0.001)), calc_cm_metrics_from_prob, mouse_proteome_pred) %>% add_column(Organism = "Mus_musculus")
-
-ggplot(mouse_proteome_roc) +
-  geom_line(aes(x = Recall, y = Precision))
+}
 ```
 
 
+```{r}
+mouse_proteome_pred <- join_pred_with_metadata(mouse_pred, mouse_proteome_metadata)
 
-# use functions to calculate CM metrics for both blast (2) and the classification and make plots.
-maybe long format and add column organism and method (blast 1 , 2, classification model)
+cow_proteome_pred <- join_pred_with_metadata(cow_pred, cow_proteome_metadata)
+
+
+
+proteome_predictions <- rbind(mouse_proteome_pred, cow_proteome_pred) 
+```
+
+
+
+```{r}
+pred_roc <- get_proteome_roc(proteome_predictions, "Classification")
+```
+
+*combine BLAST and prediction results*
+```{r}
+blast_pred_roc <- rbind(blast_roc, pred_roc)
+```
+
+  
+```{r, echo = FALSE}
+ggplot(blast_pred_roc) +
+  geom_line(aes(x = Recall, y = Precision, colour = Method)) +
+  facet_wrap(~Organism) +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        strip.background = element_blank(),
+        strip.text = element_text(face = "italic",
+                                  size = 10)) +
+  labs(colour = "")
+  
+```
+
+**Figure 2.1:** Comparison of three different methods on finding AMPs in different organisms using precision-recall curves. **BLAST1** method is using the proteome of the organism as a database which queries a FASTA file that contains all AMPs in the SwissProt database, *excluding* the subject organism. **BLAST2** method is using all AMPs in the SwissProt database as a database, *excluding* the organism proteome that is used as a query. **Classification** method is where a classification model is trained which contains Swissprot AMPs and non-AMPs of all organisms *excluding* the target organism, and then tested on the target organism proteome.
+
+
