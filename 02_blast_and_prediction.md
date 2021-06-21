@@ -30,6 +30,38 @@ cow_proteome_metadata <- read_tsv("data/proteomes/B_taurus-proteome-UP000009136.
   mutate(Label = case_when(str_detect(Keywords, "Antimicrobial") ~ "Pos", TRUE ~ "Neg"))
 ```
 
+This `UP000000589_10090.fasta.gz` proteome is from the “one protein
+sequence per gene” containing 22,001 proteins. This proteome contains
+all reviewed AMPs (100) and 20 out of 31 reviewed AMPs. – maybe replace
+“full” proteomes with the “unique” proteome and use both reviewed AND
+unreviewed AMPs as benchmark result..
+
+``` r
+mouse_proteome_1prot <- read_faa("data/proteomes/UP000000589_10090.fasta.gz") %>% mutate(Entry_name = str_extract(seq_name, "(?<=\\|)[a-zA-Z0-9_]*(?=\\s)")) %>% left_join(mouse_proteome_metadata)
+
+mouse_proteome_1prot %>% filter(Status == "reviewed") %>% filter(Label == "Pos") %>% nrow()
+```
+
+    ## [1] 100
+
+``` r
+mouse_proteome_metadata %>% filter(Status == "reviewed") %>% filter(Label == "Pos") %>% nrow()
+```
+
+    ## [1] 100
+
+``` r
+mouse_proteome_1prot  %>% filter(Status == "unreviewed") %>% filter(Label == "Pos") %>% nrow()
+```
+
+    ## [1] 20
+
+``` r
+mouse_proteome_metadata %>% filter(Status == "unreviewed") %>% filter(Label == "Pos") %>% nrow()
+```
+
+    ## [1] 31
+
 ## BLAST searches to find AMPs
 
 The [BLAST+](https://pubmed.ncbi.nlm.nih.gov/20003500/) version used was
@@ -80,7 +112,7 @@ parse_blast_results <- function(blast_results_path, metadata) {
   blast_colnames <- c("qaccver","saccver","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore")
   
   read_tsv(blast_results_path, col_names = blast_colnames) %>% 
-  group_by(qaccver) %>% 
+  group_by(saccver) %>% 
   slice_max(n = 1, order_by = bitscore) %>%
   separate(saccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
   right_join(metadata, by = "Entry_name") %>% 
@@ -90,9 +122,22 @@ parse_blast_results <- function(blast_results_path, metadata) {
 
 mouse_amps_blast <- parse_blast_results("data/blastp_results/Mus_musculus.blastp", mouse_proteome_metadata)
 
-
 cow_amps_blast <- parse_blast_results("data/blastp_results/Bos_taurus.blastp", cow_proteome_metadata)
 ```
+
+*sanity check, remove*
+
+``` r
+mouse_amps_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 0.5) %>% n_distinct()
+```
+
+    ## [1] 86
+
+``` r
+cow_amps_blast %>%   filter(Status == "reviewed") %>% filter(Label == "Pos") %>% n_distinct()
+```
+
+    ## [1] 55
 
 *BLAST2 method:*
 
@@ -226,15 +271,15 @@ pred_roc <- get_proteome_roc(proteome_predictions, "Classification")
 blast_pred_roc <- rbind(blast_roc, pred_roc)
 ```
 
-![](02_blast_and_prediction_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](02_blast_and_prediction_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 **Figure 2.1:** Comparison of three different methods on finding AMPs in
 different organisms using precision-recall curves. **BLAST1** method is
-using the proteome of the organism as a database which queries a FASTA
-file that contains all AMPs in the SwissProt database, *excluding* the
-subject organism. **BLAST2** method is using all AMPs in the SwissProt
-database as a database, *excluding* the organism proteome that is used
-as a query. **Classification** method is where a classification model is
-trained which contains Swissprot AMPs and non-AMPs of all organisms
-*excluding* the target organism, and then tested on the target organism
-proteome.
+using the proteome of the organism as a database and a FASTA file that
+contains all AMPs in the SwissProt database, *excluding* the subject
+organism, as a query. **BLAST2** method is using all AMPs in the
+SwissProt database as a database, *excluding* the organism proteome,
+which is used as a query. **Classification** method is where a
+classification model is trained which contains Swissprot AMPs and
+non-AMPs of all organisms *excluding* the target organism, and then
+tested on the target organism proteome.
