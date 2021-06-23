@@ -136,12 +136,14 @@ Similar to the reviewed AMPs, the orders Primates, Artiodactyla dominate the top
 
 Within Carnivora, the domestic dog, [*Canis lupus familiaris*](https://www.uniprot.org/proteomes/UP000002254) contains the most AMPs (72). In Chiroptera, the greater horseshoe bat, [*Rhinolophus ferrumequinum*](https://www.uniprot.org/proteomes/UP000472240) contains the most AMPs (54). As these organisms contain the most AMPs for their respective orders, and both contain a reference proteome, these two species could be good candidates to include in the analysis.
 
+
 *NOTE: problem with this though as these are in the unreviewed section, and not well represented in the reviewed AMPs (used for the training and query data) at all. How to get around this? use unreviewed AMPs instead for training / query data? or just do normal approach and then these 2 organisms can be used as a decent test for taxonomic bias in training/query data  ... (and still have decent number of AMPs to test effectiveness of the model/BLAST methods )*
 
 ```{r}
 mammal_amps %>% filter(Order == "Carnivora") %>% count(Organism, sort = TRUE) %>% slice_head(n=6)
 mammal_amps %>% filter(Order == "Chiroptera") %>% count(Organism, sort = TRUE) %>% slice_head(n=6)
 ```
+
 ## Extracting data for model training and query searches
 
 The effectiveness of statistical learning (or machine learning) classification models on finding AMPs was compared with homology. To do this a training dataset was constructed to train a AMP classification model for a given organism, which contained all the AMPs in the SwissProt database **excluding the given organism**, as well as general protein sequences which exclude AMPs. To perform BLAST searches, a FASTA file containing *only* the AMPs in the SwissProt database that **exclude the given organism**.
@@ -192,4 +194,18 @@ save_training_and_query_data("Rattus_norvegicus")
 
 save_training_and_query_data("Bos_taurus")
 
+save_training_and_query_data("Pan_troglodytes")
+
+save_training_and_query_data("Sus_scrofa")
+
+save_training_and_query_data("Canis_lupus familiaris")
+
+
+# this organism is not in the dataset at all. maybe use ampir precursor model for classification and "data/swissprot_amps_standardaa_90.fasta" as query
+save_training_and_query_data("Rhinolophus_ferrumequinum") 
 ```
+
+*R. ferrumequinum* is not in the dataset. Upon examination of the SwissProt database, there is only 1 reviewed AMP for the entire Chiroptera order which is a [lactotransferrin in *Desmodus rotundus*](https://www.uniprot.org/uniprot/K9IMD0), the Vampire bat, which is a large AMP (708). 
+
+There are 10 reviewed AMPs for Carnivora. Also largely includes largely secretory fluid AMPs (like lysozymes)
+

@@ -177,4 +177,23 @@ save_training_and_query_data("Homo_sapiens")
 save_training_and_query_data("Rattus_norvegicus")
 
 save_training_and_query_data("Bos_taurus")
+
+save_training_and_query_data("Pan_troglodytes")
+
+save_training_and_query_data("Sus_scrofa")
+
+save_training_and_query_data("Canis_lupus familiaris")
+
+
+# this organism is not in the dataset at all. maybe use ampir precursor model for classification and "data/swissprot_amps_standardaa_90.fasta" as query
+save_training_and_query_data("Rhinolophus_ferrumequinum") 
 ```
+
+*R. ferrumequinum* is not in the dataset. Upon examination of the
+SwissProt database, there is only 1 reviewed AMP for the entire
+Chiroptera order which is a [lactotransferrin in *Desmodus
+rotundus*](https://www.uniprot.org/uniprot/K9IMD0), the Vampire bat,
+which is a large AMP (708).
+
+There are 10 reviewed AMPs for Carnivora. Also largely includes largely
+secretory fluid AMPs (like lysozymes)
