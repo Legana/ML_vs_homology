@@ -19,6 +19,7 @@ swissprot_amps <- read_tsv("data/uniprot-keywordAntimicrobial+[KW-0929]-filtered
 
 swissprot_nonamps <- read_tsv("data/uniprot-NOT+keyword_Antimicrobial+[KW-0929]+length[5+TO+500]24May21.tab") %>% rename(Entry_name = `Entry name`) %>% mutate(Organism = str_remove(Organism, " \\(.*")) %>% mutate(Organism = str_replace(Organism, " ", "_"))
 
+
 ```
 
 Sequences that contained non standard amino acids were removed and the remaining sequences were saved as FASTA files to process with CD-HIT
@@ -66,6 +67,7 @@ ggplot(swissprot_amps_summary %>% pivot_longer(cols = starts_with("AMP")), aes(x
         legend.position = "bottom") +
   scale_fill_manual(values = c("black", "forestgreen"))
 ```
+**Figure 1.1:** Number of reviewed AMPs in the SwissProt database in mammalian species contrasted with the filtered AMP set used for model training
 
 
 ```{r,fig.width=9, fig.height=6, echo = FALSE}
@@ -87,7 +89,46 @@ swissprot_amps %>%
   
 
 ```
+**Figure 1.2:** Number of reviewed AMPs in the SwissProt database in mammalian orders contrasted with the filtered AMP set used for model training
 
+```{r, echo = FALSE}
+mammal_amps <- read_tsv("data/uniprot-keyword-Antimicrobial+[KW-0929]+taxonomy-Mammalia.tab.gz") %>% rename(Entry_name = `Entry name`) %>% mutate(Organism = str_remove(Organism, " \\(.*")) %>% rename(Order = `Taxonomic lineage (ORDER)`) %>% mutate(Order = str_remove(Order, " \\(.*"))  %>% mutate(Organism = str_replace(Organism, " ", "_"))
+```
+
+
+```{r, fig.width=9, fig.height=20, echo = FALSE}
+mammal_amps %>% filter(Status == "unreviewed") %>% 
+  group_by(Organism) %>% 
+  summarise(AMP_count = n()) %>%
+  arrange(.by_group = TRUE, desc(AMP_count)) %>%
+  slice_max(order_by = AMP_count, n = 100) %>%
+  ggplot(aes(x = reorder(Organism, AMP_count), y = AMP_count)) +
+  geom_bar(stat ="identity", position = "dodge") +
+  coord_flip() +
+  labs(x = "Mammal species (Top 100)", y = "Number of antimicrobial peptides (AMP)", fill = "") +
+  theme_classic() +
+  theme(axis.text.y = element_text(face = "italic"))
+```
+
+**Figure 1.3:** Number of unreviewed AMPs in the TrEMBL database in the top 100 best represented mammal species
+
+```{r, echo=FALSE}
+mammal_amps %>% filter(Status == "unreviewed") %>% 
+  group_by(Order) %>% 
+  mutate(Order = replace(Order, is.na(Order), "Afrosoricida")) %>%
+  summarise(AMP_count = n()) %>%
+  arrange(.by_group = TRUE, desc(AMP_count)) %>%
+  pivot_longer(cols = starts_with("AMP")) %>%
+  ggplot(aes(x = reorder(Order, value), y = value)) +
+  geom_bar(stat ="identity", position = "dodge") +
+  coord_flip() +
+  labs(x = "Mammal Order", y = "Number of antimicrobial peptides (AMP)", fill = "") +
+  theme_classic() +
+  theme(legend.position = "bottom") 
+
+```
+
+**Figure 1.4:** Number of unreviewed AMPs in the TrEMBL database in mammalian orders 
 
 The effectiveness of statistical learning (or machine learning) classification models on finding AMPs was compared with homology. To do this a training dataset was constructed to train a AMP classification model for a given organism, which contained all the AMPs in the SwissProt database **excluding the given organism**, as well as general protein sequences which exclude AMPs. To perform BLAST searches, a FASTA file containing *only* the AMPs in the SwissProt database that **exclude the given organism**.
 

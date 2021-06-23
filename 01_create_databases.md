@@ -49,8 +49,24 @@ swissprot_amps_summary <- swissprot_amps %>%
 ```
 
 ![](01_create_databases_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+**Figure 1.1:** Number of reviewed AMPs in the SwissProt database in
+mammalian species contrasted with the filtered AMP set used for model
+training
 
 ![](01_create_databases_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+**Figure 1.2:** Number of reviewed AMPs in the SwissProt database in
+mammalian orders contrasted with the filtered AMP set used for model
+training
+
+![](01_create_databases_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+**Figure 1.3:** Number of unreviewed AMPs in the TrEMBL database in the
+top 100 best represented mammal species
+
+![](01_create_databases_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+**Figure 1.4:** Number of unreviewed AMPs in the TrEMBL database in
+mammalian orders
 
 The effectiveness of statistical learning (or machine learning)
 classification models on finding AMPs was compared with homology. To do
