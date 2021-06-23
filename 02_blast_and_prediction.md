@@ -4,63 +4,43 @@
 ## Proteomes
 
 The proteomes were downloaded from
-[UniProt](https://www.uniprot.org/proteomes) on 10 June 2021.
+[UniProt](https://www.uniprot.org/proteomes) on 23 June 2021.
 
 **Table 1:** Proteome information from organisms used as subjects
 
-| Organism Name       | Reference proteome ID                                        | Total proteins | Reviewed | Unreviewed |
-|---------------------|--------------------------------------------------------------|----------------|----------|------------|
-| *Mus musculus*      | [UP000000589](https://www.uniprot.org/proteomes/UP000000589) | 55,470         | 17,068   | 38,402     |
-| *Homo sapiens*      |                                                              |                |          |            |
-| *Rattus norvegicus* |                                                              |                |          |            |
-| *Bos taurus*        | [UP000009136](https://www.uniprot.org/proteomes/UP000009136) | 37,513         | 6,014    | 31,499     |
-|                     |                                                              |                |          |            |
+| Organism Name               | Reference proteome ID                                        | Total proteins | Reviewed | Unreviewed | AMPs (rev) | AMPs (unrev) | Gene count |
+|-----------------------------|--------------------------------------------------------------|----------------|----------|------------|------------|--------------|------------|
+| *Mus musculus*              | [UP000000589](https://www.uniprot.org/proteomes/UP000000589) | 55,366         | 17,077   | 38,289     | 100        | 31           | 22,001     |
+| *Homo sapiens*              | [UP000005640](https://www.uniprot.org/proteomes/UP000005640) | 78,120         | 20,371   | 57,749     | 99         | 16           | 20,600     |
+| *Rattus norvegicus*         | [UP000002494](https://www.uniprot.org/proteomes/UP000002494) | 29,934         | 8,131    | 21,803     | 52         | 36           | 21,588     |
+| *Bos taurus*                | [UP000009136](https://www.uniprot.org/proteomes/UP000009136) | 37,513         | 6,014    | 31,499     | 55         | 61           | 23,847     |
+| *Pan troglodytes*           | [UP000002277](https://www.uniprot.org/proteomes/UP000002277) | 48,770         | 692      | 48,078     | 38         | 27           | 23,053     |
+| *Sus scrofa*                | [UP000008227](https://www.uniprot.org/proteomes/UP000008227) | 49,792         | 1,438    | 48,354     | 29         | 46           | 22,165     |
+| *Canis lupus familiaris*    | [UP000002254](https://www.uniprot.org/proteomes/UP000002254) | 45,351         | 44,518   | 833        | 6          | 45           | 20,654     |
+| *Rhinolophus ferrumequinum* | [UP000472240](https://www.uniprot.org/proteomes/UP000472240) | 33,504         | 27       | 33,477     | 0          | 37           | 19,443     |
 
 ``` r
-mouse_proteome <- read_faa("data/proteomes/M_musculus-proteome-UP000000589.fasta.gz")
-mouse_proteome_metadata <- read_tsv("data/proteomes/uniprot-organism-Mus+musculus+AND+proteome.tab.gz", col_types = cols()) %>%
+read_proteome_metadata <- function(path, organism) {
+  read_tsv(path, col_types = cols()) %>%
   rename("Entry_name" = `Entry name`) %>%
-  mutate(Organism = "Mus_musculus") %>% 
+  mutate(Organism = organism) %>% 
   mutate(Label = case_when(str_detect(Keywords, "Antimicrobial") ~ "Pos", TRUE ~ "Neg"))
+}
 
-cow_proteome <- read_faa("data/proteomes/B_taurus-proteome-UP000009136.fasta.gz")
-cow_proteome_metadata <- read_tsv("data/proteomes/B_taurus-proteome-UP000009136.tab.gz", col_types = cols()) %>%
-  rename("Entry_name" = `Entry name`) %>%
-  mutate(Organism = "Bos_taurus") %>% 
-  mutate(Label = case_when(str_detect(Keywords, "Antimicrobial") ~ "Pos", TRUE ~ "Neg"))
+mouse_proteome_metadata <- read_proteome_metadata("data/proteomes/M_musculus-proteome-UP000000589.tab.gz", "Mus_musculus")
+cow_proteome_metadata <- read_proteome_metadata("data/proteomes/B_taurus-proteome-UP000009136.tab.gz", "Bos_taurus")
+#rat_proteome_metadata <- read_proteome_metadata("data/proteomes/")
 ```
 
-This `UP000000589_10090.fasta.gz` proteome is from the “one protein
-sequence per gene” containing 22,001 proteins. This proteome contains
-all reviewed AMPs (100) and 20 out of 31 reviewed AMPs. – maybe replace
-“full” proteomes with the “unique” proteome and use both reviewed AND
-unreviewed AMPs as benchmark result..
+This mouse `UP000000589_10090.fasta.gz` proteome is from the “one
+protein sequence per gene” containing 22,001 proteins. This proteome
+contains all reviewed AMPs (100) and 20 out of 31 unreviewed AMPs. The
+cow `B_taurus_UP000009136_9913.fasta.gz` proteome containing 23,847
+proteins which contained all reviewed AMPs (55) and 54 out of 61
+unreviewed AMPs.
 
-``` r
-mouse_proteome_1prot <- read_faa("data/proteomes/UP000000589_10090.fasta.gz") %>% mutate(Entry_name = str_extract(seq_name, "(?<=\\|)[a-zA-Z0-9_]*(?=\\s)")) %>% left_join(mouse_proteome_metadata)
-
-mouse_proteome_1prot %>% filter(Status == "reviewed") %>% filter(Label == "Pos") %>% nrow()
-```
-
-    ## [1] 100
-
-``` r
-mouse_proteome_metadata %>% filter(Status == "reviewed") %>% filter(Label == "Pos") %>% nrow()
-```
-
-    ## [1] 100
-
-``` r
-mouse_proteome_1prot  %>% filter(Status == "unreviewed") %>% filter(Label == "Pos") %>% nrow()
-```
-
-    ## [1] 20
-
-``` r
-mouse_proteome_metadata %>% filter(Status == "unreviewed") %>% filter(Label == "Pos") %>% nrow()
-```
-
-    ## [1] 31
+NOTE: – maybe replace “full” proteomes with the “unique” proteome and
+use both reviewed AND unreviewed AMPs as benchmark result..
 
 ## BLAST searches to find AMPs
 
@@ -69,27 +49,28 @@ blast 2.11.0, build Nov 17 2020 for MacOS.
 
 Each proteome was used to make a local BLAST database using
 `makeblastdb`. This proteome database was then used to query the AMP
-dataset with `blastp`, Protein-Protein BLAST 2.11.0+
+dataset with `blastp`, Protein-Protein BLAST 2.11.0+. The
+[blast01\_proteomeagainstAMPs](scripts/blast01_proteomeagainstAMPs.sh)
+script was used for this. This BLAST method is henceforth referred to as
+the “BLAST1” method.
 
 ``` bash
-gunzip -dc data/proteomes/M_musculus-proteome-UP000000589.fasta.gz | makeblastdb -in - -title M_musculus-proteome-UP000000589 -dbtype prot -out cache/M_musculus-proteome-UP000000589.fasta
-```
+gunzip -d data/proteomes/M_musculus_UP000000589_10090.fasta.gz 
 
-``` bash
-blastp -db cache/M_musculus-proteome-UP000000589.fasta -query cache/Mus_musculus.fasta -outfmt 6 -max_target_seqs 5 -evalue=10 > data/blastp_results/Mus_musculus.blastp
-```
+makeblastdb -in data/proteomes/M_musculus_UP000000589_10090.fasta -dbtype 'prot' 
 
-``` bash
-gunzip -dc data/proteomes/B_taurus-proteome-UP000009136.fasta.gz | makeblastdb -in - -title B_taurus-proteome-UP000009136 -dbtype prot -out cache/B_taurus-proteome-UP000009136.fasta 
+blastp -db data/proteomes/M_musculus_UP000000589_10090.fasta -query cache/Mus_musculus.fasta -outfmt 6 -max_target_seqs 5 -evalue=10 > data/blastp_results/Mus_musculus2.blastp 
 
-blastp -db cache/B_taurus-proteome-UP000009136.fasta -query cache/Bos_taurus.fasta -outfmt 6 -max_target_seqs 5 -evalue=10 > data/blastp_results/Bos_taurus.blastp
+find data/proteomes/ -type f -not -name '*.gz' -delete
 ```
 
 BLAST was also performed the other way around, using Mus\_musculus.fasta
 as the database and query it against M\_musculus proteome (referred to
 as the BLAST2 method) This was done on the HPC. See
-[blastAMPsagainstproteome.sh](/scripts/blastAMPsagainstproteome.sh) for
-the script used.
+[blast02\_AMPsagainstproteome.sh](scripts/blast02_AMPsagainstproteome.sh)
+for the script used.
+
+The standard BLAST tabular output consists of nine columns:
 
 1.  qaccver - Query accession.version (AMPs list ID)
 2.  saccver - Subject accession.version (Reference proteome ID)
@@ -116,8 +97,7 @@ parse_blast_results <- function(blast_results_path, metadata) {
   slice_max(n = 1, order_by = bitscore) %>%
   separate(saccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
   right_join(metadata, by = "Entry_name") %>% 
-  mutate(bitscore = replace_na(bitscore, 0)) %>% # 
-  filter(Status == "reviewed")
+  mutate(bitscore = replace_na(bitscore, 0))
 }
 
 mouse_amps_blast <- parse_blast_results("data/blastp_results/Mus_musculus.blastp", mouse_proteome_metadata)
@@ -128,7 +108,7 @@ cow_amps_blast <- parse_blast_results("data/blastp_results/Bos_taurus.blastp", c
 *sanity check, remove*
 
 ``` r
-mouse_amps_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 0.5) %>% n_distinct()
+mouse_amps_blast %>% filter(Status == "reviewed") %>% filter(Label=="Pos") %>% filter(bitscore >= 0.5) %>% n_distinct()
 ```
 
     ## [1] 86
@@ -142,25 +122,20 @@ cow_amps_blast %>%   filter(Status == "reviewed") %>% filter(Label == "Pos") %>%
 *BLAST2 method:*
 
 ``` r
-blast_colnames <- c("qaccver","saccver","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore")
-
-
-mouse_proteome_blast <- read_tsv("data/blastp_results/Mus_musculus_proteome.blastp", col_names = blast_colnames) %>% 
+parse_blast2_results <- function(blast_results_path, metadata) {
+  blast_colnames <- c("qaccver","saccver","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore")
+  read_tsv(blast_results_path, col_names = blast_colnames) %>% 
   group_by(qaccver) %>% 
   slice_max(n = 1, order_by = bitscore) %>%
   separate(qaccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
-  right_join(mouse_proteome_metadata, by = "Entry_name") %>% 
-  mutate(bitscore = replace_na(bitscore, 0)) %>% # 
-  filter(Status == "reviewed")
+  right_join(metadata, by = "Entry_name") %>% 
+  mutate(bitscore = replace_na(bitscore, 0))
+}
 
 
-cow_proteome_blast <- read_tsv("data/blastp_results/Bos_taurus_proteome.blastp", col_names = blast_colnames) %>% 
-  group_by(qaccver) %>% 
-  slice_max(n = 1, order_by = bitscore) %>%
-  separate(qaccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
-  right_join(cow_proteome_metadata, by = "Entry_name") %>% 
-  mutate(bitscore = replace_na(bitscore, 0)) %>% # 
-  filter(Status == "reviewed")
+mouse_proteome_blast <- parse_blast2_results("data/blastp_results/Mus_musculus_proteome.blastp", mouse_proteome_metadata)
+
+cow_proteome_blast <- parse_blast2_results("data/blastp_results/Bos_taurus_proteome.blastp", cow_proteome_metadata)
 ```
 
 “For average length proteins, a bit score of 50 is almost always
@@ -271,7 +246,7 @@ pred_roc <- get_proteome_roc(proteome_predictions, "Classification")
 blast_pred_roc <- rbind(blast_roc, pred_roc)
 ```
 
-![](02_blast_and_prediction_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](02_blast_and_prediction_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 **Figure 2.1:** Comparison of three different methods on finding AMPs in
 different organisms using precision-recall curves. **BLAST1** method is

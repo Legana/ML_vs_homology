@@ -197,3 +197,19 @@ which is a large AMP (708).
 
 There are 10 reviewed AMPs for Carnivora. Also largely includes largely
 secretory fluid AMPs (like lysozymes)
+
+*Save all AMPs (and 10 x random non AMPs) as a general query and
+training set to use for R ferrumequinum as this species is not
+represented in the dataset*
+
+``` r
+df_to_faa(swissprot_amps_standardaa90, "cache/positive_1528AMPs.fasta")
+
+positive_1528AMPs <- swissprot_amps_standardaa90 %>% select("seq_name", "seq_aa", "Label")
+negative_15280nonAMPs <- swissprot_nonamps_standardaa90 %>% slice_sample(n = 10*nrow(swissprot_amps_standardaa90)) %>% select("seq_name", "seq_aa", "Label")
+
+posneg1528 <- rbind(positive_1528AMPs, negative_15280nonAMPs)
+posneg1528_features <- calculate_features(posneg1528) %>% add_column(Label = as.factor(posneg1528$Label))
+
+saveRDS(posneg1528_features, "cache/pos1528neg15280_feat.rds")
+```
