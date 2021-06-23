@@ -58,6 +58,8 @@ training
 mammalian orders contrasted with the filtered AMP set used for model
 training
 
+## Mammals with the most unreviewed AMPs
+
 ![](01_create_databases_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 **Figure 1.3:** Number of unreviewed AMPs in the TrEMBL database in the
@@ -67,6 +69,58 @@ top 100 best represented mammal species
 
 **Figure 1.4:** Number of unreviewed AMPs in the TrEMBL database in
 mammalian orders
+
+Similar to the reviewed AMPs, the orders Primates, Artiodactyla dominate
+the top three orders that have the highest AMP count. However, in the
+unreviewed AMPs, Carnivora has topped Rodentia in number of AMPs. In
+addition, Chiroptera also appears in the top 5 orders that have the most
+number of AMPs in TrEMBL.
+
+Within Carnivora, the domestic dog, [*Canis lupus
+familiaris*](https://www.uniprot.org/proteomes/UP000002254) contains the
+most AMPs (72). In Chiroptera, the greater horseshoe bat, [*Rhinolophus
+ferrumequinum*](https://www.uniprot.org/proteomes/UP000472240) contains
+the most AMPs (54). As these organisms contain the most AMPs for their
+respective orders, and both contain a reference proteome, these two
+species could be good candidates to include in the analysis.
+
+*NOTE: problem with this though as these are in the unreviewed section,
+and not well represented in the reviewed AMPs (used for the training and
+query data) at all. How to get around this? use unreviewed AMPs instead
+for training / query data? or just do normal approach and then these 2
+organisms can be used as a decent test for taxonomic bias in
+training/query data … (and still have decent number of AMPs to test
+effectiveness of the model/BLAST methods )*
+
+``` r
+mammal_amps %>% filter(Order == "Carnivora") %>% count(Organism, sort = TRUE) %>% slice_head(n=6)
+```
+
+    ## # A tibble: 6 x 2
+    ##   Organism                   n
+    ##   <chr>                  <int>
+    ## 1 Canis_lupus familiaris    72
+    ## 2 Ailuropoda_melanoleuca    65
+    ## 3 Ursus_maritimus           45
+    ## 4 Felis_catus               40
+    ## 5 Lynx_canadensis           37
+    ## 6 Panthera_pardus           37
+
+``` r
+mammal_amps %>% filter(Order == "Chiroptera") %>% count(Organism, sort = TRUE) %>% slice_head(n=6)
+```
+
+    ## # A tibble: 6 x 2
+    ##   Organism                      n
+    ##   <chr>                     <int>
+    ## 1 Rhinolophus_ferrumequinum    54
+    ## 2 Myotis_lucifugus             44
+    ## 3 Pipistrellus_kuhlii          33
+    ## 4 Molossus_molossus            27
+    ## 5 Myotis_myotis                27
+    ## 6 Pteropus_vampyrus            27
+
+## Extracting data for model training and query searches
 
 The effectiveness of statistical learning (or machine learning)
 classification models on finding AMPs was compared with homology. To do
