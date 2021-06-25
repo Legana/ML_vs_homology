@@ -8,9 +8,9 @@ sequences and the NOT operator with Antimicrobial keyword. The AMPs
 dataset (unfiltered) contained 3,350 sequences.
 
 ``` r
-swissprot_amps <- read_tsv("data/uniprot-keywordAntimicrobial+[KW-0929]-filtered-reviewedyes24May21.tab") %>% rename(Entry_name = `Entry name`) %>% mutate(Organism = str_remove(Organism, " \\(.*")) %>% rename(Taxonomic_lineage = `Taxonomic lineage (ALL)`) %>% rename(Order = `Taxonomic lineage (ORDER)`) %>% mutate(Order = str_remove(Order, " \\(.*"))  %>% mutate(Organism = str_replace(Organism, " ", "_"))
+swissprot_amps <- read_tsv("data/uniprot-keywordAntimicrobial+[KW-0929]-filtered-reviewedyes24May21.tab") %>% rename(Entry_name = `Entry name`) %>% mutate(Organism = str_remove(Organism, " \\(.*")) %>% rename(Taxonomic_lineage = `Taxonomic lineage (ALL)`) %>% rename(Order = `Taxonomic lineage (ORDER)`) %>% mutate(Order = str_remove(Order, " \\(.*"))  %>% mutate(Organism = str_replace_all(Organism, " ", "_"))
 
-swissprot_nonamps <- read_tsv("data/uniprot-NOT+keyword_Antimicrobial+[KW-0929]+length[5+TO+500]24May21.tab") %>% rename(Entry_name = `Entry name`) %>% mutate(Organism = str_remove(Organism, " \\(.*")) %>% mutate(Organism = str_replace(Organism, " ", "_"))
+swissprot_nonamps <- read_tsv("data/uniprot-NOT+keyword_Antimicrobial+[KW-0929]+length[5+TO+500]24May21.tab") %>% rename(Entry_name = `Entry name`) %>% mutate(Organism = str_remove(Organism, " \\(.*")) %>% mutate(Organism = str_replace_all(Organism, " ", "_"))
 ```
 
 Sequences that contained non standard amino acids were removed and the
@@ -99,7 +99,7 @@ mammal_amps %>% filter(Order == "Carnivora") %>% count(Organism, sort = TRUE) %>
     ## # A tibble: 6 x 2
     ##   Organism                   n
     ##   <chr>                  <int>
-    ## 1 Canis_lupus familiaris    72
+    ## 1 Canis_lupus_familiaris    72
     ## 2 Ailuropoda_melanoleuca    65
     ## 3 Ursus_maritimus           45
     ## 4 Felis_catus               40
@@ -182,7 +182,7 @@ save_training_and_query_data("Pan_troglodytes")
 
 save_training_and_query_data("Sus_scrofa")
 
-save_training_and_query_data("Canis_lupus familiaris")
+save_training_and_query_data("Canis_lupus_familiaris")
 
 
 # this organism is not in the dataset at all. maybe use ampir precursor model for classification and "data/swissprot_amps_standardaa_90.fasta" as query
