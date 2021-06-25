@@ -42,8 +42,30 @@ blastp -db data/proteomes/P_troglodytes_UP000002277_9598.fasta -query cache/Pan_
 
 # Pig
 
+gunzip -dk data/proteomes/S_scrofa_UP000008227_9823.fasta.gz 
+
+makeblastdb -in data/proteomes/S_scrofa_UP000008227_9823.fasta -dbtype 'prot' 
+
+blastp -db data/proteomes/S_scrofa_UP000008227_9823.fasta -query cache/Sus_scrofa.fasta -outfmt 6 -max_target_seqs 5 -evalue=10 > data/blastp_results/Sus_scrofa.blastp
+
+
 # Dog
 
+gunzip -dk data/proteomes/C_familiaris_UP000002254_9615.fasta.gz 
+
+makeblastdb -in data/proteomes/C_familiaris_UP000002254_9615.fasta -dbtype 'prot' 
+
+blastp -db data/proteomes/C_familiaris_UP000002254_9615.fasta -query cache/Canis_lupus_familiaris.fasta -outfmt 6 -max_target_seqs 5 -evalue=10 > data/blastp_results/Canis_lupus_familiaris.blastp
+
+
 # Bat (using general AMP set)
+
+gunzip -dk data/proteomes/R_ferrumequinum_UP000472240_59479.fasta.gz 
+
+makeblastdb -in data/proteomes/R_ferrumequinum_UP000472240_59479.fasta -dbtype 'prot' 
+
+blastp -db data/proteomes/R_ferrumequinum_UP000472240_59479.fasta -query cache/positive_1528AMPs.fasta -outfmt 6 -max_target_seqs 5 -evalue=10 > data/blastp_results/R_ferrumequinum.blastp
+
+
 
 find data/proteomes/ -type f -not -name '*.gz' -delete
