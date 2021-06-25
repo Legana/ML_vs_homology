@@ -29,7 +29,12 @@ read_proteome_metadata <- function(path, organism) {
 
 mouse_proteome_metadata <- read_proteome_metadata("data/proteomes/M_musculus-proteome-UP000000589.tab.gz", "Mus_musculus")
 cow_proteome_metadata <- read_proteome_metadata("data/proteomes/B_taurus-proteome-UP000009136.tab.gz", "Bos_taurus")
-#rat_proteome_metadata <- read_proteome_metadata("data/proteomes/")
+human_proteome_metadata <- read_proteome_metadata("data/proteomes/H_sapiens-proteome-UP000005640.tab.gz", "Homo_sapiens")
+rat_proteome_metadata <- read_proteome_metadata("data/proteomes/R_norvegicus-proteome-UP000002494.tab.gz", "Rattus_norvegicus")
+chimp_proteome_metadata <- read_proteome_metadata("data/proteomes/P_troglodytes-proteome-UP000002277.tab.gz", "Pan_troglodytes")
+pig_proteome_metadata <- read_proteome_metadata("data/proteomes/S_scrofa-uniprot-proteome-UP000008227.tab.gz", "Sus_scrofa")
+dog_proteome_metadata <- read_proteome_metadata("data/proteomes/C_familiaris_proteome-UP000002254.tab.gz", "Canis_lupus_familiaris")
+bat_proteome_metadata <- read_proteome_metadata("data/proteomes/R_ferrumequinum-proteome-UP000472240.tab.gz", "Rhinolophus_ferrumequinum")
 ```
 
 This mouse `UP000000589_10090.fasta.gz` proteome is from the “one
@@ -39,8 +44,10 @@ cow `B_taurus_UP000009136_9913.fasta.gz` proteome containing 23,847
 proteins which contained all reviewed AMPs (55) and 54 out of 61
 unreviewed AMPs.
 
-NOTE: – maybe replace “full” proteomes with the “unique” proteome and
-use both reviewed AND unreviewed AMPs as benchmark result..
+To remove redundancy, the “unique” proteomes were used instead of the
+“full” proteomes. As the proteomes used were reference proteomes and
+therefore likely accurate, both the reviewed AND unreviewed AMPs were
+used as benchmark result..
 
 ## BLAST searches to find AMPs
 
@@ -50,7 +57,7 @@ blast 2.11.0, build Nov 17 2020 for MacOS.
 Each proteome was used to make a local BLAST database using
 `makeblastdb`. This proteome database was then used to query the AMP
 dataset with `blastp`, Protein-Protein BLAST 2.11.0+. The
-[blast01\_proteomeagainstAMPs](scripts/blast01_proteomeagainstAMPs.sh)
+[blast01_proteomeagainstAMPs](scripts/blast01_proteomeagainstAMPs.sh)
 script was used for this. This BLAST method is henceforth referred to as
 the “BLAST1” method.
 
@@ -64,10 +71,10 @@ blastp -db data/proteomes/M_musculus_UP000000589_10090.fasta -query cache/Mus_mu
 find data/proteomes/ -type f -not -name '*.gz' -delete
 ```
 
-BLAST was also performed the other way around, using Mus\_musculus.fasta
-as the database and query it against M\_musculus proteome (referred to
-as the BLAST2 method) This was done on the HPC. See
-[blast02\_AMPsagainstproteome.sh](scripts/blast02_AMPsagainstproteome.sh)
+BLAST was also performed the other way around, using Mus_musculus.fasta
+as the database and query it against M_musculus proteome (referred to as
+the BLAST2 method) This was done on the HPC. See
+[blast02_AMPsagainstproteome.sh](scripts/blast02_AMPsagainstproteome.sh)
 for the script used.
 
 The standard BLAST tabular output consists of nine columns:
@@ -101,23 +108,16 @@ parse_blast_results <- function(blast_results_path, metadata) {
 }
 
 mouse_amps_blast <- parse_blast_results("data/blastp_results/Mus_musculus.blastp", mouse_proteome_metadata)
-
 cow_amps_blast <- parse_blast_results("data/blastp_results/Bos_taurus.blastp", cow_proteome_metadata)
+human_amps_blast <- parse_blast_results("data/blastp_results/Homo_sapiens.blastp", human_proteome_metadata)
+rat_amps_blast <- parse_blast_results("data/blastp_results/Rattus_norvegicus.blastp", rat_proteome_metadata)
+chimp_amps_blast <- parse_blast_results("data/blastp_results/Pan_troglodytes.blastp", chimp_proteome_metadata)
+pig_amps_blast <- parse_blast_results("data/blastp_results/Sus_scrofa.blastp", pig_proteome_metadata)
+dog_amps_blast <- parse_blast_results("data/blastp_results/Canis_lupus_familiaris.blastp", dog_proteome_metadata)
+bat_amps_blast <- parse_blast_results("data/blastp_results/R_ferrumequinum.blastp", bat_proteome_metadata)
+
+blast1results <- rbind(mouse_amps_blast, cow_amps_blast, human_amps_blast, rat_amps_blast, chimp_amps_blast, pig_amps_blast, dog_amps_blast, bat_amps_blast)
 ```
-
-*sanity check, remove*
-
-``` r
-mouse_amps_blast %>% filter(Status == "reviewed") %>% filter(Label=="Pos") %>% filter(bitscore >= 0.5) %>% n_distinct()
-```
-
-    ## [1] 86
-
-``` r
-cow_amps_blast %>%   filter(Status == "reviewed") %>% filter(Label == "Pos") %>% n_distinct()
-```
-
-    ## [1] 55
 
 *BLAST2 method:*
 
@@ -134,29 +134,99 @@ parse_blast2_results <- function(blast_results_path, metadata) {
 
 
 mouse_proteome_blast <- parse_blast2_results("data/blastp_results/Mus_musculus_proteome.blastp", mouse_proteome_metadata)
-
 cow_proteome_blast <- parse_blast2_results("data/blastp_results/Bos_taurus_proteome.blastp", cow_proteome_metadata)
+human_proteome_blast <- parse_blast2_results("data/blastp_results/Homo_sapiens_proteome.blastp", human_proteome_metadata)
+rat_proteome_blast <- parse_blast2_results("data/blastp_results/Rattus_norvegicus_proteome.blastp", rat_proteome_metadata)
+chimp_proteome_blast <- parse_blast2_results("data/blastp_results/Pan_troglodytes_proteome.blastp", chimp_proteome_metadata)
+pig_proteome_blast <- parse_blast2_results("data/blastp_results/Sus_scrofa_proteome.blastp", pig_proteome_metadata)
+dog_proteome_blast <- parse_blast2_results("data/blastp_results/Canis_familiaris_proteome.blastp", dog_proteome_metadata)
+bat_proteome_blast <- parse_blast2_results("data/blastp_results/R_ferrumequinum_proteome.blastp", bat_proteome_metadata)
+
+blast2results <- rbind(mouse_proteome_blast, cow_proteome_blast, human_proteome_blast, rat_proteome_blast, chimp_proteome_blast, pig_proteome_blast, dog_proteome_blast, bat_proteome_blast)
 ```
 
 “For average length proteins, a bit score of 50 is almost always
-significant. A bit score of 40 is only significant (E() &lt; 0.001) in
+significant. A bit score of 40 is only significant (E() \< 0.001) in
 searches of protein databases with fewer than 7000 entries”[Pearson
 2013, pp. 4-5](https://doi.org/10.1002/0471250953.bi0301s42)
 
 ``` r
-max(mouse_proteome_blast$bitscore)
+max(blast1results$bitscore)
 ```
 
-    ## [1] 830
+    ## [1] 982
 
 ``` r
-min(mouse_proteome_blast$bitscore)
+max(blast2results$bitscore)
 ```
 
-    ## [1] 0
+    ## [1] 982
+
+## Prediction with AMP classification model
+
+Read in models
 
 ``` r
-organisms = c("Mus_musculus","Bos_taurus")
+mouse_model <- readRDS("models/Mus_musculus_model.rds")
+cow_model <- readRDS("models/Bos_taurus_model.rds")
+human_model <- readRDS("models/Homo_sapiens_model.rds")
+rat_model <- readRDS("models/Rattus_norvegicus_model.rds")
+chimp_model <- readRDS("models/Pan_troglodytes_model.rds")
+pig_model <- readRDS("models/Sus_scrofa_model.rds")
+dog_model <- readRDS("models/Canis_familiaris_model.rds")
+general_model <- readRDS("models/general_model.rds")
+```
+
+Predict AMPs in proteomes
+
+``` r
+mouse_pred <- read_faa("data/proteomes/M_musculus_UP000000589_10090.fasta.gz") %>% predict_amps(n_cores = 3, model = mouse_model)
+cow_pred <- read_faa("data/proteomes/B_taurus_UP000009136_9913.fasta.gz") %>% predict_amps(n_cores = 4, model = cow_model)
+human_pred <- read_faa("data/proteomes/H_sapiens_UP000005640_9606.fasta.gz") %>% predict_amps(n_cores = 4, model = human_model)
+rat_pred <- read_faa("data/proteomes/R_norvegicus_UP000002494_10116.fasta.gz") %>% predict_amps(n_cores = 4, model = rat_model)
+chimp_pred <- read_faa("data/proteomes/P_troglodytes_UP000002277_9598.fasta.gz") %>% predict_amps(n_cores = 4, model = chimp_model)
+pig_pred <- read_faa("data/proteomes/S_scrofa_UP000008227_9823.fasta.gz") %>% predict_amps(n_cores = 4, model = pig_model)
+dog_pred <- read_faa("data/proteomes/C_familiaris_UP000002254_9615.fasta.gz") %>% predict_amps(n_cores = 4, model = dog_model)
+bat_pred <- read_faa("data/proteomes/R_ferrumequinum_UP000472240_59479.fasta.gz") %>% predict_amps(n_cores = 4, model = general_model)
+```
+
+Combine the predictions with metadata
+
+*Regex: Three steps to extract the `Entry_name` text that is between a
+Unix pipe and a space:*
+
+*1. Lookbehind `(?<=\\|)` matches only if preceding character is a Unix
+pipe (\\\|)* *2. Match only alphanumerics and underscores
+`[a-zA-Z0-9_]*` *3. Lookahead `(?=\\s)` Matches only if the next
+character is a space (\\s)\*
+
+``` r
+join_pred_with_metadata <- function(pred_data, metadata){
+  pred_data %>%
+  mutate(Entry_name = str_extract(seq_name, "(?<=\\|)[a-zA-Z0-9_]*(?=\\s)")) %>% 
+  select(Entry_name, seq_aa, prob_AMP) %>% 
+  left_join(metadata, by = "Entry_name")
+}
+```
+
+``` r
+mouse_proteome_pred <- join_pred_with_metadata(mouse_pred, mouse_proteome_metadata)
+cow_proteome_pred <- join_pred_with_metadata(cow_pred, cow_proteome_metadata)
+human_proteome_pred <- join_pred_with_metadata(human_pred, human_proteome_metadata)
+rat_proteome_pred <- join_pred_with_metadata(rat_pred, rat_proteome_metadata)
+chimp_proteome_pred <- join_pred_with_metadata(chimp_pred, chimp_proteome_metadata)
+pig_proteome_pred <- join_pred_with_metadata(pig_pred, pig_proteome_metadata)
+dog_proteome_pred <- join_pred_with_metadata(dog_pred, dog_proteome_metadata)
+bat_proteome_pred <- join_pred_with_metadata(bat_pred, bat_proteome_metadata)
+
+
+proteome_predictions <- rbind(mouse_proteome_pred, cow_proteome_pred, human_proteome_pred, rat_proteome_pred, chimp_proteome_pred, pig_proteome_pred, dog_proteome_pred, bat_proteome_pred) 
+```
+
+## Calculate metrics for PR curves for BLAST and classification methods
+
+``` r
+organisms = c("Mus_musculus","Bos_taurus", "Homo_sapiens", "Rattus_norvegicus", "Pan_troglodytes", "Sus_scrofa", "Canis_lupus_familiaris", "Rhinolophus_ferrumequinum")
 
 source("scripts/calc_cm_metrics_from_bitscore.R")
 
@@ -180,73 +250,77 @@ get_proteome_roc <- function(data, method){
 ```
 
 ``` r
-mouse_amps_blast1_roc <- get_blast_roc(mouse_amps_blast, method = "BLAST1")
+blast1roc <- get_blast_roc(blast1results, "BLAST1")
 
-mouse_proteome_blast2_roc <- get_blast_roc(mouse_proteome_blast, method = "BLAST2")
-
-
-cow_amps_blast1_roc <- get_blast_roc(cow_amps_blast, method = "BLAST1")
-
-cow_proteome_blast2_roc <- get_blast_roc(cow_proteome_blast, method = "BLAST2")
+blast2roc <- get_blast_roc(blast2results, "BLAST2")
 
 
-blast_roc <- rbind(mouse_amps_blast1_roc, mouse_proteome_blast2_roc, cow_amps_blast1_roc, cow_proteome_blast2_roc)
-
-saveRDS(blast_roc, "cache/blast_roc.rds")
-```
-
-## Prediction with AMP classification model
-
-``` r
-mouse_model <- readRDS("models/Mus_musculus_model.rds")
-cow_model <- readRDS("models/Bos_taurus_model.rds")
-```
-
-``` r
-mouse_pred <- predict_amps(mouse_proteome, n_cores = 2, model = mouse_model)
-cow_pred <- predict_amps(cow_proteome, n_cores = 3, model = cow_model)
-```
-
-Regex: Three steps to extract the `Entry_name` text that is between a
-Unix pipe and a space:
-
-1.  Lookbehind `(?<=\\|)` matches only if preceding character is a Unix
-    pipe (\\\|)
-2.  Match only alphanumerics and underscores `[a-zA-Z0-9_]*`
-3.  Lookahead `(?=\\s)` Matches only if the next character is a space
-    (\\s)
-
-``` r
-join_pred_with_metadata <- function(pred_data, metadata){
-  pred_data %>%
-  mutate(Entry_name = str_extract(seq_name, "(?<=\\|)[a-zA-Z0-9_]*(?=\\s)")) %>% 
-  select(Entry_name, seq_aa, prob_AMP) %>% 
-  left_join(metadata, by = "Entry_name") %>%
-  filter(Status == "reviewed")
-}
-```
-
-``` r
-mouse_proteome_pred <- join_pred_with_metadata(mouse_pred, mouse_proteome_metadata)
-
-cow_proteome_pred <- join_pred_with_metadata(cow_pred, cow_proteome_metadata)
-
-
-
-proteome_predictions <- rbind(mouse_proteome_pred, cow_proteome_pred) 
-```
-
-``` r
 pred_roc <- get_proteome_roc(proteome_predictions, "Classification")
-```
 
-*combine BLAST and prediction results*
+
+blast1and2andpred_roc <- rbind(blast1roc, blast2roc, pred_roc)
+```
 
 ``` r
-blast_pred_roc <- rbind(blast_roc, pred_roc)
+saveRDS(blast1and2andpred_roc, "cache/blast1and2andpred_roc.rds")
 ```
 
-![](02_blast_and_prediction_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+Figure colours were tested with a [colorblindness
+simulator](http://hclwizard.org:3000/cvdemulator/)
+
+*trying to add manual label to the plot*
+
+``` r
+blast1and2andpred_roc <- blast1and2andpred_roc %>% mutate(Organism = factor(Organism, levels = c("Homo_sapiens", "Pan_troglodytes","Mus_musculus" , "Rattus_norvegicus" , "Bos_taurus", "Sus_scrofa", "Canis_lupus_familiaris", "Rhinolophus_ferrumequinum"))) %>% mutate(Order = case_when(
+  str_detect(Organism, "Mus") ~ "Rodentia",
+  str_detect(Organism, "Rat") ~ "Rodentia",
+  str_detect(Organism, "Homo") ~ "Primates",
+  str_detect(Organism, "Pan") ~ "Primates",
+  str_detect(Organism, "Sus") ~ "Artiodactyla",
+  str_detect(Organism, "Bos") ~ "Artiodactyla",
+  str_detect(Organism, "Canis") ~ "Carnivora",
+  str_detect(Organism, "Rhino") ~ "Chiroptera",
+                          TRUE ~ "other"))
+  
+# label <- tibble(
+#   Precision = Inf,
+#   Recall = Inf,
+#   order = unique(blast1and2andpred_roc$Order),
+#   label = order)
+
+label <- tibble(
+  Precision = Inf,
+  Recall = Inf,
+  label = unique(blast1and2andpred_roc$Order))
+
+label <- tibble(
+  Precision = Inf,
+  Recall = Inf,
+  label = blast1and2andpred_roc$Order)
+```
+
+TODO fix labels so each facet has correct Order ..
+
+``` r
+ggplot(blast1and2andpred_roc, aes(x = Recall, y = Precision) ) +
+  geom_line(aes(colour = Method)) +
+  geom_text(aes(label = label), data = label, check_overlap = TRUE, vjust = "top", hjust = "right", size = 3) +
+  facet_wrap(~Organism, ncol = 2) +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        strip.background = element_blank(),
+        strip.text = element_text(face = "italic",
+                                  size = 10)) +
+  labs(colour = "") +
+  scale_colour_manual(breaks = c("BLAST1", "BLAST2", "Classification"),
+                       values = c("forestgreen","violetred", "grey1")) 
+```
+
+![](02_blast_and_prediction_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+
+``` r
+  #annotate("text", x = 1, y = 0.75, label = "Some text")
+```
 
 **Figure 2.1:** Comparison of three different methods on finding AMPs in
 different organisms using precision-recall curves. **BLAST1** method is
