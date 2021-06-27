@@ -268,7 +268,8 @@ saveRDS(blast1and2andpred_roc, "cache/blast1and2andpred_roc.rds")
 Figure colours were tested with a [colorblindness
 simulator](http://hclwizard.org:3000/cvdemulator/)
 
-*trying to add manual label to the plot*
+Modify dataframes to add labels with the Orders of the organisms to the
+facet plot
 
 ``` r
 blast1and2andpred_roc <- blast1and2andpred_roc %>% mutate(Organism = factor(Organism, levels = c("Homo_sapiens", "Pan_troglodytes","Mus_musculus" , "Rattus_norvegicus" , "Bos_taurus", "Sus_scrofa", "Canis_lupus_familiaris", "Rhinolophus_ferrumequinum"))) %>% mutate(Order = case_when(
@@ -280,31 +281,31 @@ blast1and2andpred_roc <- blast1and2andpred_roc %>% mutate(Organism = factor(Orga
   str_detect(Organism, "Bos") ~ "Artiodactyla",
   str_detect(Organism, "Canis") ~ "Carnivora",
   str_detect(Organism, "Rhino") ~ "Chiroptera",
-                          TRUE ~ "other"))
+                          TRUE ~ "other")) %>% 
+  mutate(Order = factor(Order))
   
-# label <- tibble(
-#   Precision = Inf,
-#   Recall = Inf,
-#   order = unique(blast1and2andpred_roc$Order),
-#   label = order)
 
-label <- tibble(
+figure_text <- tibble(
   Precision = Inf,
   Recall = Inf,
-  label = unique(blast1and2andpred_roc$Order))
-
-label <- tibble(
-  Precision = Inf,
-  Recall = Inf,
-  label = blast1and2andpred_roc$Order)
+  Organism = unique(blast1and2andpred_roc$Organism),
+  label = case_when(
+  str_detect(Organism, "Mus") ~ "Rodentia",
+  str_detect(Organism, "Rat") ~ "Rodentia",
+  str_detect(Organism, "Homo") ~ "Primates",
+  str_detect(Organism, "Pan") ~ "Primates",
+  str_detect(Organism, "Sus") ~ "Artiodactyla",
+  str_detect(Organism, "Bos") ~ "Artiodactyla",
+  str_detect(Organism, "Canis") ~ "Carnivora",
+  str_detect(Organism, "Rhino") ~ "Chiroptera",
+                          TRUE ~ "other")) %>%
+  mutate(Organism = factor(Organism, levels = c("Homo_sapiens", "Pan_troglodytes","Mus_musculus" , "Rattus_norvegicus" , "Bos_taurus", "Sus_scrofa", "Canis_lupus_familiaris", "Rhinolophus_ferrumequinum")))
 ```
-
-TODO fix labels so each facet has correct Order ..
 
 ``` r
 ggplot(blast1and2andpred_roc, aes(x = Recall, y = Precision) ) +
   geom_line(aes(colour = Method)) +
-  geom_text(aes(label = label), data = label, check_overlap = TRUE, vjust = "top", hjust = "right", size = 3) +
+  geom_text(aes(label = label), data = figure_text, check_overlap = TRUE, vjust = "top", hjust = "right", size = 3, fontface = "bold") +
   facet_wrap(~Organism, ncol = 2) +
   theme_classic() +
   theme(legend.position = "bottom",
@@ -317,10 +318,6 @@ ggplot(blast1and2andpred_roc, aes(x = Recall, y = Precision) ) +
 ```
 
 ![](02_blast_and_prediction_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
-
-``` r
-  #annotate("text", x = 1, y = 0.75, label = "Some text")
-```
 
 **Figure 2.1:** Comparison of three different methods on finding AMPs in
 different organisms using precision-recall curves. **BLAST1** method is
