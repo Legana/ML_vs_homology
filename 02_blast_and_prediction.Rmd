@@ -134,6 +134,7 @@ bat_amps_blast <- parse_blast_results("data/blastp_results/R_ferrumequinum.blast
 blast1results <- rbind(mouse_amps_blast, cow_amps_blast, human_amps_blast, rat_amps_blast, chimp_amps_blast, pig_amps_blast, dog_amps_blast, bat_amps_blast)
 ```
 
+
 *BLAST2 method:*
 ```{r}
 parse_blast2_results <- function(blast_results_path, metadata) {
@@ -158,14 +159,6 @@ bat_proteome_blast <- parse_blast2_results("data/blastp_results/R_ferrumequinum_
 
 blast2results <- rbind(mouse_proteome_blast, cow_proteome_blast, human_proteome_blast, rat_proteome_blast, chimp_proteome_blast, pig_proteome_blast, dog_proteome_blast, bat_proteome_blast)
 ```
-
-"For average length proteins, a bit score of 50 is almost always significant. A bit score of 40 is only significant (E() < 0.001) in searches of protein databases with fewer than 7000 entries"[Pearson 2013, pp. 4-5](https://doi.org/10.1002/0471250953.bi0301s42)
-
-```{r}
-max(blast1results$bitscore)
-max(blast2results$bitscore)
-```
-
 
 ## Prediction with AMP classification model  
 
@@ -234,7 +227,41 @@ saveRDS(proteome_predictions, "cache/proteome_predictions.rds")
 proteome_predictions <- readRDS("cache/proteome_predictions.rds")
 ```
 
+"For average length proteins, a bit score of 50 is almost always significant. A bit score of 40 is only significant (E() < 0.001) in searches of protein databases with fewer than 7000 entries"[Pearson 2013, pp. 4-5](https://doi.org/10.1002/0471250953.bi0301s42)
 
+```{r}
+max(blast1results$bitscore)
+max(blast2results$bitscore)
+```
+
+**Table 2:** Correctly identified AMPs in different proteomes with the BLAST1, BLAST2 and classification methods.
+
+| Organism | AMPs correctly identified | Total AMP count | Method |
+| --------------- | --------------- | --------------- | --------------- |  
+| *Mus musculus* | `r mouse_amps_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r mouse_amps_blast %>% filter(Label=="Pos") %>% n_distinct()` |  BLAST1   |
+| *Mus musculus* | `r mouse_proteome_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r mouse_proteome_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST2
+| *Mus musculus* | `r proteome_predictions %>% filter(Organism == "Mus_musculus") %>% filter(Label=="Pos") %>% filter(prob_AMP >= 0.5) %>% n_distinct()` | `r proteome_predictions %>% filter(Organism == "Mus_musculus") %>% filter(Label=="Pos") %>% n_distinct()` | Classification
+| *Homo sapiens* | `r human_amps_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r human_amps_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST1 
+| *Homo sapiens* | `r human_proteome_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r human_proteome_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST2
+| *Homo sapiens* | `r proteome_predictions %>% filter(Organism == "Homo_sapiens") %>% filter(Label=="Pos") %>% filter(prob_AMP >= 0.5) %>% n_distinct()` | `r proteome_predictions %>% filter(Organism == "Homo_sapiens") %>% filter(Label=="Pos") %>% n_distinct()` | Classification
+| *Rattus norvegicus* | `r rat_amps_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r rat_amps_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST1 
+| *Rattus norvegicus* | `r rat_proteome_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r rat_proteome_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST2
+| *Rattus norvegicus* | `r proteome_predictions %>% filter(Organism == "Rattus_norvegicus") %>% filter(Label=="Pos") %>% filter(prob_AMP >= 0.5) %>% n_distinct()` | `r proteome_predictions %>% filter(Organism == "Rattus_norvegicus") %>% filter(Label=="Pos") %>% n_distinct()` | Classification
+| *Bos taurus* | `r cow_amps_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r cow_amps_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST1 
+| *Bos taurus* | `r cow_proteome_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r cow_proteome_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST2
+| *Bos taurus* | `r proteome_predictions %>% filter(Organism == "Bos_taurus") %>% filter(Label=="Pos") %>% filter(prob_AMP >= 0.5) %>% n_distinct()` | `r proteome_predictions %>% filter(Organism == "Bos_taurus") %>% filter(Label=="Pos") %>% n_distinct()` | Classification
+| *Pan troglodytes* | `r chimp_amps_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r chimp_amps_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST1 
+| *Pan troglodytes* | `r chimp_proteome_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r chimp_proteome_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST2
+| *Pan troglodytes* | `r proteome_predictions %>% filter(Organism == "Pan_troglodytes") %>% filter(Label=="Pos") %>% filter(prob_AMP >= 0.5) %>% n_distinct()` | `r proteome_predictions %>% filter(Organism == "Pan_troglodytes") %>% filter(Label=="Pos") %>% n_distinct()` | Classification
+| *Sus scrofa* | `r pig_amps_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r pig_amps_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST1 
+| *Sus scrofa* | `r pig_proteome_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r pig_proteome_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST2
+| *Sus scrofa* | `r proteome_predictions %>% filter(Organism == "Sus_scrofa")  %>% filter(Label=="Pos") %>% filter(prob_AMP >= 0.5) %>% n_distinct()` | `r proteome_predictions %>% filter(Organism == "Sus_scrofa") %>% filter(Label=="Pos") %>% n_distinct()` | Classification
+| *Canis lupus familiaris* | `r dog_amps_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r dog_amps_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST1 
+| *Canis lupus familiaris* | `r dog_proteome_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r dog_proteome_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST2
+| *Canis lupus familiaris* | `r proteome_predictions %>% filter(Organism == "Canis_lupus_familiaris") %>% filter(Label=="Pos") %>% filter(prob_AMP >= 0.5) %>% n_distinct()` | `r proteome_predictions %>% filter(Organism == "Canis_lupus_familiaris") %>% filter(Label=="Pos") %>% n_distinct()` | Classification
+| *Rhinolophus ferrumequinum* | `r bat_amps_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r bat_amps_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST1 
+| *Rhinolophus ferrumequinum*| `r bat_proteome_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r bat_proteome_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST2
+| *Rhinolophus ferrumequinum* | `r proteome_predictions %>% filter(Organism == "Rhinolophus_ferrumequinum") %>% filter(Label=="Pos") %>% filter(prob_AMP >= 0.5) %>% n_distinct()` | `r proteome_predictions %>% filter(Organism == "Rhinolophus_ferrumequinum") %>% filter(Label=="Pos") %>% n_distinct()` | Classification
 
 ## Calculate metrics for PR curves for BLAST and classification methods
 
@@ -334,5 +361,4 @@ ggplot(blast1and2andpred_roc, aes(x = Recall, y = Precision) ) +
 
 
 **Figure 2.1:** Comparison of three different methods on finding AMPs in different organisms using precision-recall curves. **BLAST1** method is using the proteome of the organism as a database and a FASTA file that contains all AMPs in the SwissProt database, *excluding* the subject organism, as a query. **BLAST2** method is using all AMPs in the SwissProt database as a database, *excluding* the organism proteome, which is used as a query. **Classification** method is where a classification model is trained which contains Swissprot AMPs and non-AMPs of all organisms *excluding* the target organism, and then tested on the target organism proteome.
-
 

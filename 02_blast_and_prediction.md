@@ -145,23 +145,6 @@ bat_proteome_blast <- parse_blast2_results("data/blastp_results/R_ferrumequinum_
 blast2results <- rbind(mouse_proteome_blast, cow_proteome_blast, human_proteome_blast, rat_proteome_blast, chimp_proteome_blast, pig_proteome_blast, dog_proteome_blast, bat_proteome_blast)
 ```
 
-“For average length proteins, a bit score of 50 is almost always
-significant. A bit score of 40 is only significant (E() \< 0.001) in
-searches of protein databases with fewer than 7000 entries”[Pearson
-2013, pp. 4-5](https://doi.org/10.1002/0471250953.bi0301s42)
-
-``` r
-max(blast1results$bitscore)
-```
-
-    ## [1] 982
-
-``` r
-max(blast2results$bitscore)
-```
-
-    ## [1] 982
-
 ## Prediction with AMP classification model
 
 Read in models
@@ -222,6 +205,53 @@ bat_proteome_pred <- join_pred_with_metadata(bat_pred, bat_proteome_metadata)
 
 proteome_predictions <- rbind(mouse_proteome_pred, cow_proteome_pred, human_proteome_pred, rat_proteome_pred, chimp_proteome_pred, pig_proteome_pred, dog_proteome_pred, bat_proteome_pred) 
 ```
+
+“For average length proteins, a bit score of 50 is almost always
+significant. A bit score of 40 is only significant (E() \< 0.001) in
+searches of protein databases with fewer than 7000 entries”[Pearson
+2013, pp. 4-5](https://doi.org/10.1002/0471250953.bi0301s42)
+
+``` r
+max(blast1results$bitscore)
+```
+
+    ## [1] 982
+
+``` r
+max(blast2results$bitscore)
+```
+
+    ## [1] 982
+
+**Table 2:** Correctly identified AMPs in different proteomes with the
+BLAST1, BLAST2 and classification methods.
+
+| Organism                    | AMPs correctly identified | Total AMP count | Method         |
+|-----------------------------|---------------------------|-----------------|----------------|
+| *Mus musculus*              | 95                        | 132             | BLAST1         |
+| *Mus musculus*              | 107                       | 132             | BLAST2         |
+| *Mus musculus*              | 68                        | 120             | Classification |
+| *Homo sapiens*              | 74                        | 118             | BLAST1         |
+| *Homo sapiens*              | 77                        | 117             | BLAST2         |
+| *Homo sapiens*              | 62                        | 99              | Classification |
+| *Rattus norvegicus*         | 73                        | 89              | BLAST1         |
+| *Rattus norvegicus*         | 73                        | 88              | BLAST2         |
+| *Rattus norvegicus*         | 62                        | 76              | Classification |
+| *Bos taurus*                | 80                        | 116             | BLAST1         |
+| *Bos taurus*                | 99                        | 117             | BLAST2         |
+| *Bos taurus*                | 83                        | 109             | Classification |
+| *Pan troglodytes*           | 52                        | 66              | BLAST1         |
+| *Pan troglodytes*           | 52                        | 65              | BLAST2         |
+| *Pan troglodytes*           | 49                        | 59              | Classification |
+| *Sus scrofa*                | 61                        | 76              | BLAST1         |
+| *Sus scrofa*                | 62                        | 77              | BLAST2         |
+| *Sus scrofa*                | 48                        | 64              | Classification |
+| *Canis lupus familiaris*    | 39                        | 51              | BLAST1         |
+| *Canis lupus familiaris*    | 38                        | 51              | BLAST2         |
+| *Canis lupus familiaris*    | 30                        | 40              | Classification |
+| *Rhinolophus ferrumequinum* | 32                        | 38              | BLAST1         |
+| *Rhinolophus ferrumequinum* | 33                        | 39              | BLAST2         |
+| *Rhinolophus ferrumequinum* | 26                        | 35              | Classification |
 
 ## Calculate metrics for PR curves for BLAST and classification methods
 
