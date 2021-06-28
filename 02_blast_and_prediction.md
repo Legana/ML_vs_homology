@@ -104,7 +104,8 @@ parse_blast_results <- function(blast_results_path, metadata) {
   slice_max(n = 1, order_by = bitscore) %>%
   separate(saccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
   right_join(metadata, by = "Entry_name") %>% 
-  mutate(bitscore = replace_na(bitscore, 0))
+  mutate(bitscore = replace_na(bitscore, 0)) %>%
+  distinct(Entry_name, .keep_all = TRUE)
 }
 
 mouse_amps_blast <- parse_blast_results("data/blastp_results/Mus_musculus.blastp", mouse_proteome_metadata)
@@ -129,7 +130,8 @@ parse_blast2_results <- function(blast_results_path, metadata) {
   slice_max(n = 1, order_by = bitscore) %>%
   separate(qaccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
   right_join(metadata, by = "Entry_name") %>% 
-  mutate(bitscore = replace_na(bitscore, 0))
+  mutate(bitscore = replace_na(bitscore, 0)) %>%
+  distinct(Entry_name, .keep_all = TRUE)
 }
 
 
@@ -175,20 +177,25 @@ bat_pred <- read_faa("data/proteomes/R_ferrumequinum_UP000472240_59479.fasta.gz"
 
 Combine the predictions with metadata
 
-*Regex: Three steps to extract the `Entry_name` text that is between a
-Unix pipe and a space:*
+<i>
 
-*1. Lookbehind `(?<=\\|)` matches only if preceding character is a Unix
-pipe (\\\|)* *2. Match only alphanumerics and underscores
-`[a-zA-Z0-9_]*` *3. Lookahead `(?=\\s)` Matches only if the next
-character is a space (\\s)\*
+Regex: Three steps to extract the `Entry_name` text that is between a
+Unix pipe and a space:
+
+1.  Lookbehind `(?<=\\|)` matches only if preceding character is a Unix
+    pipe (\\\|)
+2.  Match only alphanumerics and underscores `[a-zA-Z0-9_]*`
+3.  Lookahead `(?=\\s)` Matches only if the next character is a space
+    (\\s)
+
+</i>
 
 ``` r
 join_pred_with_metadata <- function(pred_data, metadata){
   pred_data %>%
   mutate(Entry_name = str_extract(seq_name, "(?<=\\|)[a-zA-Z0-9_]*(?=\\s)")) %>% 
   select(Entry_name, seq_aa, prob_AMP) %>% 
-  left_join(metadata, by = "Entry_name")
+  right_join(metadata, by = "Entry_name") 
 }
 ```
 
@@ -228,30 +235,30 @@ BLAST1, BLAST2 and classification methods.
 
 | Organism                    | AMPs correctly identified | Total AMP count | Method         |
 |-----------------------------|---------------------------|-----------------|----------------|
-| *Mus musculus*              | 95                        | 132             | BLAST1         |
-| *Mus musculus*              | 107                       | 132             | BLAST2         |
-| *Mus musculus*              | 68                        | 120             | Classification |
-| *Homo sapiens*              | 74                        | 118             | BLAST1         |
-| *Homo sapiens*              | 77                        | 117             | BLAST2         |
-| *Homo sapiens*              | 62                        | 99              | Classification |
-| *Rattus norvegicus*         | 73                        | 89              | BLAST1         |
+| *Mus musculus*              | 94                        | 131             | BLAST1         |
+| *Mus musculus*              | 107                       | 131             | BLAST2         |
+| *Mus musculus*              | 68                        | 131             | Classification |
+| *Homo sapiens*              | 72                        | 115             | BLAST1         |
+| *Homo sapiens*              | 77                        | 115             | BLAST2         |
+| *Homo sapiens*              | 62                        | 115             | Classification |
+| *Rattus norvegicus*         | 72                        | 88              | BLAST1         |
 | *Rattus norvegicus*         | 73                        | 88              | BLAST2         |
-| *Rattus norvegicus*         | 62                        | 76              | Classification |
+| *Rattus norvegicus*         | 62                        | 88              | Classification |
 | *Bos taurus*                | 80                        | 116             | BLAST1         |
-| *Bos taurus*                | 99                        | 117             | BLAST2         |
-| *Bos taurus*                | 83                        | 109             | Classification |
-| *Pan troglodytes*           | 52                        | 66              | BLAST1         |
+| *Bos taurus*                | 99                        | 116             | BLAST2         |
+| *Bos taurus*                | 83                        | 116             | Classification |
+| *Pan troglodytes*           | 52                        | 65              | BLAST1         |
 | *Pan troglodytes*           | 52                        | 65              | BLAST2         |
-| *Pan troglodytes*           | 49                        | 59              | Classification |
-| *Sus scrofa*                | 61                        | 76              | BLAST1         |
-| *Sus scrofa*                | 62                        | 77              | BLAST2         |
-| *Sus scrofa*                | 48                        | 64              | Classification |
+| *Pan troglodytes*           | 49                        | 65              | Classification |
+| *Sus scrofa*                | 60                        | 75              | BLAST1         |
+| *Sus scrofa*                | 61                        | 75              | BLAST2         |
+| *Sus scrofa*                | 48                        | 75              | Classification |
 | *Canis lupus familiaris*    | 39                        | 51              | BLAST1         |
 | *Canis lupus familiaris*    | 38                        | 51              | BLAST2         |
-| *Canis lupus familiaris*    | 30                        | 40              | Classification |
-| *Rhinolophus ferrumequinum* | 32                        | 38              | BLAST1         |
-| *Rhinolophus ferrumequinum* | 33                        | 39              | BLAST2         |
-| *Rhinolophus ferrumequinum* | 26                        | 35              | Classification |
+| *Canis lupus familiaris*    | 30                        | 51              | Classification |
+| *Rhinolophus ferrumequinum* | 31                        | 37              | BLAST1         |
+| *Rhinolophus ferrumequinum* | 31                        | 37              | BLAST2         |
+| *Rhinolophus ferrumequinum* | 26                        | 37              | Classification |
 
 ## Calculate metrics for PR curves for BLAST and classification methods
 

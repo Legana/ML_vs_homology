@@ -119,7 +119,8 @@ parse_blast_results <- function(blast_results_path, metadata) {
   slice_max(n = 1, order_by = bitscore) %>%
   separate(saccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
   right_join(metadata, by = "Entry_name") %>% 
-  mutate(bitscore = replace_na(bitscore, 0))
+  mutate(bitscore = replace_na(bitscore, 0)) %>%
+  distinct(Entry_name, .keep_all = TRUE)
 }
 
 mouse_amps_blast <- parse_blast_results("data/blastp_results/Mus_musculus.blastp", mouse_proteome_metadata)
@@ -144,7 +145,8 @@ parse_blast2_results <- function(blast_results_path, metadata) {
   slice_max(n = 1, order_by = bitscore) %>%
   separate(qaccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
   right_join(metadata, by = "Entry_name") %>% 
-  mutate(bitscore = replace_na(bitscore, 0))
+  mutate(bitscore = replace_na(bitscore, 0)) %>%
+  distinct(Entry_name, .keep_all = TRUE)
 }
 
 
@@ -189,18 +191,22 @@ bat_pred <- read_faa("data/proteomes/R_ferrumequinum_UP000472240_59479.fasta.gz"
 
 Combine the predictions with metadata
 
-*Regex: Three steps to extract the `Entry_name` text that is between a Unix pipe and a space:*
+<i>
 
-*1. Lookbehind `(?<=\\|)` matches only if preceding character is a Unix pipe (\\|)*
-*2. Match only alphanumerics and underscores `[a-zA-Z0-9_]*` 
-*3. Lookahead `(?=\\s)` Matches only if the next character is a space (\\s)*
+Regex: Three steps to extract the `Entry_name` text that is between a Unix pipe and a space:
+
+1. Lookbehind `(?<=\\|)` matches only if preceding character is a Unix pipe (\\|)
+2. Match only alphanumerics and underscores `[a-zA-Z0-9_]*`
+3. Lookahead `(?=\\s)` Matches only if the next character is a space (\\s)
+
+</i>
 
 ```{r}
 join_pred_with_metadata <- function(pred_data, metadata){
   pred_data %>%
   mutate(Entry_name = str_extract(seq_name, "(?<=\\|)[a-zA-Z0-9_]*(?=\\s)")) %>% 
   select(Entry_name, seq_aa, prob_AMP) %>% 
-  left_join(metadata, by = "Entry_name")
+  right_join(metadata, by = "Entry_name") 
 }
 ```
 
@@ -262,6 +268,7 @@ max(blast2results$bitscore)
 | *Rhinolophus ferrumequinum* | `r bat_amps_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r bat_amps_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST1 
 | *Rhinolophus ferrumequinum*| `r bat_proteome_blast %>% filter(Label=="Pos") %>% filter(bitscore >= 50) %>% n_distinct()` | `r bat_proteome_blast %>% filter(Label=="Pos") %>% n_distinct()` | BLAST2
 | *Rhinolophus ferrumequinum* | `r proteome_predictions %>% filter(Organism == "Rhinolophus_ferrumequinum") %>% filter(Label=="Pos") %>% filter(prob_AMP >= 0.5) %>% n_distinct()` | `r proteome_predictions %>% filter(Organism == "Rhinolophus_ferrumequinum") %>% filter(Label=="Pos") %>% n_distinct()` | Classification
+
 
 ## Calculate metrics for PR curves for BLAST and classification methods
 
