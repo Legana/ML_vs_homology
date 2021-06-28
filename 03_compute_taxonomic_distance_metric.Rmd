@@ -1,0 +1,26 @@
+---
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(ape)
+```
+
+```{r}
+swissprot_amps <- read_tsv("data/uniprot-keywordAntimicrobial+[KW-0929]-filtered-reviewedyes24May21.tab")
+```
+
+get tax_ids from list of names: https://www.ncbi.nlm.nih.gov/Taxonomy/TaxIdentifier/tax_identifier.cgi
+
+get tree from NCBI: https://www.ncbi.nlm.nih.gov/Taxonomy/CommonTree/wwwcmt.cgi
+
+calculate branch lengths: https://rdrr.io/cran/ape/man/compute.brlen.html
+
+pairwise distances from a phylogenetic tree: https://rdrr.io/cran/ape/man/cophenetic.phylo.html
+
+get species distance matrix from NCBI tax IDS: https://www.biostars.org/p/312148/ 
