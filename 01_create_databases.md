@@ -8,7 +8,7 @@ sequences and the NOT operator with Antimicrobial keyword. The AMPs
 dataset (unfiltered) contained 3,350 sequences.
 
 ``` r
-swissprot_amps <- read_tsv("data/uniprot-keywordAntimicrobial+[KW-0929]-filtered-reviewedyes24May21.tab") %>% rename(Entry_name = `Entry name`) %>% mutate(Organism = str_remove(Organism, " \\(.*")) %>% rename(Taxonomic_lineage = `Taxonomic lineage (ALL)`) %>% rename(Order = `Taxonomic lineage (ORDER)`) %>% mutate(Order = str_remove(Order, " \\(.*"))  %>% mutate(Organism = str_replace_all(Organism, " ", "_"))
+swissprot_amps <- read_tsv("data/uniprot-keywordAntimicrobial+[KW-0929]-filtered-reviewedyes24May21.tab") %>% rename(Entry_name = `Entry name`) %>% mutate(Organism = str_remove(Organism, " \\(.*")) %>% rename(Taxonomic_lineage = `Taxonomic lineage (ALL)`) %>% rename(Order = `Taxonomic lineage (ORDER)`) %>% mutate(Order = str_remove(Order, " \\(.*")) %>% mutate(Organism = str_replace_all(Organism, " ", "_"))
 
 swissprot_nonamps <- read_tsv("data/uniprot-NOT+keyword_Antimicrobial+[KW-0929]+length[5+TO+500]24May21.tab") %>% rename(Entry_name = `Entry name`) %>% mutate(Organism = str_remove(Organism, " \\(.*")) %>% mutate(Organism = str_replace_all(Organism, " ", "_"))
 ```
@@ -60,12 +60,71 @@ training
 
 ## Mammals with the most unreviewed AMPs
 
-![](01_create_databases_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+``` r
+uniprot_amps <- read_tsv("data/uniprot-keywordAntimicrobial+[KW-0929]02July21.tab.gz") %>%
+  rename(Entry_name = `Entry name`) %>% mutate(Organism = str_remove(Organism, " \\(.*")) %>% 
+  rename(Taxonomic_lineage = `Taxonomic lineage (ALL)`) %>% 
+  rename(Order = `Taxonomic lineage (ORDER)`) %>% 
+  mutate(Order = str_remove(Order, " \\(.*")) %>%
+  mutate(Organism = str_replace_all(Organism, " ", "_")) %>% 
+  filter(!grepl("Viruses", Taxonomic_lineage)) %>% 
+  filter(!grepl("unclassified", Taxonomic_lineage)) %>%
+  mutate(Order = case_when(
+    str_detect(Taxonomic_lineage, "Bacteria") ~ "Bacteria",
+    str_detect(Organism, "Lates_calcarifer") ~ "Perciformes",
+    str_detect(Organism, "Parambassis_ranga") ~ "Perciformes",
+    str_detect(Organism, "Larimichthys_crocea") ~ "Acanthuriformes",
+    str_detect(Organism, "Amphiprion") ~ "Perciformes",
+    str_detect(Organism, "Collichthys_lucidus") ~ "Perciformes",
+    str_detect(Organism, "Siganus_canaliculatus") ~ "Perciformes",
+    str_detect(Organism, "Parambassis_ranga") ~ "Perciformes",
+    str_detect(Organism, "Miichthys_miiuy") ~ "Perciformes",
+    str_detect(Organism, "Dicentrarchus_labrax") ~ "Perciformes",
+    str_detect(Organism, "Scatophagus_argus") ~ "Perciformes",
+    str_detect(Organism, "Biomphalaria_glabrata") ~ "Hygrophila",
+    str_detect(Organism, "Stegastes") ~ "Perciformes",
+    str_detect(Organism, "Chrysochloris_asiatica") ~ "Afrosoricida",
+    str_detect(Organism, "Totoaba_macdonaldi") ~ "Acanthuriformes",
+    str_detect(Organism, "Acanthochromis_polyacanthus") ~ "Perciformes",
+    str_detect(Organism, "Argyrosomus_regius") ~ "Perciformes",
+    str_detect(Organism, "Collichthys_lucidus") ~ "Perciformes",
+    str_detect(Organism, "Morone") ~ "Perciformes",
+    str_detect(Organism, "Capitella_teleta") ~ "Capitellida",
+    str_detect(Organism, "Arenicola_marina") ~ "Capitellida",
+    str_detect(Organism, "Naegleria_fowleri") ~ "Schizopyrenida",
+    str_detect(Organism, "Dimorphilus_gyrociliatus") ~ "Eunicida",
+    str_detect(Organism, "Reticulomyxa_filosa") ~ "Athalamida",
+    TRUE ~ Order))
+```
+
+``` r
+uniprot_amps %>%
+  group_by(Order) %>% 
+  summarise(AMP_count = n()) %>%
+  arrange(.by_group = TRUE, desc(AMP_count)) 
+```
+
+    ## # A tibble: 236 x 2
+    ##    Order        AMP_count
+    ##    <chr>            <int>
+    ##  1 Bacteria         18776
+    ##  2 Anura             1703
+    ##  3 Primates          1618
+    ##  4 Brassicales       1329
+    ##  5 Artiodactyla      1166
+    ##  6 Diptera            855
+    ##  7 Carnivora          749
+    ##  8 Rodentia           665
+    ##  9 Fabales            454
+    ## 10 Malvales           432
+    ## # … with 226 more rows
+
+![](01_create_databases_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 **Figure 1.3:** Number of unreviewed AMPs in the TrEMBL database in the
 top 100 best represented mammal species
 
-![](01_create_databases_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](01_create_databases_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 **Figure 1.4:** Number of unreviewed AMPs in the TrEMBL database in
 mammalian orders
