@@ -13,55 +13,11 @@ swissprot_amps <- read_tsv("data/uniprot-keywordAntimicrobial+[KW-0929]-filtered
 swissprot_nonamps <- read_tsv("data/uniprot-NOT+keyword_Antimicrobial+[KW-0929]+length[5+TO+500]24May21.tab") %>% rename(Entry_name = `Entry name`) %>% mutate(Organism = str_remove(Organism, " \\(.*")) %>% mutate(Organism = str_replace_all(Organism, " ", "_"))
 ```
 
-Sequences that contained non standard amino acids were removed and the
-remaining sequences were saved as FASTA files to process with CD-HIT
+All Uniprot AMPs were downloaded from UniProt on 02 July 2021 which
+included \~20 more reviewed AMPs
 
 ``` r
-swissprot_amps_standardaa <- swissprot_amps %>% select("Entry_name", "Sequence") %>% as.data.frame() %>% remove_nonstandard_aa()
-swissprot_nonamps_standardaa <- swissprot_nonamps %>% select("Entry_name", "Sequence") %>% as.data.frame() %>% remove_nonstandard_aa()
-
-df_to_faa(swissprot_amps_standardaa, "cache/swissprot_amps_standardaa.fasta")
-df_to_faa(swissprot_nonamps_standardaa, "cache/swissprot_nonamps_standardaa.fasta")
-```
-
-This command was used on the HPC for both datasets as the nonAMPs file
-contained many sequences.
-
-``` bash
-cd-hit -i swissprot_nonamps_standardaa.fasta -o swissprot_nonamps_standardaa_90.fasta -c 0.90 -g 1 -T 32 -M 300000
-```
-
-``` r
-swissprot_amps_standardaa90 <- read_faa("data/swissprot_amps_standardaa_90.fasta") %>% left_join(swissprot_amps, by = c("seq_name" = "Entry_name")) %>% add_column(Label = "Pos") %>% filter(between(Length, 50, 500))
-
-swissprot_nonamps_standardaa90 <- read_faa("data/swissprot_nonamps_standardaa_90.fasta") %>% left_join(swissprot_nonamps, by = c("seq_name" = "Entry_name")) %>% add_column(Label = "Neg") %>% filter(between(Length, 50, 500))
-```
-
-## Mammals with the most reviewed AMPs
-
-``` r
-swissprot_amps_summary <- swissprot_amps %>%
-  mutate(in_90 = Entry_name %in% swissprot_amps_standardaa90$seq_name) %>%
-  filter(grepl("Mammalia", Taxonomic_lineage)) %>%
-  group_by(Organism) %>% 
-  summarise(AMP_count = n(), AMP_standardaa_90 = sum(in_90)) %>%
-  arrange(.by_group = TRUE, desc(AMP_count))
-```
-
-![](01_create_databases_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
-**Figure 1.1:** Number of reviewed AMPs in the SwissProt database in
-mammalian species contrasted with the filtered AMP set used for model
-training
-
-![](01_create_databases_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
-**Figure 1.2:** Number of reviewed AMPs in the SwissProt database in
-mammalian orders contrasted with the filtered AMP set used for model
-training
-
-## Mammals with the most unreviewed AMPs
-
-``` r
-uniprot_amps <- read_tsv("data/uniprot-keywordAntimicrobial+[KW-0929]02July21.tab.gz") %>%
+uniprot_amps <- readRDS("data/uniprot_amps_06Jul21_3371rev42126unrev.rds") %>%
   rename(Entry_name = `Entry name`) %>% mutate(Organism = str_remove(Organism, " \\(.*")) %>% 
   rename(Taxonomic_lineage = `Taxonomic lineage (ALL)`) %>% 
   rename(Order = `Taxonomic lineage (ORDER)`) %>% 
@@ -97,34 +53,59 @@ uniprot_amps <- read_tsv("data/uniprot-keywordAntimicrobial+[KW-0929]02July21.ta
     TRUE ~ Order))
 ```
 
+Sequences that contained non standard amino acids were removed and the
+remaining sequences were saved as FASTA files to process with CD-HIT
+
 ``` r
-uniprot_amps %>%
-  group_by(Order) %>% 
-  summarise(AMP_count = n()) %>%
-  arrange(.by_group = TRUE, desc(AMP_count)) 
+swissprot_amps_standardaa <- swissprot_amps %>% select("Entry_name", "Sequence") %>% as.data.frame() %>% remove_nonstandard_aa()
+swissprot_nonamps_standardaa <- swissprot_nonamps %>% select("Entry_name", "Sequence") %>% as.data.frame() %>% remove_nonstandard_aa()
+
+df_to_faa(swissprot_amps_standardaa, "cache/swissprot_amps_standardaa.fasta")
+df_to_faa(swissprot_nonamps_standardaa, "cache/swissprot_nonamps_standardaa.fasta")
 ```
 
-    ## # A tibble: 236 x 2
-    ##    Order        AMP_count
-    ##    <chr>            <int>
-    ##  1 Bacteria         18776
-    ##  2 Anura             1703
-    ##  3 Primates          1618
-    ##  4 Brassicales       1329
-    ##  5 Artiodactyla      1166
-    ##  6 Diptera            855
-    ##  7 Carnivora          749
-    ##  8 Rodentia           665
-    ##  9 Fabales            454
-    ## 10 Malvales           432
-    ## # … with 226 more rows
+This command was used on the HPC for both datasets as the nonAMPs file
+contained many sequences.
 
-![](01_create_databases_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+``` bash
+cd-hit -i swissprot_nonamps_standardaa.fasta -o swissprot_nonamps_standardaa_90.fasta -c 0.90 -g 1 -T 32 -M 300000
+```
+
+``` r
+swissprot_amps_standardaa90 <- read_faa("data/swissprot_amps_standardaa_90.fasta") %>% left_join(swissprot_amps, by = c("seq_name" = "Entry_name")) %>% add_column(Label = "Pos") %>% filter(between(Length, 50, 500))
+
+swissprot_nonamps_standardaa90 <- read_faa("data/swissprot_nonamps_standardaa_90.fasta") %>% left_join(swissprot_nonamps, by = c("seq_name" = "Entry_name")) %>% add_column(Label = "Neg") %>% filter(between(Length, 50, 500))
+```
+
+## Mammals with the most reviewed AMPs
+
+``` r
+swissprot_amps_summary <- swissprot_amps %>%
+  mutate(in_90 = Entry_name %in% swissprot_amps_standardaa90$seq_name) %>%
+  filter(grepl("Mammalia", Taxonomic_lineage)) %>%
+  group_by(Organism) %>% 
+  summarise(AMP_count = n(), AMP_standardaa_90 = sum(in_90)) %>%
+  arrange(.by_group = TRUE, desc(AMP_count))
+```
+
+![](01_create_databases_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+**Figure 1.1:** Number of reviewed AMPs in the SwissProt database in
+mammalian species contrasted with the filtered AMP set used for model
+training
+
+![](01_create_databases_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+**Figure 1.2:** Number of reviewed AMPs in the SwissProt database in
+mammalian orders contrasted with the filtered AMP set used for model
+training
+
+## Mammals with the most AMPs
+
+![](01_create_databases_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 **Figure 1.3:** Number of unreviewed AMPs in the TrEMBL database in the
 top 100 best represented mammal species
 
-![](01_create_databases_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](01_create_databases_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 **Figure 1.4:** Number of unreviewed AMPs in the TrEMBL database in
 mammalian orders
@@ -152,7 +133,7 @@ training/query data … (and still have decent number of AMPs to test
 effectiveness of the model/BLAST methods )*
 
 ``` r
-mammal_amps %>% filter(Order == "Carnivora") %>% count(Organism, sort = TRUE) %>% slice_head(n=6)
+uniprot_amps %>% filter(grepl("Carnivora", Taxonomic_lineage))  %>% count(Organism, sort = TRUE) %>% slice_head(n=6)
 ```
 
     ## # A tibble: 6 x 2
@@ -166,7 +147,7 @@ mammal_amps %>% filter(Order == "Carnivora") %>% count(Organism, sort = TRUE) %>
     ## 6 Panthera_pardus           37
 
 ``` r
-mammal_amps %>% filter(Order == "Chiroptera") %>% count(Organism, sort = TRUE) %>% slice_head(n=6)
+uniprot_amps %>% filter(grepl("Chiroptera", Taxonomic_lineage)) %>% count(Organism, sort = TRUE) %>% slice_head(n=6)
 ```
 
     ## # A tibble: 6 x 2
@@ -178,6 +159,32 @@ mammal_amps %>% filter(Order == "Chiroptera") %>% count(Organism, sort = TRUE) %
     ## 4 Molossus_molossus            27
     ## 5 Myotis_myotis                27
     ## 6 Pteropus_vampyrus            27
+
+Marsupials and Monotremes
+
+``` r
+uniprot_amps %>% filter(grepl("Metatheria", Taxonomic_lineage)) %>% count(Organism, sort = TRUE)
+```
+
+    ## # A tibble: 6 x 2
+    ##   Organism                     n
+    ##   <chr>                    <int>
+    ## 1 Vombatus_ursinus            24
+    ## 2 Monodelphis_domestica       23
+    ## 3 Sarcophilus_harrisii        19
+    ## 4 Phascolarctos_cinereus      12
+    ## 5 Pseudocheirus_peregrinus     1
+    ## 6 Trichosurus_vulpecula        1
+
+``` r
+uniprot_amps %>% filter(grepl("Monotremata", Taxonomic_lineage)) %>% count(Organism, sort = TRUE)
+```
+
+    ## # A tibble: 2 x 2
+    ##   Organism                             n
+    ##   <chr>                            <int>
+    ## 1 Ornithorhynchus_anatinus            27
+    ## 2 Tachyglossus_aculeatus_aculeatus     1
 
 ## Extracting data for model training and query searches
 
