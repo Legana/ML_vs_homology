@@ -8,20 +8,33 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 ```{r}
 library(tidyverse)
+library(patchwork)
+source("scripts/theme_black.R")
 ```
 
 All Uniprot AMPs were downloaded from UniProt on 02 July 2021 which included ~20 more reviewed AMPs
 ```{r}
-uniprot_amps <- readRDS("data/uniprot_amps_06Jul21_3371rev42126unrev.rds") %>%
+uniprot_amps <- read_tsv("data/uniprot_amps_07Jul21_3371rev42126unrev.tab.gz") %>%
   rename(Entry_name = `Entry name`) %>% mutate(Organism = str_remove(Organism, " \\(.*")) %>% 
   rename(Taxonomic_lineage = `Taxonomic lineage (ALL)`) %>% 
   rename(Order = `Taxonomic lineage (ORDER)`) %>% 
+  rename(Phylum = `Taxonomic lineage (PHYLUM)`) %>%
+  rename(Class = `Taxonomic lineage (CLASS)`) %>%
   mutate(Order = str_remove(Order, " \\(.*")) %>%
   mutate(Organism = str_replace_all(Organism, " ", "_")) %>% 
   filter(!grepl("Viruses", Taxonomic_lineage)) %>% 
   filter(!grepl("unclassified", Taxonomic_lineage)) %>%
+  mutate(label = case_when(str_detect(Taxonomic_lineage, "Bacteria") ~ "Bacteria",
+                           str_detect(Taxonomic_lineage, "Archaea") ~ "Archaea",
+                               str_detect(Phylum, "Nematoda*") ~ "Nematoda",
+                               str_detect(Phylum, "Foraminifera*") ~ "Foraminifera",
+                               str_detect(Phylum, "Bryozoa*") ~ "Bryozoa",
+                               str_detect(Phylum, "Brachiopoda*") ~ "Brachiopoda",
+                               str_detect(Phylum, "Rotifera*") ~ "Rotifera",
+                               str_detect(Phylum, "Tardigrada*") ~ "Tardigrada",
+                               str_detect(Phylum, "Porifera*") ~ "Porifera",
+                                               TRUE ~ Phylum)) %>%
   mutate(Order = case_when(
-    str_detect(Taxonomic_lineage, "Bacteria") ~ "Bacteria",
     str_detect(Organism, "Lates_calcarifer") ~ "Perciformes",
     str_detect(Organism, "Parambassis_ranga") ~ "Perciformes",
     str_detect(Organism, "Larimichthys_crocea") ~ "Acanthuriformes",
@@ -45,35 +58,199 @@ uniprot_amps <- readRDS("data/uniprot_amps_06Jul21_3371rev42126unrev.rds") %>%
     str_detect(Organism, "Naegleria_fowleri") ~ "Schizopyrenida",
     str_detect(Organism, "Dimorphilus_gyrociliatus") ~ "Eunicida",
     str_detect(Organism, "Reticulomyxa_filosa") ~ "Athalamida",
-    TRUE ~ Order))
+    TRUE ~ Order)) %>%
+     mutate(Class = case_when(str_detect(Class, "Lepidosauria*") ~ "Reptilia",
+                           str_detect(Order, "Crocodylia") ~ "Reptilia",
+                           str_detect(Order, "Testudines") ~ "Reptilia",
+                                               TRUE ~ Class))
+
 ```
 
-```{r}
+## Taxonomic level: Phylum
+
+
+```{r, fig.width=10, fig.height=6, echo = FALSE}
 uniprot_amps %>%
-  filter(!grepl("Bacteria", Taxonomic_lineage)) %>%
+  filter(!grepl("Bacteria", label)) %>% 
+  filter(!grepl("Archaea", label)) %>%
+  group_by(label) %>% 
+  summarise(AMP_count = n()) %>%
+  mutate(percentage = round(AMP_count / sum(AMP_count) * 100, digits = 2)) %>%
+  arrange(.by_group = TRUE, desc(AMP_count)) %>%
+  ggplot(aes(x = reorder(label, AMP_count), y = AMP_count)) +
+  geom_col(width = 0.7, fill = "cyan") +
+  coord_flip() +
+  geom_text(aes(label=paste0(percentage, "%")), size = 2.4, hjust = -0.1, colour = "white") +
+  labs(x = "Taxonomic Phyla", y = "Number of antimicrobial peptides (AMPs) in UniProt ", fill = "") +
+  theme_black() +
+  theme(legend.position = "bottom")
+
+ggsave("figures/phyla_amps.png", width = 10, height = 4, dpi = 300)
+```
+
+**Figure 1.1:** The number of antimicrobial peptides in phyla across the UniProt database (excluding Bacteria, Viruses and Archaea)
+
+## Taxonomic level: Class
+
+```{r, fig.width=10, fig.height=6, echo = FALSE}
+chordata_amps_plot <- uniprot_amps %>%
+  filter(Phylum == "Chordata") %>%
+  group_by(Class) %>% 
+  summarise(AMP_count = n()) %>%
+  mutate(percentage = round(AMP_count / sum(AMP_count) * 100, digits = 2)) %>%
+  arrange(.by_group = TRUE, desc(AMP_count)) %>%
+  ggplot(aes(x = reorder(Class, AMP_count), y = AMP_count)) +
+  geom_col(width = 0.7, fill = "cyan") +
+  coord_flip() +
+  #geom_text(aes(label=paste0(percentage, "%")), size = 2.4, hjust = -0.1, colour = "white") +
+  labs(x = "Taxonomic Class", y = "AMP count in Chordata", fill = "") +
+  theme_black() 
+
+arth_amps <- uniprot_amps %>% filter(Phylum == "Arthropoda") %>%
+       mutate(Class = case_when(str_detect(Class, "Collembola*") ~ "Collembola",
+                           str_detect(Class, "Merostomata*") ~ "Merostomata",
+                           str_detect(Class, "Chilopoda") ~ "Chilopoda",
+                                               TRUE ~ Class))
+
+arthropoda_amps_plot <- arth_amps %>%
+  group_by(Class) %>% 
+  summarise(AMP_count = n()) %>%
+  mutate(percentage = round(AMP_count / sum(AMP_count) * 100, digits = 2)) %>%
+  arrange(.by_group = TRUE, desc(AMP_count)) %>%
+  ggplot(aes(x = reorder(Class, AMP_count), y = AMP_count)) +
+  geom_col(width = 0.7, fill = "cyan") +
+  coord_flip() +
+  #geom_text(aes(label=paste0(percentage, "%")), size = 2.4, hjust = -0.1, colour = "white") +
+  labs(x = "Taxonomic Class", y = "AMP count in Arthropoda", fill = "") +
+  theme_black() 
+
+
+chordata_amps_plot | arthropoda_amps_plot
+
+ggsave(plot = chordata_amps_plot, "figures/chor_class_amps.png", width = 5, height = 3)
+ggsave(plot = arthropoda_amps_plot, "figures/arth_class_amps.png", width = 5, height = 3)
+```
+
+**Figure 1.2:** The number of antimicrobial peptides in classes in chordates (left) and Arthropods (right) 
+
+
+## Taxonomic level: Order
+
+```{r, fig.width=10, fig.height=6, echo = FALSE}
+
+mammal_amps_plot <- uniprot_amps %>% filter(grepl("Mammalia", Taxonomic_lineage)) %>% 
   group_by(Order) %>% 
   summarise(AMP_count = n()) %>%
   arrange(.by_group = TRUE, desc(AMP_count)) %>%
-  slice_max(order_by = AMP_count, n = 50) %>%
   pivot_longer(cols = starts_with("AMP")) %>%
   ggplot(aes(x = reorder(Order, value), y = value)) +
-  geom_bar(stat ="identity", position = "dodge") +
+  geom_col(width = 0.7, fill = "cyan") +
   coord_flip() +
-  labs(x = "Taxonomic Order", y = "Number of antimicrobial peptides (AMP) in UniProt (Top 50)", fill = "") +
+  labs(x = "Order", y = "Number of AMPs described in mammals", fill = "") +
   theme_classic() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") +
+  theme_black() 
+
+insect_amps_plot <- uniprot_amps %>% filter(grepl("Insecta", Taxonomic_lineage)) %>% 
+  group_by(Order) %>% 
+  summarise(AMP_count = n()) %>%
+  arrange(.by_group = TRUE, desc(AMP_count)) %>%
+  pivot_longer(cols = starts_with("AMP")) %>%
+  ggplot(aes(x = reorder(Order, value), y = value)) +
+  geom_col(width = 0.7, fill = "cyan") +
+  coord_flip() +
+  labs(x = "Order", y = "Number of AMPs described in insects", fill = "") +
+  theme_classic() +
+  theme(legend.position = "bottom") +
+  theme_black() 
+
+mammal_amps_plot | insect_amps_plot
+
+ggsave(plot = mammal_amps_plot, "figures/mammal_order_amps.png", width = 5, height = 3)
+ggsave(plot = insect_amps_plot, "figures/insect_order_amps.png", width = 5, height = 3)
+
 ```
 
+## Taxonomic level: Species
 
-## Mammals with the most AMPs
+```{r, fig.width=12, fig.height=6, echo = FALSE}
+mammal_orders <- c("Primates", "Artiodactyla", "Carnivora", "Rodentia", "Chiroptera")
+
+mammal_selection <- uniprot_amps %>% filter(grepl("Mammalia", Taxonomic_lineage)) %>% filter(Order %in% mammal_orders)
+
+mammal_species_amps_plot <- mammal_selection %>%
+  group_by(Organism, Order) %>% 
+  summarise(AMP_count = n(), .groups = "drop" ) %>%
+  group_by(Order) %>%
+  slice_max(AMP_count, n = 3) %>%
+  ggplot(aes(x = reorder(Organism, AMP_count), y = AMP_count)) +
+  geom_col(width = 0.7, fill = "cyan") +
+  coord_flip() +
+  facet_wrap(~Order, ncol = 1, scales = "free_y") +
+  labs(x = "Mammal species (Top 3)", y = "Number of antimicrobial peptides (AMPs)", fill = "") +
+  theme_black() +
+  theme(axis.text.y = element_text(face = "italic"))
 
 
-```{r, fig.width=9, fig.height=20, echo = FALSE}
+ggsave(plot = mammal_species_amps_plot, "figures/mammal_species_amps.png", width = 7, height = 6)
+
+
+insect_orders <- c("Diptera", "Lepidoptera", "Hymenoptera", "Coleoptera", "Hemiptera")
+insect_selection <- uniprot_amps %>% filter(grepl("Insecta", Taxonomic_lineage)) %>% filter(Order %in% insect_orders)
+
+insect_species_amps_plot <- insect_selection %>%
+  group_by(Organism, Order) %>% 
+  summarise(AMP_count = n(), .groups = "drop" ) %>%
+  group_by(Order) %>%
+  slice_max(AMP_count, n = 3) %>%
+  ggplot(aes(x = reorder(Organism, AMP_count), y = AMP_count)) +
+  geom_col(width = 0.7, fill = "cyan") +
+  coord_flip() +
+  facet_wrap(~Order, ncol = 1, scales = "free_y") +
+  labs(x = "Insect species (Top 3)", y = "Number of antimicrobial peptides (AMPs)", fill = "") +
+  theme_black() +
+  theme(axis.text.y = element_text(face = "italic"))
+
+ggsave(plot = insect_species_amps_plot, "figures/insect_species_amps.png", width = 7, height = 6)
+
+mammal_species_amps_plot | insect_species_amps_plot
+```
+
+**Figure 1.3:** The number of antimicrobial peptides in mammal species (left) and insect species (right) 
+
+
+
+```{r, echo = FALSE}
+uniprot_amps %>% 
+  filter(grepl("Amphibia", Taxonomic_lineage)) %>% 
+  group_by(Organism, Order) %>% 
+  summarise(AMP_count = n(), .groups = "drop" ) %>%
+  group_by(Order) %>%
+  slice_max(AMP_count, n = 20) %>%
+  filter(Order == "Anura") %>%
+  ggplot(aes(x = reorder(Organism, AMP_count), y = AMP_count)) +
+  geom_col(width = 0.7, fill = "cyan") +
+  coord_flip() +
+  labs(x = "Anuran species (Top 20)", y = "Number of antimicrobial peptides (AMPs)", fill = "") +
+  theme_black() +
+  theme(axis.text.y = element_text(face = "italic"))
+
+ggsave("figures/anuran_amps.png", width = 7, height = 3)
+
+```
+
+**Figure 1.4:** The number of antimicrobial peptides in frogs and toads (top 20)
+
+
+## Fin
+
+
+```{r}
 uniprot_amps %>% filter(grepl("Mammalia", Taxonomic_lineage)) %>% 
   group_by(Organism) %>% 
   summarise(AMP_count = n()) %>%
   arrange(.by_group = TRUE, desc(AMP_count)) %>%
-  slice_max(order_by = AMP_count, n = 100) %>%
+  slice_max(order_by = AMP_count, n = 30) %>%
   ggplot(aes(x = reorder(Organism, AMP_count), y = AMP_count)) +
   geom_bar(stat ="identity", position = "dodge") +
   coord_flip() +
@@ -83,20 +260,6 @@ uniprot_amps %>% filter(grepl("Mammalia", Taxonomic_lineage)) %>%
 ```
 
 
-```{r, echo=FALSE}
-uniprot_amps %>% filter(grepl("Mammalia", Taxonomic_lineage)) %>% 
-  group_by(Order) %>% 
-  summarise(AMP_count = n()) %>%
-  arrange(.by_group = TRUE, desc(AMP_count)) %>%
-  pivot_longer(cols = starts_with("AMP")) %>%
-  ggplot(aes(x = reorder(Order, value), y = value)) +
-  geom_bar(stat ="identity", position = "dodge") +
-  coord_flip() +
-  labs(x = "Mammal Order", y = "Number of antimicrobial peptides (AMP)", fill = "") +
-  theme_classic() +
-  theme(legend.position = "bottom") 
-
-```
 
 
 
