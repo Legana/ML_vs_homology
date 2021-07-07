@@ -48,12 +48,12 @@ swissprot_amps_summary <- swissprot_amps %>%
   arrange(.by_group = TRUE, desc(AMP_count))
 ```
 
-![](01_create_databases_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](02_create_databases_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 **Figure 1.1:** Number of reviewed AMPs in the SwissProt database in
 mammalian species contrasted with the filtered AMP set used for model
 training
 
-![](01_create_databases_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](02_create_databases_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 **Figure 1.2:** Number of reviewed AMPs in the SwissProt database in
 mammalian orders contrasted with the filtered AMP set used for model
 training
