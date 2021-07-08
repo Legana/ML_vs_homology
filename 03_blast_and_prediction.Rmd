@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(tidyverse)
 library(ampir)
 library(patchwork)
+source("scripts/theme_black.R")
 ```
 
 ## Proteomes
@@ -351,7 +352,7 @@ figure_text <- tibble(
 ```
 
 
-```{r}
+```{r, echo = FALSE}
 ggplot(blast1and2andpred_roc, aes(x = Recall, y = Precision) ) +
   geom_line(aes(colour = Method)) +
   geom_text(aes(label = label), data = figure_text, check_overlap = TRUE, vjust = "top", hjust = "right", size = 3, fontface = "bold") +
@@ -364,6 +365,22 @@ ggplot(blast1and2andpred_roc, aes(x = Recall, y = Precision) ) +
   labs(colour = "") +
   scale_colour_manual(breaks = c("BLAST1", "BLAST2", "Classification"),
                        values = c("forestgreen","violetred", "grey1")) 
+
+blast1and2andpred_roc_plot_theme_black <- ggplot(blast1and2andpred_roc, aes(x = Recall, y = Precision) ) +
+  geom_line(aes(colour = Method)) +
+  geom_text(aes(label = label), data = figure_text, check_overlap = TRUE, vjust = "top", hjust = "right", size = 5, fontface = "bold", colour = "cyan") +
+  facet_wrap(~Organism, ncol = 2) +
+  theme_black() +
+  theme(legend.position = "bottom",
+        strip.background = element_blank(),
+        strip.text = element_text(face = "italic",
+                                  size = 10)) +
+  labs(colour = "") +
+  scale_colour_manual(breaks = c("BLAST1", "BLAST2", "Classification"),
+                       values = c("forestgreen","violetred", "yellow")) 
+
+ggsave(plot = blast1and2andpred_roc_plot_theme_black, "figures/methods_prcurve.png", width = 10, height = 9)
+
 ```
 
 

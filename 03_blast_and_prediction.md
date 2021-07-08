@@ -339,22 +339,7 @@ figure_text <- tibble(
   mutate(Organism = factor(Organism, levels = c("Homo_sapiens", "Pan_troglodytes","Mus_musculus" , "Rattus_norvegicus" , "Bos_taurus", "Sus_scrofa", "Canis_lupus_familiaris", "Rhinolophus_ferrumequinum")))
 ```
 
-``` r
-ggplot(blast1and2andpred_roc, aes(x = Recall, y = Precision) ) +
-  geom_line(aes(colour = Method)) +
-  geom_text(aes(label = label), data = figure_text, check_overlap = TRUE, vjust = "top", hjust = "right", size = 3, fontface = "bold") +
-  facet_wrap(~Organism, ncol = 2) +
-  theme_classic() +
-  theme(legend.position = "bottom",
-        strip.background = element_blank(),
-        strip.text = element_text(face = "italic",
-                                  size = 10)) +
-  labs(colour = "") +
-  scale_colour_manual(breaks = c("BLAST1", "BLAST2", "Classification"),
-                       values = c("forestgreen","violetred", "grey1")) 
-```
-
-![](02_blast_and_prediction_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](03_blast_and_prediction_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 **Figure 2.1:** Comparison of three different methods on finding AMPs in
 different organisms using precision-recall curves. **BLAST1** method is
