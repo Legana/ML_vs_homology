@@ -195,7 +195,9 @@ join_pred_with_metadata <- function(pred_data, metadata){
   pred_data %>%
   mutate(Entry_name = str_extract(seq_name, "(?<=\\|)[a-zA-Z0-9_]*(?=\\s)")) %>% 
   select(Entry_name, seq_aa, prob_AMP) %>% 
-  right_join(metadata, by = "Entry_name") 
+  right_join(metadata, by = "Entry_name") %>%
+  mutate(prob_AMP = replace_na(prob_AMP, 0))
+
 }
 ```
 
@@ -210,8 +212,54 @@ dog_proteome_pred <- join_pred_with_metadata(dog_pred, dog_proteome_metadata)
 bat_proteome_pred <- join_pred_with_metadata(bat_pred, bat_proteome_metadata)
 
 
-proteome_predictions <- rbind(mouse_proteome_pred, cow_proteome_pred, human_proteome_pred, rat_proteome_pred, chimp_proteome_pred, pig_proteome_pred, dog_proteome_pred, bat_proteome_pred) 
+proteome_predictions <- rbind(mouse_proteome_pred, cow_proteome_pred, human_proteome_pred, rat_proteome_pred, chimp_proteome_pred, pig_proteome_pred, dog_proteome_pred, bat_proteome_pred)  
 ```
+
+Calculate the Area Under the Precision Recall Curve (AUPRC) for each
+method \* how to turn this into a loop so I can run the function on
+proteome_predictions separating by each method + organism? \*
+
+``` r
+evalmod(scores = proteome_predictions[["prob_AMP"]], labels = proteome_predictions[["Label"]], mode = "rocprc") %>%
+  precrec::auc() %>%
+  select(curvetypes, aucs) %>%
+  filter(curvetypes == "PRC") %>%
+  pivot_wider(names_from = curvetypes, values_from = aucs) %>%
+  rename(AUPRC = "PRC") %>%
+  round(digits = 3) %>%
+  add_column(Method = "Classification")
+```
+
+    ## # A tibble: 1 x 2
+    ##   AUPRC Method        
+    ##   <dbl> <chr>         
+    ## 1 0.296 Classification
+
+``` r
+calculate_auprc_probAMP <- function(df, method_name) {
+  evalmod(scores = df[["prob_AMP"]], labels = df[["Label"]], mode = "rocprc") %>%
+  precrec::auc() %>%
+  select(curvetypes, aucs) %>%
+  filter(curvetypes == "PRC") %>%
+  pivot_wider(names_from = curvetypes, values_from = aucs) %>%
+  rename(AUPRC = "PRC") %>%
+  round(digits = 3) %>%
+  add_column(Method = method_name)
+}
+
+calculate_auprc_bitscore <- function(df, method_name) {
+  evalmod(scores = df[["bitscore"]], labels = df[["Label"]], mode = "rocprc") %>%
+  precrec::auc() %>%
+  select(curvetypes, aucs) %>%
+  filter(curvetypes == "PRC") %>%
+  pivot_wider(names_from = curvetypes, values_from = aucs) %>%
+  rename(AUPRC = "PRC") %>%
+  round(digits = 3) %>%
+  add_column(Method = method_name)
+}
+```
+
+![](03_blast_and_prediction_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 “For average length proteins, a bit score of 50 is almost always
 significant. A bit score of 40 is only significant (E() \< 0.001) in
@@ -339,7 +387,7 @@ figure_text <- tibble(
   mutate(Organism = factor(Organism, levels = c("Homo_sapiens", "Pan_troglodytes","Mus_musculus" , "Rattus_norvegicus" , "Bos_taurus", "Sus_scrofa", "Canis_lupus_familiaris", "Rhinolophus_ferrumequinum")))
 ```
 
-![](03_blast_and_prediction_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](03_blast_and_prediction_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 **Figure 2.1:** Comparison of three different methods on finding AMPs in
 different organisms using precision-recall curves. **BLAST1** method is
