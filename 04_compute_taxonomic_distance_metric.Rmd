@@ -50,7 +50,8 @@ Calculate pairwise distances between pairs of tips from the tree using the branc
 ```{r}
 tree_distance_matrix <- cophenetic.phylo(tree_w_brlen)
 
-glimpse(tree_distance_matrix)
+tree_distance_matrix_tib  <- as_tibble(tree_distance_matrix)
+glimpse(tree_distance_matrix_tib)
 ```
 
 
