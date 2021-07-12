@@ -237,87 +237,70 @@ saveRDS(proteome_predictions, "cache/proteome_predictions.rds")
 proteome_predictions <- readRDS("cache/proteome_predictions.rds")
 ```
 
-Calculate the Area Under the Precision Recall Curve (AUPRC) for each method
-* how to turn this into a loop so I can run the function on proteome_predictions separating by each method + organism? *
+## Calculate the Area Under the Precision Recall Curve (AUPRC) for each method
+
+First made a function to calculate the AUPRC from a dataset, for each method, and then made a function to loop this function to calculate the AUPRC for each organism in the dataset. 
+
 ```{r}
-evalmod(scores = proteome_predictions[["prob_AMP"]], labels = proteome_predictions[["Label"]], mode = "rocprc") %>%
-  precrec::auc() %>%
-  select(curvetypes, aucs) %>%
-  filter(curvetypes == "PRC") %>%
-  pivot_wider(names_from = curvetypes, values_from = aucs) %>%
-  rename(AUPRC = "PRC") %>%
-  round(digits = 3) %>%
-  add_column(Method = "Classification")
-
-
-calculate_auprc_probAMP <- function(df, method_name) {
+calculate_auprc_probAMP <- function(df) {
   evalmod(scores = df[["prob_AMP"]], labels = df[["Label"]], mode = "rocprc") %>%
   precrec::auc() %>%
   select(curvetypes, aucs) %>%
   filter(curvetypes == "PRC") %>%
   pivot_wider(names_from = curvetypes, values_from = aucs) %>%
   rename(AUPRC = "PRC") %>%
-  round(digits = 3) %>%
+  round(digits = 3)
+}
+
+organisms <- unique(proteome_predictions$Organism)
+
+get_probAMP_auprc <- function(prediction_data, method_name){
+  do.call(rbind,lapply(organisms,function(org){ 
+    calculate_auprc_probAMP(prediction_data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
   add_column(Method = method_name)
 }
 
-calculate_auprc_bitscore <- function(df, method_name) {
+calculate_auprc_bitscore <- function(df) {
   evalmod(scores = df[["bitscore"]], labels = df[["Label"]], mode = "rocprc") %>%
   precrec::auc() %>%
   select(curvetypes, aucs) %>%
   filter(curvetypes == "PRC") %>%
   pivot_wider(names_from = curvetypes, values_from = aucs) %>%
   rename(AUPRC = "PRC") %>%
-  round(digits = 3) %>%
+  round(digits = 3)
+}
+
+get_bitscore_auprc <- function(blast_results_data, method_name){
+  do.call(rbind,lapply(organisms,function(org){ 
+    calculate_auprc_bitscore(blast_results_data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
   add_column(Method = method_name)
 }
-```
 
-```{r, echo = FALSE, eval = FALSE}
-auprc_mouse <- calculate_auprc_probAMP(mouse_proteome_pred, "Classification") %>% add_column(Organism = "Mouse")
-auprc_cow <- calculate_auprc_probAMP(cow_proteome_pred, "Classification") %>% add_column(Organism = "Cow")
-auprc_human <- calculate_auprc_probAMP(human_proteome_pred, "Classification") %>% add_column(Organism = "Human")
-auprc_rat <- calculate_auprc_probAMP(rat_proteome_pred, "Classification") %>% add_column(Organism = "Rat")
-auprc_chimp <- calculate_auprc_probAMP(chimp_proteome_pred, "Classification") %>% add_column(Organism = "Chimpanzee")
-auprc_pig <- calculate_auprc_probAMP(pig_proteome_pred, "Classification") %>% add_column(Organism = "Pig")
-auprc_dog <- calculate_auprc_probAMP(dog_proteome_pred, "Classification") %>% add_column(Organism = "Dog")
-auprc_bat <- calculate_auprc_probAMP(bat_proteome_pred, "Classification") %>% add_column(Organism = "Bat")
 
-auprc_mouse2 <- calculate_auprc_bitscore(mouse_proteome_blast, "BLAST2") %>% add_column(Organism = "Mouse")
-auprc_cow2 <- calculate_auprc_bitscore(cow_proteome_blast, "BLAST2") %>% add_column(Organism = "Cow")
-auprc_human2 <- calculate_auprc_bitscore(human_proteome_blast, "BLAST2") %>% add_column(Organism = "Human")
-auprc_rat2 <- calculate_auprc_bitscore(rat_proteome_blast, "BLAST2") %>% add_column(Organism = "Rat")
-auprc_chimp2 <- calculate_auprc_bitscore(chimp_proteome_blast, "BLAST2") %>% add_column(Organism = "Chimpanzee")
-auprc_pig2 <- calculate_auprc_bitscore(pig_proteome_blast, "BLAST2") %>% add_column(Organism = "Pig")
-auprc_dog2<- calculate_auprc_bitscore(dog_proteome_blast, "BLAST2") %>% add_column(Organism = "Dog")
-auprc_bat2 <- calculate_auprc_bitscore(bat_proteome_blast, "BLAST2") %>% add_column(Organism = "Bat")
+classification_auprc <- get_probAMP_auprc(proteome_predictions, "Classification")
+blast1_auprc <- get_bitscore_auprc(blast1results, "BLAST1")
+blast2_auprc <- get_bitscore_auprc(blast2results, "BLAST2")
 
-auprc_mouse1 <- calculate_auprc_bitscore(mouse_amps_blast, "BLAST1") %>% add_column(Organism = "Mouse")
-auprc_cow1 <- calculate_auprc_bitscore(cow_amps_blast, "BLAST1") %>% add_column(Organism = "Cow")
-auprc_human1 <- calculate_auprc_bitscore(human_amps_blast, "BLAST1") %>% add_column(Organism = "Human")
-auprc_rat1 <- calculate_auprc_bitscore(rat_amps_blast, "BLAST1") %>% add_column(Organism = "Rat")
-auprc_chimp1 <- calculate_auprc_bitscore(chimp_amps_blast, "BLAST1") %>% add_column(Organism = "Chimpanzee")
-auprc_pig1 <- calculate_auprc_bitscore(pig_amps_blast, "BLAST1") %>% add_column(Organism = "Pig")
-auprc_dog1<- calculate_auprc_bitscore(dog_amps_blast, "BLAST1") %>% add_column(Organism = "Dog")
-auprc_bat1 <- calculate_auprc_bitscore(bat_amps_blast, "BLAST1") %>% add_column(Organism = "Bat")
-
-auprc_combined <- rbind(auprc_mouse, auprc_mouse1, auprc_mouse2, auprc_cow, auprc_cow1, auprc_cow2, auprc_human, auprc_human1, auprc_human2, auprc_rat, auprc_rat1, auprc_rat2, auprc_chimp, auprc_chimp1, auprc_chimp2, auprc_pig, auprc_pig1, auprc_pig2, auprc_dog, auprc_dog1, auprc_dog2, auprc_bat, auprc_bat1, auprc_bat2 ) %>%  mutate(Organism = factor(Organism, levels = c("Human", "Chimpanzee","Mouse" ,"Rat" , "Cow", "Pig", "Dog", "Bat"))) %>% mutate(Method = factor(Method, levels = c("Classification", "BLAST1", "BLAST2")))
-
-saveRDS(auprc_combined, "cache/auprc_combined.rds")
+methods_auprc <- rbind(classification_auprc, blast1_auprc, blast2_auprc)
 ```
 
 
 ```{r, echo = FALSE}
-auprc_combined <- readRDS("cache/auprc_combined.rds")
-
-ggplot(auprc_combined, aes(x = Method, y = AUPRC, fill = Method)) +
+ggplot(methods_auprc, aes(x = Method, y = AUPRC, fill = Method)) +
   geom_col(width = 0.7) +
   facet_wrap(~Organism, ncol = 2) +
   theme_black() +
+  theme(strip.text = element_text(face = "italic")) +
   labs(fill = "")
 
 ggsave("figures/auprcs.png", width = 7, height = 7)
 ```
+
+**Figure 2.1:** The area under the precision recall curve for each method and organism
 
 
 "For average length proteins, a bit score of 50 is almost always significant. A bit score of 40 is only significant (E() < 0.001) in searches of protein databases with fewer than 7000 entries"[Pearson 2013, pp. 4-5](https://doi.org/10.1002/0471250953.bi0301s42)
@@ -470,5 +453,5 @@ ggsave(plot = blast1and2andpred_roc_plot_theme_black, "figures/methods_prcurve.p
 ```
 
 
-**Figure 2.1:** Comparison of three different methods on finding AMPs in different organisms using precision-recall curves. **BLAST1** method is using the proteome of the organism as a database and a FASTA file that contains all AMPs in the SwissProt database, *excluding* the subject organism, as a query. **BLAST2** method is using all AMPs in the SwissProt database as a database, *excluding* the organism proteome, which is used as a query. **Classification** method is where a classification model is trained which contains Swissprot AMPs and non-AMPs of all organisms *excluding* the target organism, and then tested on the target organism proteome.
+**Figure 2.2:** Comparison of three different methods on finding AMPs in different organisms using precision-recall curves. **BLAST1** method is using the proteome of the organism as a database and a FASTA file that contains all AMPs in the SwissProt database, *excluding* the subject organism, as a query. **BLAST2** method is using all AMPs in the SwissProt database as a database, *excluding* the organism proteome, which is used as a query. **Classification** method is where a classification model is trained which contains Swissprot AMPs and non-AMPs of all organisms *excluding* the target organism, and then tested on the target organism proteome.
 

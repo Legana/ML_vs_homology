@@ -215,51 +215,63 @@ bat_proteome_pred <- join_pred_with_metadata(bat_pred, bat_proteome_metadata)
 proteome_predictions <- rbind(mouse_proteome_pred, cow_proteome_pred, human_proteome_pred, rat_proteome_pred, chimp_proteome_pred, pig_proteome_pred, dog_proteome_pred, bat_proteome_pred)  
 ```
 
-Calculate the Area Under the Precision Recall Curve (AUPRC) for each
-method \* how to turn this into a loop so I can run the function on
-proteome_predictions separating by each method + organism? \*
+## Calculate the Area Under the Precision Recall Curve (AUPRC) for each method
+
+First made a function to calculate the AUPRC from a dataset, for each
+method, and then made a function to loop this function to calculate the
+AUPRC for each organism in the dataset.
 
 ``` r
-evalmod(scores = proteome_predictions[["prob_AMP"]], labels = proteome_predictions[["Label"]], mode = "rocprc") %>%
-  precrec::auc() %>%
-  select(curvetypes, aucs) %>%
-  filter(curvetypes == "PRC") %>%
-  pivot_wider(names_from = curvetypes, values_from = aucs) %>%
-  rename(AUPRC = "PRC") %>%
-  round(digits = 3) %>%
-  add_column(Method = "Classification")
-```
-
-    ## # A tibble: 1 x 2
-    ##   AUPRC Method        
-    ##   <dbl> <chr>         
-    ## 1 0.296 Classification
-
-``` r
-calculate_auprc_probAMP <- function(df, method_name) {
+calculate_auprc_probAMP <- function(df) {
   evalmod(scores = df[["prob_AMP"]], labels = df[["Label"]], mode = "rocprc") %>%
   precrec::auc() %>%
   select(curvetypes, aucs) %>%
   filter(curvetypes == "PRC") %>%
   pivot_wider(names_from = curvetypes, values_from = aucs) %>%
   rename(AUPRC = "PRC") %>%
-  round(digits = 3) %>%
+  round(digits = 3)
+}
+
+organisms <- unique(proteome_predictions$Organism)
+
+get_probAMP_auprc <- function(prediction_data, method_name){
+  do.call(rbind,lapply(organisms,function(org){ 
+    calculate_auprc_probAMP(prediction_data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
   add_column(Method = method_name)
 }
 
-calculate_auprc_bitscore <- function(df, method_name) {
+calculate_auprc_bitscore <- function(df) {
   evalmod(scores = df[["bitscore"]], labels = df[["Label"]], mode = "rocprc") %>%
   precrec::auc() %>%
   select(curvetypes, aucs) %>%
   filter(curvetypes == "PRC") %>%
   pivot_wider(names_from = curvetypes, values_from = aucs) %>%
   rename(AUPRC = "PRC") %>%
-  round(digits = 3) %>%
+  round(digits = 3)
+}
+
+get_bitscore_auprc <- function(blast_results_data, method_name){
+  do.call(rbind,lapply(organisms,function(org){ 
+    calculate_auprc_bitscore(blast_results_data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
   add_column(Method = method_name)
 }
+
+
+classification_auprc <- get_probAMP_auprc(proteome_predictions, "Classification")
+blast1_auprc <- get_bitscore_auprc(blast1results, "BLAST1")
+blast2_auprc <- get_bitscore_auprc(blast2results, "BLAST2")
+
+methods_auprc <- rbind(classification_auprc, blast1_auprc, blast2_auprc)
 ```
 
-![](03_blast_and_prediction_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](03_blast_and_prediction_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+**Figure 2.1:** The area under the precision recall curve for each
+method and organism
 
 “For average length proteins, a bit score of 50 is almost always
 significant. A bit score of 40 is only significant (E() \< 0.001) in
@@ -387,9 +399,9 @@ figure_text <- tibble(
   mutate(Organism = factor(Organism, levels = c("Homo_sapiens", "Pan_troglodytes","Mus_musculus" , "Rattus_norvegicus" , "Bos_taurus", "Sus_scrofa", "Canis_lupus_familiaris", "Rhinolophus_ferrumequinum")))
 ```
 
-![](03_blast_and_prediction_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](03_blast_and_prediction_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
-**Figure 2.1:** Comparison of three different methods on finding AMPs in
+**Figure 2.2:** Comparison of three different methods on finding AMPs in
 different organisms using precision-recall curves. **BLAST1** method is
 using the proteome of the organism as a database and a FASTA file that
 contains all AMPs in the SwissProt database, *excluding* the subject
