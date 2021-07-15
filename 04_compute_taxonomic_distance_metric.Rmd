@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```{r}
 library(tidyverse)
 library(ape)
-library(tidytree)
+library(treeio)
 ```
 
 AMPs (3,371 sequences) were obtained from SwissProt on 01 July 2021 [UniProtKB 2021_03 results](https://www.uniprot.org/uniprot/?query=keyword%3A%22Antimicrobial%20%5BKW-0929%5D%22%20AND%20reviewed%3Ayes&columns=id%2Centry%20name%2Creviewed%2Cprotein%20names%2Cgenes%2Corganism%2Clength%2Ckeyword-id%2Ckeywords%2Cproteome%2Corganism-id%2Clineage(ORDER)%2Csequence%2Cexistence%2Clineage(ALL)&sort=sequence-modified). 
@@ -34,19 +34,33 @@ swissprot_amps <- read_tsv("data/uniprot-keywordAntimicrobial+[KW-0929]-filtered
                           TRUE ~ Organism)) %>%
   mutate(Organism = str_replace(Organism, "Ranoidea", "Litoria")) %>%
   mutate(Organism = str_replace_all(Organism, " ", "_")) 
-  
-
 
 write_lines(unique(swissprot_amps$Organism), "cache/organism_list.txt")
 ```
 
+Add in the unreviewed horseshoe bat AMPs (used in previous analysis)
+```{r}
+horseshoe_bat_amps <- read_tsv("data/uniprot_amps_07Jul21_3371rev42126unrev.tab.gz") %>%
+  rename(Entry_name = `Entry name`) %>% 
+  rename(Taxonomic_lineage = `Taxonomic lineage (ALL)`) %>%
+  mutate(Organism = str_remove(Organism, " \\(.*")) %>% 
+  mutate(Organism = str_replace_all(Organism, " ", "_")) %>%
+  filter(Organism == "Rhinolophus_ferrumequinum") %>%
+  select(!c(`Taxonomic lineage (PHYLUM)`, `Taxonomic lineage (CLASS)`, `Organism ID`))
+
+swissprot_amps <- rbind(swissprot_amps, horseshoe_bat_amps)
+```
+
+
 Read in the tree from [TimeTree](http://timetree.org/)
 
+Normalise names:
 211 organisms had unresolved names of which 76 (mostly bacteria) were replaced with different names and the remaining 135 organisms potentially were not in the TimeTree database at the time. 
 
 
 ```{r}
 timetree <- read.tree("data/organism_list.nwk")
+timetree <- read.tree("data/organism_list_w_bat.nwk")
 
 timetree_tibble <- as_tibble(timetree) %>%
    mutate(label = case_when(
@@ -155,17 +169,76 @@ timetree_tibble <- as_tibble(timetree) %>%
     str_detect(label, "Neobellieria_bullata") ~ "Sarcophaga_peregrina",
                           TRUE ~ label)) %>%
   mutate(label = str_trim(label, side = "right")) # remove trailing whitespace
-
 ```
 
 
 ```{r}
 treelabel_notinAMPs <- timetree_tibble[!timetree_tibble$label %in% swissprot_amps$Organism,]
+
+AMPs_notintreelabel<- swissprot_amps[!swissprot_amps$Organism %in% timetree_tibble$label,]
 ```
+
+After renaming the majority of species in the tree to match to the species names used in SwissProt, 456 AMP entries remained in SwissProt where the species could not be found in the TimeTree database. These mostly includes arachnids (scorpions and spiders), hymenopterans (wasps, bees, ants and sawflies) and anurans (frogs).
+
+```{r}
+AMPs_notintreelabel %>% count(`Taxonomic lineage (ORDER)`, sort = TRUE)
+```
+
+Convert the tree tibble back to a tree
+```{r}
+timetree_reworded <- as.treedata(timetree_tibble)
+
+timetree_reworded_phylo <- timetree_reworded@phylo
+```
+
 
 Calculate pairwise distances between pairs of tips from the tree using the branch lengths with [`cophenetic.phylo`](https://rdrr.io/cran/ape/man/cophenetic.phylo.html)
 
 
 ```{r}
-timetree_distance_matrix <- cophenetic.phylo(timetree)
+timetree_distance_matrix <- cophenetic.phylo(timetree_reworded_phylo)
 ```
+
+Convert matrix to dataframe and left join to SwissProt AMPs dataset (by organism)
+```{r}
+timetree_dm_df <- as.data.frame(timetree_distance_matrix) %>% rownames_to_column("Organism")
+
+amps_w_distance <- swissprot_amps %>% left_join(timetree_dm_df)
+```
+
+
+```{r}
+amps_w_distance %>% 
+  select(Homo_sapiens, Pan_troglodytes, Mus_musculus , Rattus_norvegicus , Bos_taurus, Sus_scrofa, Canis_lupus, Rhinolophus_ferrumequinum) %>%
+  pivot_longer(names_to = "Organism", values_to = "Distance", cols = everything()) %>%
+  ggplot(aes(x = Distance)) +
+  geom_histogram(bins = 40) +
+  facet_wrap(~Organism, ncol = 2, scales = "free") +
+  theme_classic() +
+  theme(strip.text.x = element_text(face = "italic"),
+        strip.background = element_rect(fill = "white", color = "white"))
+
+```
+
+**Figure 4.1:** Histogram of pairwise distance between each faceted organism and 756 other organisms present in the AMP dataset
+
+<i>
+
+**Method notes:**
+
+Take column belonging to each organism (will have all all distances between that organism and all other organisms)
+
+
+take inverse from all organisms and add them all up . single number is representation of histogram
+
+How weighted are organisms towards low values. expect for mammals to have a common set of AMPs that fall outside of mammals (only distantly related to mammals) which will have low difference between them and to mammals. Values within mammals will change more (higher values in histogram)
+
+set values to 0 for really distant taxonomic distance?
+
+
+Sum up the inverse (1/distance) for distances so that a large value of distance translates to a small value (or weighting) of the AMP.
+Inverse because an AMP that is taxonomically far away (e.g bacterial AMP to a human AMP) will be difficult to BLAST (not likely to have high sequence similarity) so we give that a low weighting. 
+
+histogram for both normal and inverse?
+
+</i>

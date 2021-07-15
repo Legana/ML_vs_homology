@@ -2,85 +2,269 @@
 ``` r
 library(tidyverse)
 library(ape)
+library(treeio)
 ```
 
 AMPs (3,371 sequences) were obtained from SwissProt on 01 July 2021
 [UniProtKB 2021_03
 results](https://www.uniprot.org/uniprot/?query=keyword%3A%22Antimicrobial%20%5BKW-0929%5D%22%20AND%20reviewed%3Ayes&columns=id%2Centry%20name%2Creviewed%2Cprotein%20names%2Cgenes%2Corganism%2Clength%2Ckeyword-id%2Ckeywords%2Cproteome%2Corganism-id%2Clineage(ORDER)%2Csequence%2Cexistence%2Clineage(ALL)&sort=sequence-modified).
 
-UniProt contains a column called “Organism ID”. This ID refers to the
-NCBI “taxid” which can be used in the [Taxonomy
-Browser](https://www.ncbi.nlm.nih.gov/Taxonomy/CommonTree/wwwcmt.cgi) to
-obtain a phylogenetic tree. The organism IDs, rather than the organism
-names were used as some organism names listed in UniProt are under a
-different name in NCBI, e.g. *Neoponera goeldii* is currently known as
-*Pachycondyla goeldii* in the NCBI taxonomy database. However, the
-taxonomic ID for this organism is 118888 in both databases.
-
-Read in SwissProt AMPs and save the organism taxonomic IDs to submit to
-the NCBI Taxonomy Browser to obtain a tree. Viruses were removed. This
-resulted in 832 unique organisms.
+Read in the same SwissProt AMPs used for creating the classification
+models and BLAST datasets. The organism names were tidied up and made
+more compatible to [TimeTree](http://timetree.org/) names where species
+only have two names. Viruses were removed. This resulted in 802 unique
+organisms. Species not fully defined (e.g. “Lactococcus sp) were
+additionally removed. This resulted in 769 species.
 
 ``` r
-swissprot_amps_july <- read_tsv("data/uniprot-keywordAntimicrobial+[KW-0929]+AND+reviewedyes01July2021.tab.gz") %>% 
-  rename(Organism_ID = `Organism ID`) %>%
+swissprot_amps <- read_tsv("data/uniprot-keywordAntimicrobial+[KW-0929]-filtered-reviewedyes24May21.tab") %>% 
+  rename(Entry_name = `Entry name`) %>% 
+  rename(Taxonomic_lineage = `Taxonomic lineage (ALL)`) %>% 
+  filter(!grepl("Viruses", Taxonomic_lineage)) %>%
+  filter(!grepl("\\.", Organism)) %>%
+  mutate(Organism = word(Organism, 1, 2)) %>% 
+  mutate(Organism = case_when(
+    str_detect(Organism, "Phlyctimantis maculatus") ~ "Hylambates maculatus",
+    str_detect(Organism, "Nyctimystes infrafrenatus") ~ "Litoria infrafrenata",
+    str_detect(Organism, "Lithobates catesbeianus") ~ "Rana catesbeiana",
+    str_detect(Organism, "Boana punctata") ~ "Hypsiboas punctatus",
+                          TRUE ~ Organism)) %>%
+  mutate(Organism = str_replace(Organism, "Ranoidea", "Litoria")) %>%
+  mutate(Organism = str_replace_all(Organism, " ", "_")) 
+
+write_lines(unique(swissprot_amps$Organism), "cache/organism_list.txt")
+```
+
+Add in the unreviewed horseshoe bat AMPs (used in previous analysis)
+
+``` r
+horseshoe_bat_amps <- read_tsv("data/uniprot_amps_07Jul21_3371rev42126unrev.tab.gz") %>%
+  rename(Entry_name = `Entry name`) %>% 
   rename(Taxonomic_lineage = `Taxonomic lineage (ALL)`) %>%
-  filter(!grepl("Viruses", Taxonomic_lineage))
+  mutate(Organism = str_remove(Organism, " \\(.*")) %>% 
+  mutate(Organism = str_replace_all(Organism, " ", "_")) %>%
+  filter(Organism == "Rhinolophus_ferrumequinum") %>%
+  select(!c(`Taxonomic lineage (PHYLUM)`, `Taxonomic lineage (CLASS)`, `Organism ID`))
 
-
-write_lines(unique(swissprot_amps_july$Organism_ID), "cache/organism_taxids.txt")
+swissprot_amps <- rbind(swissprot_amps, horseshoe_bat_amps)
 ```
 
-Read in the tree
+Read in the tree from [TimeTree](http://timetree.org/)
+
+Normalise names: 211 organisms had unresolved names of which 76 (mostly
+bacteria) were replaced with different names and the remaining 135
+organisms potentially were not in the TimeTree database at the time.
 
 ``` r
-tree_text <- readLines("data/phyliptree.phy") %>%
-  paste0(collapse="")
-tree <- read.tree(text = tree_text)
+timetree <- read.tree("data/organism_list.nwk")
+timetree <- read.tree("data/organism_list_w_bat.nwk")
 
-glimpse(tree)
+timetree_tibble <- as_tibble(timetree) %>%
+   mutate(label = case_when(
+    str_detect(label, "Halobacterium_salinarum") ~ "Haloarchaeon_S8a",
+    str_detect(label, "_aerogenes") ~ "Klebsiella_pneumoniae",
+    str_detect(label, "Achromobacter_denitrificans") ~ "Achromobacter_lyticus",
+    str_detect(label, "Lactobacillus_casei") ~ "Lactobacillus_paracasei",
+    str_detect(label, "Actinoplanes_missouriensis") ~ "Actinoplanes_garbadinensis",
+    str_detect(label, "Agrocybe_praecox") ~ "Agrocybe_cylindracea",
+    str_detect(label, "Coprinopsis_lagopus") ~ "Coprinopsis_cinerea",
+    str_detect(label, "Ganoderma_sinense") ~ "Pleurotus_sajor-caju",
+    str_detect(label, "Pseudoplectania_nigrella") ~ "Peziza_vesiculosa",
+    str_detect(label, "Pseudallescheria_apiosperma") ~ "Microascus_cirrosus",
+    str_detect(label, "Colletotrichum_acutatum") ~ "Colletotrichum_dematium",
+    str_detect(label, "Penicillium_javanicum") ~ "Penicillium_rubens",
+    str_detect(label, "Mucor_racemosus") ~ "Rhizomucor_pusillus",
+    str_detect(label, "Schistosoma_japonicum") ~ "Schistosoma_mansoni",
+    str_detect(label, "Molgula_tectiformis") ~ "Halocynthia_aurantium",
+    str_detect(label, "Paralichthys_dentatus") ~ "Paralichthys_olivaceus",
+    str_detect(label, "Siganus_vulpinus") ~ "Siganus_canaliculatus",
+    str_detect(label, "Opsanus_tau") ~ "Thalassophryne_nattereri",
+    str_detect(label, "Paracentrotus_lividus") ~ "Echinus_esculentus",
+    str_detect(label, "Leptasterias_hexactis") ~ "Asterias_rubens",
+    str_detect(label, "Scolopendra_cingulata") ~ "Scolopendra_subspinipes",
+    str_detect(label, "Panulirus_interruptus") ~ "Panulirus_argus",
+    str_detect(label, "Chionoecetes_opilio") ~ "Hyas_araneus",
+    str_detect(label, "Anax_junius") ~ "Aeshna_cyanea",
+    str_detect(label, "Anoplius_aethiops") ~ "Anoplius_samariensis",
+    str_detect(label, "Osmia_lignaria") ~ "Osmia_rufa",
+    str_detect(label, "Lasioglossum_calceatum") ~ "Lasioglossum_laticeps",
+    str_detect(label, "Macropis_europaea") ~ "Macropis_fulvipes",
+    str_detect(label, "Tetramorium_caespitum") ~ "Tetramorium_bicarinatum",
+    str_detect(label, "Formica_moki") ~ "Formica_aquilonia",
+    str_detect(label, "Odontomachus_clarus") ~ "Odontomachus_monticola",
+    str_detect(label, "Polistes_tenebricosus") ~ "Polistes_hebraeus",
+    str_detect(label, "Stizoides_foxi") ~ "Sphecius_speciosus ",
+    str_detect(label, "Aleiodessp.BOLD") ~ "Pimpla_disparis",
+    str_detect(label, "Osmoderma_eremita") ~ "Trypoxylus_dichotomus",
+    str_detect(label, "Tetraopes_tetrophthalmus") ~ "Acalolepta_luxuriosa",
+    str_detect(label, "Chrysolina_hyperici") ~ "Gastrophysa_atrocyanea",
+    str_detect(label, "Phlebotomus_papatasi") ~ "Phlebotomus_duboscqi",
+    str_detect(label, "Sarcophaga_bullata") ~ "Sarcophaga_peregrina",
+    str_detect(label, "Tinea_columbariella") ~ "Oiketicus_kirbyi",
+    str_detect(label, "Manga_basilinea") ~ "Mamestra_brassicae",
+    str_detect(label, "Heliothis_terracottoides") ~ "Heliothis_virescens",
+    str_detect(label, "Saturnia_mendocino") ~ "Antheraea_mylitta",
+    str_detect(label, "Accinctapubes_albifasciata") ~ "Galleria_mellonella",
+    str_detect(label, "Aeschyntelus_notatus") ~ "Riptortus_clavatus",
+    str_detect(label, "Brochymena_sp._WCW-2003") ~ "Podisus_maculiventris ",
+    str_detect(label, "Platypleura_capensis") ~ "Cicada_flammata",
+    str_detect(label, "Cryptotympana_atrata") ~ "Cryptotympana_dubia",
+    str_detect(label, "Acyrthosiphon_pisum") ~ "Megoura_viciae",
+    str_detect(label, "Ixodes_hexagonus") ~ "Ixodes_sinensis",
+    str_detect(label, "Rhipicephalus_sanguineus") ~ "Rhipicephalus_microplus",
+    str_detect(label, "Ornithodoros_moubata") ~ "Argas_monolakensis",
+    str_detect(label, "Loxosceles_laeta") ~ "Loxosceles_gaucho",
+    str_detect(label, "Lycosa_tarantula") ~ "Oxyopes_takobius",
+    str_detect(label, "Vaejovis_bandido") ~ "Mesomexovis_subcristatus",
+    str_detect(label, "Metaphire_sieboldi") ~ "Metaphire_guillelmi",
+    str_detect(label, "Poecilobdella_manillensis") ~ "Hirudo_medicinalis",
+    str_detect(label, "Nereis_denhamensis") ~ "Perinereis_aibuhitensis",
+    str_detect(label, "Capitella_teleta") ~ "Arenicola_marina",
+    str_detect(label, "Conus_purpurascens") ~ "Conus_mustelinus",
+    str_detect(label, "Globba_radicalis") ~ "Curcuma_longa",
+    str_detect(label, "Xanthosoma_helleborifolium") ~ "Xanthosoma_sagittifolium",
+    str_detect(label, "Macadamia_tetraphylla") ~ "Macadamia_integrifolia",
+    str_detect(label, "Brassica_rapa") ~ "Brassica_campestris",
+    str_detect(label, "Cucurbita_pepo") ~ "Cucurbita_maxima",
+    str_detect(label, "Inga_cf._edulis_Klitgaard_677") ~ "Inga_vera",
+    str_detect(label, "Parkia_timoriana") ~ "Parkia_pendula",
+    str_detect(label, "Cullen_australasicum") ~ "Cullen_corylifolium",
+    str_detect(label, "Arachis_major") ~ "Arachis_hypogaea",
+    str_detect(label, "Heuchera_merriamii") ~ "Heuchera_sanguinea",
+    str_detect(label, "Portulaca_grandiflora") ~ "Basella_alba",
+    str_detect(label, "Amaranthus_palmeri") ~ "Amaranthus_caudatus ",
+    str_detect(label, "Bidens_cernua") ~ "Dahlia_merckii",
+    str_detect(label, "Geophila_obvallata") ~ "Chassalia_chartacea ",
+    str_detect(label, "Psychotria_kirkii") ~ "Psychotria_longipes",
+    str_detect(label, "Lippia_javanica") ~ "Lippia_sidoides",
+    str_detect(label, "Diospyros_cavalcantei") ~ "Diospyros_texana",
+    str_detect(label, "_gnavus") ~ "Ruminococcus_gnavus",
+    str_detect(label, "Mycobacterium_phlei") ~ "Mycolicibacterium_phlei",
+    str_detect(label, "Kassina_maculata") ~ "Hylambates_maculatus",
+    str_detect(label, "Rana_septentrionalis") ~ "Lithobates_septentrionalis",
+    str_detect(label, "Rana_sevosa") ~ "Lithobates_sevosus",
+    str_detect(label, "Rana_clamitans") ~ "Lithobates_clamitans",
+    str_detect(label, "Rana_berlandieri") ~ "Lithobates_berlandieri",
+    str_detect(label, "Rana_sphenocephala") ~ "Lithobates_sphenocephalus",
+    str_detect(label, "Rana_palustris") ~ "Lithobates_palustris",
+    str_detect(label, "Rana_pipiens") ~ "Lithobates_pipiens",
+    str_detect(label, "Rana_sylvatica") ~ "Lithobates_sylvaticus",
+    str_detect(label, "Rugosa_rugosa") ~ "Nidirana_pleuraden",
+    str_detect(label, "Babina_okinavana") ~ "Glandirana_rugosa",
+    str_detect(label, "Babina_pleuraden") ~ "Nidirana_pleuraden",
+    str_detect(label, "Eupemphix_nattereri") ~ "Physalaemus_nattereri",
+    str_detect(label, "Hypsiboas_albopunctatus") ~ "Boana_albopunctata",
+    str_detect(label, "Phyllomedusa_sauvagii") ~ "Phyllomedusa_sauvagei",
+    str_detect(label, "Phyllomedusa_hypochondrialis") ~ "Pithecopus_hypochondrialis",
+    str_detect(label, "Phyllomedusa_oreades") ~ "Pithecopus_oreades",
+    str_detect(label, "Pachymedusa_dacnicolor") ~ "Agalychnis_dacnicolor",
+    str_detect(label, "Hylomantis_lemur") ~ "Agalychnis_lemur",
+    str_detect(label, "Cercopithecus_preussi") ~ "Allochrocebus_preussi",
+    str_detect(label, "Fenneropenaeus_merguiensis") ~ "Penaeus_merguiensis",
+    str_detect(label, "Litopenaeus_vannamei") ~ "Penaeus_vannamei",
+    str_detect(label, "Litopenaeus_setiferus") ~ "Penaeus_setiferus",
+    str_detect(label, "Neobellieria_bullata") ~ "Sarcophaga_peregrina",
+                          TRUE ~ label)) %>%
+  mutate(label = str_trim(label, side = "right")) # remove trailing whitespace
 ```
-
-    ## List of 6
-    ##  $ edge       : int [1:941, 1:2] 692 693 694 694 695 696 696 696 697 697 ...
-    ##  $ edge.length: num [1:941] 4 4 4 4 4 4 4 4 4 4 ...
-    ##  $ Nnode      : int 251
-    ##  $ node.label : chr [1:251] "Eukaryota" "Metazoa" "Chordata" "Mammalia" ...
-    ##  $ tip.label  : chr [1:691] "Potamotrygoncf.henleiKC-2012" "Chinchillalanigera" "Caviaporcellus" "Rattusnorvegicus" ...
-    ##  $ root.edge  : num 4
-    ##  - attr(*, "class")= chr "phylo"
-    ##  - attr(*, "order")= chr "cladewise"
-
-Calculate branch lengths with
-[`compute.brlen`](https://rdrr.io/cran/ape/man/compute.brlen.html)
 
 ``` r
-tree_w_brlen <- compute.brlen(tree)
+treelabel_notinAMPs <- timetree_tibble[!timetree_tibble$label %in% swissprot_amps$Organism,]
 
-glimpse(tree_w_brlen)
+AMPs_notintreelabel<- swissprot_amps[!swissprot_amps$Organism %in% timetree_tibble$label,]
 ```
 
-    ## List of 6
-    ##  $ edge       : int [1:941, 1:2] 692 693 694 694 695 696 696 696 697 697 ...
-    ##  $ edge.length: num [1:941] 0.2014 0.3232 0.4754 0.3681 0.0986 ...
-    ##  $ Nnode      : int 251
-    ##  $ node.label : chr [1:251] "Eukaryota" "Metazoa" "Chordata" "Mammalia" ...
-    ##  $ tip.label  : chr [1:691] "Potamotrygoncf.henleiKC-2012" "Chinchillalanigera" "Caviaporcellus" "Rattusnorvegicus" ...
-    ##  $ root.edge  : num 4
-    ##  - attr(*, "class")= chr "phylo"
-    ##  - attr(*, "order")= chr "cladewise"
+After renaming the majority of species in the tree to match to the
+species names used in SwissProt, 456 AMP entries remained in SwissProt
+where the species could not be found in the TimeTree database. These
+mostly includes arachnids (scorpions and spiders), hymenopterans (wasps,
+bees, ants and sawflies) and anurans (frogs).
+
+``` r
+AMPs_notintreelabel %>% count(`Taxonomic lineage (ORDER)`, sort = TRUE)
+```
+
+    ## # A tibble: 37 x 2
+    ##    `Taxonomic lineage (ORDER)`             n
+    ##    <chr>                               <int>
+    ##  1 Scorpiones                             98
+    ##  2 Hymenoptera                            93
+    ##  3 Anura                                  67
+    ##  4 Araneae (spiders)                      67
+    ##  5 Lepidoptera (butterflies and moths)    15
+    ##  6 Coleoptera                             13
+    ##  7 Stolidobranchia                        13
+    ##  8 Lactobacillales                        10
+    ##  9 Fabales                                 9
+    ## 10 Poales                                  9
+    ## # … with 27 more rows
+
+Convert the tree tibble back to a tree
+
+``` r
+timetree_reworded <- as.treedata(timetree_tibble)
+
+timetree_reworded_phylo <- timetree_reworded@phylo
+```
 
 Calculate pairwise distances between pairs of tips from the tree using
 the branch lengths with
 [`cophenetic.phylo`](https://rdrr.io/cran/ape/man/cophenetic.phylo.html)
 
 ``` r
-tree_distance_matrix <- cophenetic.phylo(tree_w_brlen)
-
-glimpse(tree_distance_matrix)
+timetree_distance_matrix <- cophenetic.phylo(timetree_reworded_phylo)
 ```
 
-    ##  num [1:691, 1:691] 0 0.951 0.951 0.951 0.951 ...
-    ##  - attr(*, "dimnames")=List of 2
-    ##   ..$ : chr [1:691] "Potamotrygoncf.henleiKC-2012" "Chinchillalanigera" "Caviaporcellus" "Rattusnorvegicus" ...
-    ##   ..$ : chr [1:691] "Potamotrygoncf.henleiKC-2012" "Chinchillalanigera" "Caviaporcellus" "Rattusnorvegicus" ...
+Convert matrix to dataframe and left join to SwissProt AMPs dataset (by
+organism)
+
+``` r
+timetree_dm_df <- as.data.frame(timetree_distance_matrix) %>% rownames_to_column("Organism")
+
+amps_w_distance <- swissprot_amps %>% left_join(timetree_dm_df)
+```
+
+``` r
+amps_w_distance %>% 
+  select(Homo_sapiens, Pan_troglodytes, Mus_musculus , Rattus_norvegicus , Bos_taurus, Sus_scrofa, Canis_lupus, Rhinolophus_ferrumequinum) %>%
+  pivot_longer(names_to = "Organism", values_to = "Distance", cols = everything()) %>%
+  ggplot(aes(x = Distance)) +
+  geom_histogram(bins = 40) +
+  facet_wrap(~Organism, ncol = 2, scales = "free") +
+  theme_classic() +
+  theme(strip.text.x = element_text(face = "italic"),
+        strip.background = element_rect(fill = "white", color = "white"))
+```
+
+![](04_compute_taxonomic_distance_metric_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+**Figure 4.1:** Histogram of pairwise distance between each faceted
+organism and 756 other organisms present in the AMP dataset
+
+<i>
+
+**Method notes:**
+
+Take column belonging to each organism (will have all all distances
+between that organism and all other organisms)
+
+take inverse from all organisms and add them all up . single number is
+representation of histogram
+
+How weighted are organisms towards low values. expect for mammals to
+have a common set of AMPs that fall outside of mammals (only distantly
+related to mammals) which will have low difference between them and to
+mammals. Values within mammals will change more (higher values in
+histogram)
+
+set values to 0 for really distant taxonomic distance?
+
+Sum up the inverse (1/distance) for distances so that a large value of
+distance translates to a small value (or weighting) of the AMP. Inverse
+because an AMP that is taxonomically far away (e.g bacterial AMP to a
+human AMP) will be difficult to BLAST (not likely to have high sequence
+similarity) so we give that a low weighting.
+
+histogram for both normal and inverse?
+
+</i>
