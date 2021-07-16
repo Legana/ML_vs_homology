@@ -289,6 +289,11 @@ methods_auprc <- rbind(classification_auprc, blast1_auprc, blast2_auprc)
 ```
 
 
+```{r, echo=FALSE}
+saveRDS(methods_auprc, "cache/methods_auprc.rds")
+```
+
+
 ```{r, echo = FALSE}
 ggplot(methods_auprc, aes(x = Method, y = AUPRC, fill = Method)) +
   geom_col(width = 0.7) +
