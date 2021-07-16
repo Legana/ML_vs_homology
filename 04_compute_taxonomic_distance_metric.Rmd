@@ -240,7 +240,7 @@ distance_plot / inverse_distance_plot + plot_annotation(tag_levels = "A")
 ggsave("figures/distancevsinversedistance.png", width = 8, height = 9)
 ```
 
-**Figure 4.1:** **A** Histogram of pairwise distance **B** Histogram of the inverse pairwise distance between each faceted organism and 756 other organisms present in the AMP dataset
+**Figure 4.1:** **A** Histogram of pairwise distance **B** Histogram of the inverse pairwise distance between each faceted organism and 623 out of the 756 other organisms present in the AMP dataset
 
 ## Summed inverse pairwise distance vs. AUPRC 
 

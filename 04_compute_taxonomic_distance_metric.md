@@ -235,8 +235,8 @@ amps_w_distance <- swissprot_amps %>%
 ![](04_compute_taxonomic_distance_metric_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 **Figure 4.1:** **A** Histogram of pairwise distance **B** Histogram of
-the inverse pairwise distance between each faceted organism and 756
-other organisms present in the AMP dataset
+the inverse pairwise distance between each faceted organism and 623 out
+of the 756 other organisms present in the AMP dataset
 
 ## Summed inverse pairwise distance vs. AUPRC
 
