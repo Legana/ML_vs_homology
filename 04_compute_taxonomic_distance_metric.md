@@ -3,7 +3,10 @@
 library(tidyverse)
 library(ape)
 library(treeio)
+library(patchwork)
 ```
+
+## Prepare AMP and tree datasets
 
 AMPs (3,371 sequences) were obtained from SwissProt on 01 July 2021
 [UniProtKB 2021_03
@@ -207,6 +210,8 @@ timetree_reworded <- as.treedata(timetree_tibble)
 timetree_reworded_phylo <- timetree_reworded@phylo
 ```
 
+## Pairwise distances between organisms
+
 Calculate pairwise distances between pairs of tips from the tree using
 the branch lengths with
 [`cophenetic.phylo`](https://rdrr.io/cran/ape/man/cophenetic.phylo.html)
@@ -216,37 +221,116 @@ timetree_distance_matrix <- cophenetic.phylo(timetree_reworded_phylo)
 ```
 
 Convert matrix to dataframe and left join to SwissProt AMPs dataset (by
-organism)
+organism). Then calculate the inverse pairwise distance (1/distance) for
+each organism
 
 ``` r
 timetree_dm_df <- as.data.frame(timetree_distance_matrix) %>% rownames_to_column("Organism")
 
-amps_w_distance <- swissprot_amps %>% left_join(timetree_dm_df)
-```
-
-``` r
-amps_w_distance %>% 
-  select(Homo_sapiens, Pan_troglodytes, Mus_musculus , Rattus_norvegicus , Bos_taurus, Sus_scrofa, Canis_lupus, Rhinolophus_ferrumequinum) %>%
-  pivot_longer(names_to = "Organism", values_to = "Distance", cols = everything()) %>%
-  ggplot(aes(x = Distance)) +
-  geom_histogram(bins = 40) +
-  facet_wrap(~Organism, ncol = 2, scales = "free") +
-  theme_classic() +
-  theme(strip.text.x = element_text(face = "italic"),
-        strip.background = element_rect(fill = "white", color = "white"))
+amps_w_distance <- swissprot_amps %>%
+  left_join(timetree_dm_df, by = "Organism") %>% 
+  mutate(across(.cols = Haloarchaeon_S8a:Cycas_revoluta, function(x) 1/x, .names = "{.col}_inverse" ))
 ```
 
 ![](04_compute_taxonomic_distance_metric_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
-**Figure 4.1:** Histogram of pairwise distance between each faceted
-organism and 756 other organisms present in the AMP dataset
+**Figure 4.1:** **A** Histogram of pairwise distance **B** Histogram of
+the inverse pairwise distance between each faceted organism and 756
+other organisms present in the AMP dataset
+
+## Summed inverse pairwise distance vs. AUPRC
+
+Replace `inf` values to `NA` and sum inverse distance values. Then
+rename columns to original organism names and transform to longer format
+so it can be more easily combined to the AUPRC results dataframe
+
+``` r
+summed_inverse_distance <- amps_w_distance %>%
+  map_df(function(x) replace(x, is.infinite(x), NA)) %>%
+  summarise(across(.cols = c(Homo_sapiens_inverse, Pan_troglodytes_inverse, Mus_musculus_inverse , Rattus_norvegicus_inverse , Bos_taurus_inverse, Sus_scrofa_inverse, Canis_lupus_inverse, Rhinolophus_ferrumequinum_inverse), sum, na.rm = TRUE, .names = "{.col}_sum"))
+
+summed_inverse_distance <- amps_w_distance %>%
+  map_df(function(x) replace(x, is.infinite(x), NA)) %>%
+  summarise(across(.cols = c(Homo_sapiens_inverse, Pan_troglodytes_inverse, Mus_musculus_inverse , Rattus_norvegicus_inverse , Bos_taurus_inverse, Sus_scrofa_inverse, Canis_lupus_inverse, Rhinolophus_ferrumequinum_inverse), sum, na.rm = TRUE, .names = "{.col}_sum")) %>% rename("Homo_sapiens" = Homo_sapiens_inverse_sum, "Pan_troglodytes" = Pan_troglodytes_inverse_sum, "Mus_musculus" = Mus_musculus_inverse_sum, "Rattus_norvegicus" = Rattus_norvegicus_inverse_sum, "Bos_taurus" = Bos_taurus_inverse_sum, "Sus_scrofa" = Sus_scrofa_inverse_sum, "Canis_lupus_familiaris" = Canis_lupus_inverse_sum,"Rhinolophus_ferrumequinum" = Rhinolophus_ferrumequinum_inverse_sum) %>% pivot_longer(cols = everything(), names_to = "Organism", values_to = "Inverse_distance_sum")
+```
+
+Read in previously calculated AUPRC values (see
+03_blast_and_prediction.Rmd). Widen data so its easier to add the
+summed_inverse_distance dataframe to it
+
+``` r
+methods_auprc <- readRDS("cache/methods_auprc.rds")
+
+methods_auprc_wide <- pivot_wider(methods_auprc, names_from = Method, values_from = AUPRC)
+```
+
+Join the AUPRC values and distance metric for each organism
+
+``` r
+auprc_and_distance_metric <- left_join(methods_auprc_wide, summed_inverse_distance, by = "Organism")
+```
+
+Change back to long format for plotting
+
+``` r
+auprc_and_distance_metric_long <- auprc_and_distance_metric %>% pivot_longer(cols = c(Classification, BLAST1, BLAST2), names_to = "Method", values_to = "AUPRC")
+```
+
+![](04_compute_taxonomic_distance_metric_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+**Figure 4.2:** Line plot of the summed inverse pairwise distance and
+the AUPRC for each AMP finding method
+
+*inverse values have a fair `inf` values*
+
+``` r
+length(which(is.infinite(amps_w_distance$Homo_sapiens_inverse))) #99
+```
+
+    ## [1] 99
+
+``` r
+length(which(is.infinite(amps_w_distance$Mus_musculus_inverse))) #100
+```
+
+    ## [1] 100
+
+``` r
+length(which(is.infinite(amps_w_distance$Pan_troglodytes_inverse))) #38
+```
+
+    ## [1] 38
+
+``` r
+length(which(is.infinite(amps_w_distance$Bos_taurus_inverse))) #55
+```
+
+    ## [1] 55
+
+``` r
+length(which(is.infinite(amps_w_distance$Canis_lupus_inverse))) #6
+```
+
+    ## [1] 6
+
+``` r
+length(which(is.infinite(amps_w_distance$Rhinolophus_ferrumequinum_inverse))) #54
+```
+
+    ## [1] 54
+
+``` r
+length(which(is.infinite(amps_w_distance$Sus_scrofa_inverse))) #29
+```
+
+    ## [1] 29
 
 <i>
 
 **Method notes:**
 
-Take column belonging to each organism (will have all all distances
-between that organism and all other organisms)
+Take column belonging to each organism (will have all distances between
+that organism and all other organisms)
 
 take inverse from all organisms and add them all up . single number is
 representation of histogram

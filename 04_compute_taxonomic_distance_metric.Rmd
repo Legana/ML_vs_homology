@@ -10,7 +10,11 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(tidyverse)
 library(ape)
 library(treeio)
+library(patchwork)
 ```
+
+## Prepare AMP and tree datasets
+
 
 AMPs (3,371 sequences) were obtained from SwissProt on 01 July 2021 [UniProtKB 2021_03 results](https://www.uniprot.org/uniprot/?query=keyword%3A%22Antimicrobial%20%5BKW-0929%5D%22%20AND%20reviewed%3Ayes&columns=id%2Centry%20name%2Creviewed%2Cprotein%20names%2Cgenes%2Corganism%2Clength%2Ckeyword-id%2Ckeywords%2Cproteome%2Corganism-id%2Clineage(ORDER)%2Csequence%2Cexistence%2Clineage(ALL)&sort=sequence-modified). 
 
@@ -191,6 +195,7 @@ timetree_reworded <- as.treedata(timetree_tibble)
 timetree_reworded_phylo <- timetree_reworded@phylo
 ```
 
+## Pairwise distances between organisms
 
 Calculate pairwise distances between pairs of tips from the tree using the branch lengths with [`cophenetic.phylo`](https://rdrr.io/cran/ape/man/cophenetic.phylo.html)
 
@@ -199,16 +204,18 @@ Calculate pairwise distances between pairs of tips from the tree using the branc
 timetree_distance_matrix <- cophenetic.phylo(timetree_reworded_phylo)
 ```
 
-Convert matrix to dataframe and left join to SwissProt AMPs dataset (by organism)
+Convert matrix to dataframe and left join to SwissProt AMPs dataset (by organism). Then calculate the inverse pairwise distance (1/distance) for each organism
 ```{r}
 timetree_dm_df <- as.data.frame(timetree_distance_matrix) %>% rownames_to_column("Organism")
 
-amps_w_distance <- swissprot_amps %>% left_join(timetree_dm_df)
+amps_w_distance <- swissprot_amps %>%
+  left_join(timetree_dm_df, by = "Organism") %>% 
+  mutate(across(.cols = Haloarchaeon_S8a:Cycas_revoluta, function(x) 1/x, .names = "{.col}_inverse" ))
 ```
 
 
-```{r}
-amps_w_distance %>% 
+```{r, echo = FALSE, fig.height=10}
+distance_plot <- amps_w_distance %>% 
   select(Homo_sapiens, Pan_troglodytes, Mus_musculus , Rattus_norvegicus , Bos_taurus, Sus_scrofa, Canis_lupus, Rhinolophus_ferrumequinum) %>%
   pivot_longer(names_to = "Organism", values_to = "Distance", cols = everything()) %>%
   ggplot(aes(x = Distance)) +
@@ -218,15 +225,93 @@ amps_w_distance %>%
   theme(strip.text.x = element_text(face = "italic"),
         strip.background = element_rect(fill = "white", color = "white"))
 
+inverse_distance_plot <- amps_w_distance %>% 
+  select(Homo_sapiens_inverse, Pan_troglodytes_inverse, Mus_musculus_inverse , Rattus_norvegicus_inverse , Bos_taurus_inverse, Sus_scrofa_inverse, Canis_lupus_inverse, Rhinolophus_ferrumequinum_inverse) %>%
+  pivot_longer(names_to = "Organism", values_to = "Distance_inverse", cols = everything()) %>%
+  ggplot(aes(x = Distance_inverse)) +
+  geom_histogram(bins = 40) +
+  facet_wrap(~Organism, ncol = 2, scales = "free") +
+  theme_classic() +
+  theme(strip.text.x = element_text(face = "italic"),
+        strip.background = element_rect(fill = "white", color = "white"))
+
+distance_plot / inverse_distance_plot + plot_annotation(tag_levels = "A")
+
+ggsave("figures/distancevsinversedistance.png", width = 8, height = 9)
 ```
 
-**Figure 4.1:** Histogram of pairwise distance between each faceted organism and 756 other organisms present in the AMP dataset
+**Figure 4.1:** **A** Histogram of pairwise distance **B** Histogram of the inverse pairwise distance between each faceted organism and 756 other organisms present in the AMP dataset
+
+## Summed inverse pairwise distance vs. AUPRC 
+
+Replace `inf` values to `NA` and sum inverse distance values. Then rename columns to original organism names and transform to longer format so it can be more easily combined to the AUPRC results dataframe  
+```{r}
+
+summed_inverse_distance <- amps_w_distance %>%
+  map_df(function(x) replace(x, is.infinite(x), NA)) %>%
+  summarise(across(.cols = c(Homo_sapiens_inverse, Pan_troglodytes_inverse, Mus_musculus_inverse , Rattus_norvegicus_inverse , Bos_taurus_inverse, Sus_scrofa_inverse, Canis_lupus_inverse, Rhinolophus_ferrumequinum_inverse), sum, na.rm = TRUE, .names = "{.col}_sum"))
+
+summed_inverse_distance <- amps_w_distance %>%
+  map_df(function(x) replace(x, is.infinite(x), NA)) %>%
+  summarise(across(.cols = c(Homo_sapiens_inverse, Pan_troglodytes_inverse, Mus_musculus_inverse , Rattus_norvegicus_inverse , Bos_taurus_inverse, Sus_scrofa_inverse, Canis_lupus_inverse, Rhinolophus_ferrumequinum_inverse), sum, na.rm = TRUE, .names = "{.col}_sum")) %>% rename("Homo_sapiens" = Homo_sapiens_inverse_sum, "Pan_troglodytes" = Pan_troglodytes_inverse_sum, "Mus_musculus" = Mus_musculus_inverse_sum, "Rattus_norvegicus" = Rattus_norvegicus_inverse_sum, "Bos_taurus" = Bos_taurus_inverse_sum, "Sus_scrofa" = Sus_scrofa_inverse_sum, "Canis_lupus_familiaris" = Canis_lupus_inverse_sum,"Rhinolophus_ferrumequinum" = Rhinolophus_ferrumequinum_inverse_sum) %>% pivot_longer(cols = everything(), names_to = "Organism", values_to = "Inverse_distance_sum")
+
+```
+
+Read in previously calculated AUPRC values (see 03_blast_and_prediction.Rmd). 
+Widen data so its easier to add the summed_inverse_distance dataframe to it
+
+```{r}
+methods_auprc <- readRDS("cache/methods_auprc.rds")
+
+methods_auprc_wide <- pivot_wider(methods_auprc, names_from = Method, values_from = AUPRC)
+```
+
+Join the AUPRC values and distance metric for each organism
+```{r}
+auprc_and_distance_metric <- left_join(methods_auprc_wide, summed_inverse_distance, by = "Organism")
+```
+
+Change back to long format for plotting 
+```{r}
+auprc_and_distance_metric_long <- auprc_and_distance_metric %>% pivot_longer(cols = c(Classification, BLAST1, BLAST2), names_to = "Method", values_to = "AUPRC")
+```
+
+```{r, echo=FALSE}
+ggplot(auprc_and_distance_metric_long, aes(x = Inverse_distance_sum, y = AUPRC, colour = Method)) +
+  geom_line() +
+  labs(x = "The sum of the inverse pairwise distance", colour = "") +
+  theme_classic() +
+  theme(legend.position = "bottom")
+
+ggsave("figures/auprc_vs_distance.png", width = 7, height = 5)
+```
+
+**Figure 4.2:** Line plot of the summed inverse pairwise distance and the AUPRC for each AMP finding method 
+
+
+*inverse values have a fair `inf` values*
+```{r}
+length(which(is.infinite(amps_w_distance$Homo_sapiens_inverse))) #99
+
+length(which(is.infinite(amps_w_distance$Mus_musculus_inverse))) #100
+
+length(which(is.infinite(amps_w_distance$Pan_troglodytes_inverse))) #38
+
+length(which(is.infinite(amps_w_distance$Bos_taurus_inverse))) #55
+
+length(which(is.infinite(amps_w_distance$Canis_lupus_inverse))) #6
+
+length(which(is.infinite(amps_w_distance$Rhinolophus_ferrumequinum_inverse))) #54
+
+length(which(is.infinite(amps_w_distance$Sus_scrofa_inverse))) #29
+```
+
 
 <i>
 
 **Method notes:**
 
-Take column belonging to each organism (will have all all distances between that organism and all other organisms)
+Take column belonging to each organism (will have all distances between that organism and all other organisms)
 
 
 take inverse from all organisms and add them all up . single number is representation of histogram
