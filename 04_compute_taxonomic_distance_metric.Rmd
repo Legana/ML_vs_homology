@@ -288,6 +288,41 @@ ggsave("figures/auprc_vs_distance.png", width = 7, height = 5)
 
 **Figure 4.2:** Line plot of the summed inverse pairwise distance and the AUPRC for each AMP finding method 
 
+```{r}
+ggplot(auprc_and_distance_metric_long, aes(x = Inverse_distance_sum, y = AUPRC, colour = Method)) +
+  geom_point() +
+  labs(x = "The sum of the inverse pairwise distance", colour = "") +
+  theme_classic() +
+  theme(legend.position = "bottom")
+
+ggsave("figures/auprc_vs_distance_scatter.png", width = 7, height = 5)
+```
+
+**Figure 4.3:** **A** Scatterplot of the summed inverse pairwise distance and the AUPRC for each AMP finding method 
+
+
+```{r, fig.height=6, echo = FALSE}
+auprc_no_primates_scatter <- ggplot(filter(auprc_and_distance_metric_long, !Organism %in% c("Homo_sapiens", "Pan_troglodytes")), aes(x = Inverse_distance_sum, y = AUPRC, colour = Method)) +
+  geom_point() +
+  labs(x = "The sum of the inverse pairwise distance", colour = "") +
+  theme_classic() +
+  theme(legend.position = "bottom") +
+  labs(x = "", colour = "")
+
+auprc_no_primates_line <- ggplot(filter(auprc_and_distance_metric_long, !Organism %in% c("Homo_sapiens", "Pan_troglodytes")), aes(x = Inverse_distance_sum, y = AUPRC, colour = Method)) +
+  geom_line() +
+  labs(x = "The sum of the inverse pairwise distance", colour = "") +
+  theme_classic() +
+  theme(legend.position = "bottom")
+
+auprc_no_primates_scatter / auprc_no_primates_line + plot_annotation(tag_levels = "A")
+
+ggsave("figures/auprc_vs_distance_scatter_linear.png", width = 7, height = 7)
+
+```
+
+**Figure 4.3:** **A** Scatterplot and **B** line plot of the summed inverse pairwise distance and the AUPRC for each AMP finding method, excluding the primates *Homo sapiens* and *Pan troglodytes*
+
 
 *inverse values have a fair `inf` values*
 ```{r}

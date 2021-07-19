@@ -281,6 +281,29 @@ auprc_and_distance_metric_long <- auprc_and_distance_metric %>% pivot_longer(col
 **Figure 4.2:** Line plot of the summed inverse pairwise distance and
 the AUPRC for each AMP finding method
 
+``` r
+ggplot(auprc_and_distance_metric_long, aes(x = Inverse_distance_sum, y = AUPRC, colour = Method)) +
+  geom_point() +
+  labs(x = "The sum of the inverse pairwise distance", colour = "") +
+  theme_classic() +
+  theme(legend.position = "bottom")
+```
+
+![](04_compute_taxonomic_distance_metric_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+``` r
+ggsave("figures/auprc_vs_distance_scatter.png", width = 7, height = 5)
+```
+
+**Figure 4.3:** **A** Scatterplot of the summed inverse pairwise
+distance and the AUPRC for each AMP finding method
+
+![](04_compute_taxonomic_distance_metric_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
+**Figure 4.3:** **A** Scatterplot and **B** line plot of the summed
+inverse pairwise distance and the AUPRC for each AMP finding method,
+excluding the primates *Homo sapiens* and *Pan troglodytes*
+
 *inverse values have a fair `inf` values*
 
 ``` r
