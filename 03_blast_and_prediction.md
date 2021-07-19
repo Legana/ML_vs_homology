@@ -268,57 +268,60 @@ blast2_auprc <- get_bitscore_auprc(blast2results, "BLAST2")
 methods_auprc <- rbind(classification_auprc, blast1_auprc, blast2_auprc)
 ```
 
-![](03_blast_and_prediction_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](03_blast_and_prediction_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 **Figure 2.1:** The area under the precision recall curve for each
 method and organism
 
+## Correctly identified AMPs
+
+For classification models, generally a probability value of 0.5 or
+higher is considered to be a positive value. This means any protein
+predicted at a probability of 0.5 or higher is considered to be an AMP.
+The bitscores for the BLAST results range between 0 and 982 According to
+[Pearson 2013, pp. 4-5](https://doi.org/10.1002/0471250953.bi0301s42):
 “For average length proteins, a bit score of 50 is almost always
 significant. A bit score of 40 is only significant (E() \< 0.001) in
-searches of protein databases with fewer than 7000 entries”[Pearson
-2013, pp. 4-5](https://doi.org/10.1002/0471250953.bi0301s42)
+searches of protein databases with fewer than 7000 entries”. Therefore,
+a bitscore threshold of 50 or higher was used to categorise a protein as
+an AMP.
 
 ``` r
-max(blast1results$bitscore)
+blast1AMPsidentified <- blast1results %>% 
+  filter(bitscore >= 50 & Label == "Pos") %>%
+  count(Organism, name = "AMPs_found_BLAST1") 
+
+blast2AMPsidentified <- blast2results %>%
+  filter(bitscore >= 50 & Label == "Pos") %>%
+  count(Organism, name = "AMPs_found_BLAST2")
+
+classificationAMPsidentified <- proteome_predictions %>%
+  filter(prob_AMP >= 0.5 & Label == "Pos") %>%
+  count(Organism, name = "AMPs_found_Classification")
+
+total_amp_count <- proteome_predictions %>% 
+  filter(Label == "Pos") %>% 
+  count(Organism, name = "Total_AMP_count")
+
+amps_identified <- blast1AMPsidentified %>%
+  left_join(blast2AMPsidentified, by = "Organism") %>%
+  left_join(classificationAMPsidentified, by = "Organism") %>%
+  left_join(total_amp_count, by = "Organism")
 ```
-
-    ## [1] 982
-
-``` r
-max(blast2results$bitscore)
-```
-
-    ## [1] 982
 
 **Table 2:** Correctly identified AMPs in different proteomes with the
 BLAST1, BLAST2 and classification methods.
 
-| Organism                    | AMPs correctly identified | Total AMP count | Method         |
-|-----------------------------|---------------------------|-----------------|----------------|
-| *Mus musculus*              | 94                        | 131             | BLAST1         |
-| *Mus musculus*              | 107                       | 131             | BLAST2         |
-| *Mus musculus*              | 68                        | 131             | Classification |
-| *Homo sapiens*              | 72                        | 115             | BLAST1         |
-| *Homo sapiens*              | 77                        | 115             | BLAST2         |
-| *Homo sapiens*              | 62                        | 115             | Classification |
-| *Rattus norvegicus*         | 72                        | 88              | BLAST1         |
-| *Rattus norvegicus*         | 73                        | 88              | BLAST2         |
-| *Rattus norvegicus*         | 62                        | 88              | Classification |
-| *Bos taurus*                | 80                        | 116             | BLAST1         |
-| *Bos taurus*                | 99                        | 116             | BLAST2         |
-| *Bos taurus*                | 83                        | 116             | Classification |
-| *Pan troglodytes*           | 52                        | 65              | BLAST1         |
-| *Pan troglodytes*           | 52                        | 65              | BLAST2         |
-| *Pan troglodytes*           | 49                        | 65              | Classification |
-| *Sus scrofa*                | 60                        | 75              | BLAST1         |
-| *Sus scrofa*                | 61                        | 75              | BLAST2         |
-| *Sus scrofa*                | 48                        | 75              | Classification |
-| *Canis lupus familiaris*    | 39                        | 51              | BLAST1         |
-| *Canis lupus familiaris*    | 38                        | 51              | BLAST2         |
-| *Canis lupus familiaris*    | 30                        | 51              | Classification |
-| *Rhinolophus ferrumequinum* | 31                        | 37              | BLAST1         |
-| *Rhinolophus ferrumequinum* | 31                        | 37              | BLAST2         |
-| *Rhinolophus ferrumequinum* | 26                        | 37              | Classification |
+| Organism                  | AMPs_found_BLAST1 | AMPs_found_BLAST2 | AMPs_found_Classification | Total_AMP_count |
+|:--------------------------|------------------:|------------------:|--------------------------:|----------------:|
+| Bos_taurus                |                80 |                99 |                        83 |             116 |
+| Canis_lupus_familiaris    |                39 |                38 |                        30 |              51 |
+| Homo_sapiens              |                72 |                77 |                        62 |             115 |
+| Mus_musculus              |                94 |               107 |                        68 |             131 |
+| Pan_troglodytes           |                52 |                52 |                        49 |              65 |
+| Rattus_norvegicus         |                72 |                73 |                        62 |              88 |
+| Rhinolophus_ferrumequinum |                31 |                31 |                        26 |              37 |
+| Sus_scrofa                |                60 |                61 |                        48 |              75 |
 
 ## Calculate metrics for PR curves for BLAST and classification methods
 
@@ -399,7 +402,7 @@ figure_text <- tibble(
   mutate(Organism = factor(Organism, levels = c("Homo_sapiens", "Pan_troglodytes","Mus_musculus" , "Rattus_norvegicus" , "Bos_taurus", "Sus_scrofa", "Canis_lupus_familiaris", "Rhinolophus_ferrumequinum")))
 ```
 
-![](03_blast_and_prediction_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](03_blast_and_prediction_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 **Figure 2.2:** Comparison of three different methods on finding AMPs in
 different organisms using precision-recall curves. **BLAST1** method is
