@@ -12,7 +12,7 @@ library(patchwork)
 source("scripts/theme_black.R")
 ```
 
-All Uniprot AMPs were downloaded from UniProt on 02 July 2021 which included ~20 more reviewed AMPs
+All Uniprot AMPs were downloaded from UniProt on 07 July 2021 
 ```{r}
 uniprot_amps <- read_tsv("data/uniprot_amps_07Jul21_3371rev42126unrev.tab.gz") %>%
   rename(Entry_name = `Entry name`) %>% mutate(Organism = str_remove(Organism, " \\(.*")) %>% 
@@ -63,7 +63,6 @@ uniprot_amps <- read_tsv("data/uniprot_amps_07Jul21_3371rev42126unrev.tab.gz") %
                            str_detect(Order, "Crocodylia") ~ "Reptilia",
                            str_detect(Order, "Testudines") ~ "Reptilia",
                                                TRUE ~ Class))
-
 ```
 
 ## Taxonomic level: Phylum

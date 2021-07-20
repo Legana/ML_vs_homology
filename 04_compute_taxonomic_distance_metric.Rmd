@@ -362,3 +362,13 @@ Inverse because an AMP that is taxonomically far away (e.g bacterial AMP to a hu
 histogram for both normal and inverse?
 
 </i>
+
+how many AMPs present for each *chosen* organism in new training DB. use range of taxonomic distances. Stretch out x axis.
+10 borderline, over 20 is good. 
+
+
+what to do about unreviewed proteins?
+
+represent number of AMPs for each organism in plot
+scatterplot, size of point depends on number of AMPs
+how many AMPs if reviewed OR unreviewed, AND in AMP databases
