@@ -11,6 +11,8 @@ library(tidyverse)
 library(ape)
 library(treeio)
 library(patchwork)
+library(cowplot)
+library(pals)
 ```
 
 ## Prepare AMP and tree datasets
@@ -271,34 +273,52 @@ Join the AUPRC values and distance metric for each organism
 auprc_and_distance_metric <- left_join(methods_auprc_wide, summed_inverse_distance, by = "Organism")
 ```
 
+
+Add AMP count to plot as point size
+```{r}
+organisms <- c("Mus_musculus", "Bos_taurus", "Homo_sapiens","Rattus_norvegicus","Pan_troglodytes","Sus_scrofa", "Canis_lupus"  ,"Rhinolophus_ferrumequinum")
+
+organisms_amp_count <- amps_w_distance %>% 
+  filter(Organism %in% organisms) %>%
+  count(Organism, name = "AMP_count") %>%
+  mutate(Organism = ifelse(Organism == "Canis_lupus", "Canis_lupus_familiaris", Organism))
+
+auprc_and_distance_metric_wAMPcount <- left_join(auprc_and_distance_metric, organisms_amp_count, by = "Organism")
+```
+
+
 Change back to long format for plotting 
 ```{r}
-auprc_and_distance_metric_long <- auprc_and_distance_metric %>% pivot_longer(cols = c(Classification, BLAST1, BLAST2), names_to = "Method", values_to = "AUPRC")
+auprc_and_distance_metric_long <- auprc_and_distance_metric_wAMPcount %>% pivot_longer(cols = c(Classification, BLAST1, BLAST2), names_to = "Method", values_to = "AUPRC")
 ```
 
-```{r, echo=FALSE}
-ggplot(auprc_and_distance_metric_long, aes(x = Inverse_distance_sum, y = AUPRC, colour = Method)) +
-  geom_line() +
-  labs(x = "The sum of the inverse pairwise distance", colour = "") +
+
+```{r, echo  = FALSE, fig.width = 9}
+theplot <- ggplot(auprc_and_distance_metric_long, aes(x = Inverse_distance_sum, y = AUPRC)) +
+  geom_line(aes(linetype = Method)) +
+  geom_point(aes(colour = Organism, size = AMP_count)) +
+  labs(x = "The sum of the inverse pairwise distance", colour = "", linetype = "") +
   theme_classic() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "right") +
+  scale_colour_manual(values = watlington(8)) +
+  guides(colour = guide_legend(label.theme = element_text(face = "italic", size = 9)))
 
-ggsave("figures/auprc_vs_distance.png", width = 7, height = 5)
+
+size_legend <- get_legend(theplot + guides(linetype = "none"))
+
+plot_grid(theplot +
+            guides(colour = "none") +
+            guides(size = "none") +
+            theme(legend.position = "bottom"),
+          size_legend,
+          ncol = 2, rel_widths = c(2.5,1)) +
+  theme(plot.background = element_rect(fill = "white", colour = NA))
+
+
+ggsave("figures/auprc_distance_amps.png", width = 10, height = 5)
 ```
 
-**Figure 4.2:** Line plot of the summed inverse pairwise distance and the AUPRC for each AMP finding method 
-
-```{r}
-ggplot(auprc_and_distance_metric_long, aes(x = Inverse_distance_sum, y = AUPRC, colour = Method)) +
-  geom_point() +
-  labs(x = "The sum of the inverse pairwise distance", colour = "") +
-  theme_classic() +
-  theme(legend.position = "bottom")
-
-ggsave("figures/auprc_vs_distance_scatter.png", width = 7, height = 5)
-```
-
-**Figure 4.3:** **A** Scatterplot of the summed inverse pairwise distance and the AUPRC for each AMP finding method 
+**Figure 4.3:** **A** Scatter and line plot of the summed inverse pairwise distance and the AUPRC for each AMP finding method for AMPs in different organisms. The AMP_count reflects the number of AMPs known in each organism.
 
 
 ```{r, fig.height=6, echo = FALSE}

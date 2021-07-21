@@ -4,6 +4,8 @@ library(tidyverse)
 library(ape)
 library(treeio)
 library(patchwork)
+library(cowplot)
+library(pals)
 ```
 
 ## Prepare AMP and tree datasets
@@ -270,33 +272,31 @@ Join the AUPRC values and distance metric for each organism
 auprc_and_distance_metric <- left_join(methods_auprc_wide, summed_inverse_distance, by = "Organism")
 ```
 
+Add AMP count to plot as point size
+
+``` r
+organisms <- c("Mus_musculus", "Bos_taurus", "Homo_sapiens","Rattus_norvegicus","Pan_troglodytes","Sus_scrofa", "Canis_lupus"  ,"Rhinolophus_ferrumequinum")
+
+organisms_amp_count <- amps_w_distance %>% 
+  filter(Organism %in% organisms) %>%
+  count(Organism, name = "AMP_count") %>%
+  mutate(Organism = ifelse(Organism == "Canis_lupus", "Canis_lupus_familiaris", Organism))
+
+auprc_and_distance_metric_wAMPcount <- left_join(auprc_and_distance_metric, organisms_amp_count, by = "Organism")
+```
+
 Change back to long format for plotting
 
 ``` r
-auprc_and_distance_metric_long <- auprc_and_distance_metric %>% pivot_longer(cols = c(Classification, BLAST1, BLAST2), names_to = "Method", values_to = "AUPRC")
-```
-
-![](04_compute_taxonomic_distance_metric_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
-
-**Figure 4.2:** Line plot of the summed inverse pairwise distance and
-the AUPRC for each AMP finding method
-
-``` r
-ggplot(auprc_and_distance_metric_long, aes(x = Inverse_distance_sum, y = AUPRC, colour = Method)) +
-  geom_point() +
-  labs(x = "The sum of the inverse pairwise distance", colour = "") +
-  theme_classic() +
-  theme(legend.position = "bottom")
+auprc_and_distance_metric_long <- auprc_and_distance_metric_wAMPcount %>% pivot_longer(cols = c(Classification, BLAST1, BLAST2), names_to = "Method", values_to = "AUPRC")
 ```
 
 ![](04_compute_taxonomic_distance_metric_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
-``` r
-ggsave("figures/auprc_vs_distance_scatter.png", width = 7, height = 5)
-```
-
-**Figure 4.3:** **A** Scatterplot of the summed inverse pairwise
-distance and the AUPRC for each AMP finding method
+**Figure 4.3:** **A** Scatter and line plot of the summed inverse
+pairwise distance and the AUPRC for each AMP finding method for AMPs in
+different organisms. The AMP_count reflects the number of AMPs known in
+each organism.
 
 ![](04_compute_taxonomic_distance_metric_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
@@ -375,3 +375,13 @@ similarity) so we give that a low weighting.
 histogram for both normal and inverse?
 
 </i>
+
+how many AMPs present for each *chosen* organism in new training DB. use
+range of taxonomic distances. Stretch out x axis. 10 borderline, over 20
+is good.
+
+what to do about unreviewed proteins?
+
+represent number of AMPs for each organism in plot scatterplot, size of
+point depends on number of AMPs how many AMPs if reviewed OR unreviewed,
+AND in AMP databases
