@@ -295,8 +295,8 @@ auprc_and_distance_metric_long <- auprc_and_distance_metric_wAMPcount %>% pivot_
 
 **Figure 4.3:** **A** Scatter and line plot of the summed inverse
 pairwise distance and the AUPRC for each AMP finding method for AMPs in
-different organisms. The AMP_count reflects the number of AMPs known in
-each organism.
+different organisms. The size of points depends on the number of AMPs in
+the organism, represented by the AMP_count.
 
 ![](04_compute_taxonomic_distance_metric_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
@@ -375,13 +375,3 @@ similarity) so we give that a low weighting.
 histogram for both normal and inverse?
 
 </i>
-
-how many AMPs present for each *chosen* organism in new training DB. use
-range of taxonomic distances. Stretch out x axis. 10 borderline, over 20
-is good.
-
-what to do about unreviewed proteins?
-
-represent number of AMPs for each organism in plot scatterplot, size of
-point depends on number of AMPs how many AMPs if reviewed OR unreviewed,
-AND in AMP databases
