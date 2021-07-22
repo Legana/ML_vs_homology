@@ -48,14 +48,18 @@ sequences are between 50 and 500 AA long, which is the length filter
 that will be applied to train the classification models.
 
 The phyla Chordata, Arthropoda and Streptophyta contain the most AMPs.
-Want to pick the organism with the most AMPs in each taxonomic group
-within these three phyla.
+Therefore I want to pick the organism with the most AMPs in each
+taxonomic group within these three phyla.
 
 The phyla Evosea and Nematoda both have a single organism (*D.
 discoideum* (amoeba) and *C. elegans* (roundworm), respectively) with
 around 10 AMPs which could maybe be added to the test. The remaining
 phyla only have organisms that have less than 5 AMPs each, so these are
 not worth adding.
+
+Notes: How many AMPs present for each *chosen* organism in new training
+DB. Use range of taxonomic distances to stretch out distance x axis. 10
+borderline, over 20 is good.
 
 ``` r
 uniprot_and_amp_dbs_amps %>%
@@ -87,16 +91,14 @@ uniprot_and_amp_dbs_amps %>%
 
 ## Chordata
 
-Initially I thought to maybe take the top organism in every Chordata
-Class (rather than from every Order, as that would have been a lot of
-organisms), but after using `cd-hit` which removed many similar AMPs,
-the AMP count in some classes/orders drastically changed. If I were to
-take the organisms with the top AMP count, going by taxonomic **Class**,
-I would only end up with:
+### Organisms with most AMPs according to taxonomic **Class**
 
--   *Mus musculus* (mammal with 80 AMPs)
--   *Bombina maxima* (toad with 11 AMPs)
--   *Gallus gallus* (bird with 20 AMPs)
+-   *Mus musculus* (mammal with 104 AMPs)
+-   *Bombina maxima* (toad with 50 AMPs)
+-   *Gallus gallus* (bird with 25 AMPs)
+-   *Oncorhynchus mykiss* (fish with 12 AMPs)
+-   *Styela clava* (tunicate with 11 AMPs)
+-   *Crotalus durissus terrificus* (snake with 10 AMPs)
 
 ``` r
 uniprot_and_amp_dbs_amps %>%
@@ -126,25 +128,39 @@ uniprot_and_amp_dbs_amps %>%
     ##  9 Petromyzonti… Petromyzon_marinus  Hyperoartia              1                1
     ## 10 Amphioxiform… Branchiostoma_belc… Leptocardii              1                1
 
-How does representative sequence work for `cd-hit`? would it have a
-different result each time (i.e remove all the similar sequences but
-choose a different organism to keep with its representative sequence).
-Is it safe to pick organisms based on AMP_standardaa_90?
+If taking the top organisms per **Order**, where each organism has at
+least 10 AMPs, the following organisms would be candidates:
 
-If choosing the organism with the most (unique?) AMPs per **Order**, the
-following organisms would be chosen:
-
--   *Mus musculus* (mouse, mammal, 80 AMPs)
--   *Homo sapiens* (human, mammal, 64 AMPs)
--   *Bos taurus* (cattle, mammal, 41 AMPs)
--   *Bombina maxima* (toad, amphibian, 11 AMPs)
--   *Gallus gallus* (junglefowl, bird, 20 AMPs)
--   *Oryctolagus cuniculus* (rabbit, mammal, 12 AMPs)
+-   *Mus musculus* (mouse, mammal, 104 AMPs)
+-   *Homo sapiens* (human, mammal, 96 AMPs)
+-   *Bos taurus* (cattle, mammal, 58 AMPs)
+-   *Oryctolagus cuniculus* (rabbit, mammal, 17 AMPs)
 -   *Ornithorhynchus anatinus* (platypus, mammal, 11 AMPs )
+-   *Bombina maxima* (toad, amphibian, 50 AMPs)
+-   *Gallus gallus* (junglefowl, bird, 25 AMPs)
+-   *Oncorhynchus mykiss* (fish with 12 AMPs)
+-   *Styela clava* (tunicate with 11 AMPs)
+-   *Crotalus durissus terrificus* (snake with 10 AMPs)
 
-This is still mostly mammals though, and the list only has 1 fish with
-only 8 AMPs. I find this a bit odd, does this mean the fish AMPs were
-mostly homologous to other (mammal?) AMPs and got cut out by `cd-hit`?
+However, the toad *Bombina maxima*, does not have an available reference
+proteome. The only [reference proteomes available for
+anurans](https://www.uniprot.org/proteomes/?query=taxonomy%3A%22Anura+%289ANUR%29+%5B8342%5D%22&sort=score)
+are: *Xenopus tropicalis* (*Silurana tropicalis*), *Xenopus leavis* and
+*Lithobates catesbeianus* (*Rana catesbeiana*) which have 9, 10 and 13
+AMPs, respectively. *Lithobates catesbeianus* has the most AMPs of these
+three frogs but also has the most missing values (70%) in its reference
+proteome BUSCO score.
+
+The tunicate, *Styela clava* and the snake *Crotalus durissus
+terrificus* do not have a proteome either and the other organisms within
+their respective class have less than four known AMPs.
+
+The majority of this list are mammals. The platypus however, is a
+monotreme, and not a typical placental (eutherian) mammal, like the
+mouse, human, cattle and rabbit are. Monotremes diverged earlier from
+the mammalian common ancestor compared to the placental mammals and
+subsequently have different characteristics [(Deakin, Graves and Rens
+2012)](https://www.karger.com/Article/Fulltext/339433)
 
 ``` r
 uniprot_and_amp_dbs_amps %>%
@@ -175,14 +191,28 @@ uniprot_and_amp_dbs_amps %>%
     ##  9 Stolidobra… Styela_clava         Ascidiacea               11                5
     ## 10 Squamata    Crotalus_durissus_t… Lepidosauria (le…        10                3
 
+``` r
+frog_amps <- uniprot_and_amp_dbs_amps %>%
+  filter(Order == "Anura") %>%
+  count(Order, Organism, sort = TRUE, name = "AMP_count")
+```
+
 ## Arthropoda
 
 If choosing the organism with the most AMPs per **Order**, the following
 organisms would be chosen:
 
--   *Drosophila melanogaster* (fruitfly, insect, 17 AMPs)
--   *Lachesana tarabaevi* (ant spider, arachnid, 11 AMPs)
--   *Neoponera_goeldii* (ant, insect, 11 AMPs)
+-   *Lachesana tarabaevi* (ant spider, arachnid, 28 AMPs)
+-   *Drosophila melanogaster* (fruitfly, insect, 23 AMPs)
+-   *Penaeus vannamei* (shrimp, decapod, 18 AMPs)
+-   *Neoponera goeldii* (ant, insect, 15 AMPs)
+-   *Bombyx mori* (moth, insect, 15 AMPs)
+-   *Tachypleus tridentatus* (horseshoe crab, 11 AMPs)
+-   *Chaerilus_tricostatus* (scorpion, arachnid, 10 AMPs)
+
+*Neoponera goeldii*, *Tachypleus tridentatus* and *Chaerilus
+tricostatus* do not have a reference proteome and therefore could not be
+included.
 
 ``` r
 uniprot_and_amp_dbs_amps %>%
@@ -246,3 +276,39 @@ uniprot_and_amp_dbs_amps %>%
     ##  8 Solanales      Solanum_tuberosum      Magnoliopsi…         5                5
     ##  9 Proteales      Macadamia_integrifolia Magnoliopsi…         4                2
     ## 10 Arecales       Cocos_nucifera         Magnoliopsi…         3                1
+
+## Bacteria
+
+Bacteria contain AMPs called bacteriocins used for competitive
+advantages. *Escherichia coli* contains the most known AMPs (29) and
+have two reference proteomes corresponding to two different strains: K12
+and 0157:H7 where the latter is considered to be the pathogenic strain,
+which is inhibited by AMPs produced from the non-pathogenic *E. coli*
+strains [(Askari and Ghanbarpour
+2019)](https://bmcvetres.biomedcentral.com/articles/10.1186/s12917-018-1771-y)
+
+``` r
+bacteriocins <- uniprot_and_amp_dbs_amps %>%
+ filter(grepl("Bacteria", Taxonomic_lineage)) %>%
+ count(Organism, sort = TRUE, name = "AMP_count")
+```
+
+## Final organism selection
+
+Table 5.1: Final organism selection
+
+| Organism Name                         | Reference proteome ID                                        | Total proteins | AMPs | Gene count |
+|---------------------------------------|--------------------------------------------------------------|----------------|------|------------|
+| *Mus musculus* (mouse)                | [UP000000589](https://www.uniprot.org/proteomes/UP000000589) | 55,366         | 104  | 22,001     |
+| *Homo sapiens* (human)                | [UP000005640](https://www.uniprot.org/proteomes/UP000005640) | 78,120         | 96   | 20,600     |
+| *Bos taurus* (cattle)                 | [UP000009136](https://www.uniprot.org/proteomes/UP000009136) | 37,513         | 58   | 23,847     |
+| *Oryctolagus cuniculus* (rabbit)      | [UP000001811](https://www.uniprot.org/proteomes/UP000001811) | 41,459         | 17   | 21,193     |
+| *Ornithorhynchus anatinus* (platypus) | [UP000002279](https://www.uniprot.org/proteomes/UP000002279) | 32,824         | 11   | 17,390     |
+| *Gallus gallus* (bird)                | [UP000000539](https://www.uniprot.org/proteomes/UP000000539) | 27,535         | 25   | 18,113     |
+| *Oncorhynchus mykiss* (fish)          | [UP000193380](https://www.uniprot.org/proteomes/UP000193380) | 46,447         | 12   | 46,405     |
+| *Drosophila melanogaster* (fruitfly)  | [UP000000803](https://www.uniprot.org/proteomes/UP000000803) | 22,110         | 23   | 13,821     |
+| *Penaeus vannamei* (shrimp)           | [UP000283509](https://www.uniprot.org/proteomes/UP000283509) | 25,399         | 18   | 25,399     |
+| *Bombyx mori* (moth)                  | [UP000005204](https://www.uniprot.org/proteomes/UP000005204) | 14,776         | 15   | 14,773     |
+| *Arabidopsis thaliana* (plant)        | [UP000006548](https://www.uniprot.org/proteomes/UP000006548) | 39,337         | 294  | 27,468     |
+| *Lithobates catesbeianus* (frog)      | [UP000228934](https://www.uniprot.org/proteomes/UP000228934) | 28,218         | 13   | 28,218     |
+| *Escherichia coli K-12* (bacteria)    | [UP000228934](https://www.uniprot.org/proteomes/UP000228934) | 4,438          | 29   | 4,392      |
