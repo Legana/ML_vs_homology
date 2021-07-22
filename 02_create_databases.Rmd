@@ -44,6 +44,9 @@ swissprot_amps_standardaa90 <- read_faa("data/swissprot_amps_standardaa_90.fasta
 swissprot_nonamps_standardaa90 <- read_faa("data/swissprot_nonamps_standardaa_90.fasta") %>% left_join(swissprot_nonamps, by = c("seq_name" = "Entry_name")) %>% add_column(Label = "Neg") %>% filter(between(Length, 50, 500))
 ```
 
+```{r, eval=FALSE, echo = FALSE}
+saveRDS(swissprot_nonamps_standardaa90, "cache/negative_dataset.rds")
+```
 
 ## Mammals with the most reviewed AMPs
 
