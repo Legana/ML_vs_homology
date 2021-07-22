@@ -53,7 +53,9 @@ cd-hit -i cache/amps_standardaa.fasta -o cache/amps_standardaa.fasta90.fasta -c 
 
 ```{r}
 amps_standardaa90 <- read_faa("cache/amps_standardaa.fasta90.fasta") %>% 
-  left_join(uniprot_and_amp_dbs_amps, by = c("seq_name" = "Entry_name"))
+  left_join(uniprot_and_amp_dbs_amps, by = c("seq_name" = "Entry_name")) %>%
+  filter(between(Length, 50, 500)) %>% 
+  add_column(Label = "Pos")
 ```
 
 `cd-hit` resulted in 2,339 representative sequences. `r nrow(amps_standardaa90 %>% filter(between(Length, 50, 500)))` of these sequences are between 50 and 500 AA long, which is the length filter that will be applied to train the classification models. 
@@ -141,8 +143,11 @@ uniprot_and_amp_dbs_amps %>%
 
 ```{r}
 frog_amps <- uniprot_and_amp_dbs_amps %>%
-  filter(Order == "Anura") %>%
-  count(Order, Organism, sort = TRUE, name = "AMP_count")
+  mutate(in_90 = Entry_name %in% amps_standardaa90$seq_name) %>% 
+  filter(Order == "Anura") %>% 
+  group_by(Organism, Order) %>%
+  summarise(AMP_count = n(), AMP_standardaa_90 = sum(in_90)) %>% 
+  arrange(desc(AMP_count))
 ```
 
 
@@ -214,8 +219,11 @@ Bacteria contain AMPs called bacteriocins used for competitive advantages. *Esch
 
 ```{r}
 bacteriocins <- uniprot_and_amp_dbs_amps %>%
- filter(grepl("Bacteria", Taxonomic_lineage)) %>%
- count(Organism, sort = TRUE, name = "AMP_count")
+  mutate(in_90 = Entry_name %in% amps_standardaa90$seq_name) %>% 
+  filter(grepl("Bacteria", Taxonomic_lineage)) %>% 
+  group_by(Organism) %>%
+  summarise(AMP_count = n(), AMP_standardaa_90 = sum(in_90)) %>% 
+  arrange(desc(AMP_count))
 ```
 
 ## Final organism selection
@@ -238,4 +246,62 @@ Table 5.1: Final organism selection
 | *Lithobates catesbeianus* (frog) | [UP000228934](https://www.uniprot.org/proteomes/UP000228934) | 28,218 | 13 | 28,218 |
 | *Escherichia coli K-12* (bacteria) | [UP000228934](https://www.uniprot.org/proteomes/UP000228934) | 4,438 | 29 | 4,392 |
 
+
+## Extracting data for model training and query searches
+
+Read in the negative dataset containing non-AMPs from SwissProt prepared in 02_create_databases.Rmd  
+
+```{r}
+swissprot_nonamps_standardaa90 <- readRDS("cache/negative_dataset.rds")
+```
+
+The effectiveness of statistical learning (or machine learning) classification models on finding AMPs was compared with homology. To do this a training dataset was constructed to train a AMP classification model for a given organism, which contained all the AMPs in the AMP database **excluding the given organism**, as well as general protein sequences which exclude AMPs. To perform BLAST searches, a FASTA file containing *only* the AMPs in the AMP database that **exclude the given organism**.
+
+A function was written that details the abovementioned process which can be used for any organism in the representative AMP database:
+
+1. Extract all AMPs excluding the targeted organism
+2. Save AMPs to serve as BLAST query dataset
+3. Extract the negative background set necessary for creating classification model
+4. Combine AMPs (positive dataset) and negative dataset 
+5. Calculate features on this combined dataset
+6. Save feature dataset 
+
+
+```{r}
+save_training_and_query_data <- function(organism) {
+  
+  if(!(organism %in% amps_standardaa90$Organism )) {
+    
+    stop("Organism is not in dataset")
+  }
+  
+  group_amps <- amps_standardaa90 %>% filter(Organism != organism) %>% select("seq_name", "seq_aa", "Label")
+  
+  group_amps %>% select("seq_name", "seq_aa") %>% df_to_faa(paste("cache/", organism, ".fasta", sep = ""))
+  
+  print("Query database saved")
+  
+  group_nonamps <- swissprot_nonamps_standardaa90 %>% filter(Organism != organism) %>% select("seq_name", "seq_aa", "Label") %>% 
+    slice_sample(n = 10*nrow(group_amps)) 
+  
+  group_posandneg <- rbind(group_amps, group_nonamps) 
+  
+  group_features <- group_posandneg %>% calculate_features() %>% mutate(Label = as.factor(group_posandneg$Label))
+  
+  saveRDS(group_features, paste("cache/", organism, ".rds", sep = ""))
+  
+  print("Training dataset saved")
+}
+```
+
+```{r}
+
+organisms_round2 <- c("Mus_musculus", "Homo_sapiens", "Bos_taurus", "Oryctolagus_cuniculus", "Ornithorhynchus_anatinus", "Gallus_gallus", "Oncorhynchus_mykiss", "Drosophila_melanogaster", "Penaeus_vannamei", "Bombyx_mori", "Arabidopsis_thaliana", "Lithobates_catesbeianus", "Escherichia_coli")
+```
+
+```{r}
+
+save_training_and_query_data("Oryctolagus_cuniculus")
+
+```
 
