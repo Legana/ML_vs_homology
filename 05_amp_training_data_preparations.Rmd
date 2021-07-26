@@ -244,7 +244,7 @@ Table 5.1: Final organism selection
 | *Bombyx mori* (moth) | [UP000005204](https://www.uniprot.org/proteomes/UP000005204) | 14,776 | 15 | 14,773 |
 | *Arabidopsis thaliana* (plant) | [UP000006548](https://www.uniprot.org/proteomes/UP000006548) | 39,337 | 294 | 27,468 |
 | *Lithobates catesbeianus* (frog) | [UP000228934](https://www.uniprot.org/proteomes/UP000228934) | 28,218 | 13 | 28,218 |
-| *Escherichia coli K-12* (bacteria) | [UP000228934](https://www.uniprot.org/proteomes/UP000228934) | 4,438 | 29 | 4,392 |
+| *Escherichia coli K-12* (bacteria) | [UP000000625](https://www.uniprot.org/proteomes/UP000000625) | 4,438 | 29 | 4,392 |
 
 
 ## Extracting data for model training and query searches
@@ -300,8 +300,31 @@ organisms_round2 <- c("Mus_musculus", "Homo_sapiens", "Bos_taurus", "Oryctolagus
 ```
 
 ```{r}
+save_training_and_query_data("Mus_musculus")
+
+save_training_and_query_data("Homo_sapiens")
+
+save_training_and_query_data("Bos_taurus")
 
 save_training_and_query_data("Oryctolagus_cuniculus")
+
+save_training_and_query_data("Ornithorhynchus_anatinus")
+
+save_training_and_query_data("Gallus_gallus")
+
+save_training_and_query_data("Oncorhynchus_mykiss")
+
+save_training_and_query_data("Drosophila_melanogaster")
+
+save_training_and_query_data("Penaeus_vannamei")
+
+save_training_and_query_data("Bombyx_mori")
+
+save_training_and_query_data("Arabidopsis_thaliana")
+
+save_training_and_query_data("Lithobates_catesbeianus")
+
+save_training_and_query_data("Escherichia_coli")
 
 ```
 
