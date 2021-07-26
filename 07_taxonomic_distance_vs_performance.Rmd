@@ -1,0 +1,21 @@
+---
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Read in AMP database to extract organisms from to submit to [TimeTree](http://timetree.org/) for phylogenetic data
+```{r}
+uniprot_and_amp_dbs_amps <- readRDS("data/uniprot_amps_w_amp_dbsJuly21.rds") %>%
+  rename(Entry_name = `Entry name`) %>% 
+  mutate(Organism = str_remove(Organism, " \\(.*")) %>% 
+  rename(Taxonomic_lineage = `Taxonomic lineage (ALL)`) %>% 
+  rename(Order = `Taxonomic lineage (ORDER)`) %>% 
+  rename(Phylum = `Taxonomic lineage (PHYLUM)`) %>%
+  rename(Class = `Taxonomic lineage (CLASS)`) %>%
+  mutate(Order = str_remove(Order, " \\(.*")) %>%
+  mutate(Organism = str_replace_all(Organism, " ", "_")) %>%
+  ungroup()
+```
