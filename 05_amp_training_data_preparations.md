@@ -40,7 +40,9 @@ cd-hit -i cache/amps_standardaa.fasta -o cache/amps_standardaa.fasta90.fasta -c 
 
 ``` r
 amps_standardaa90 <- read_faa("cache/amps_standardaa.fasta90.fasta") %>% 
-  left_join(uniprot_and_amp_dbs_amps, by = c("seq_name" = "Entry_name"))
+  left_join(uniprot_and_amp_dbs_amps, by = c("seq_name" = "Entry_name")) %>%
+  filter(between(Length, 50, 500)) %>% 
+  add_column(Label = "Pos")
 ```
 
 `cd-hit` resulted in 2,339 representative sequences. 1635 of these
@@ -74,20 +76,20 @@ uniprot_and_amp_dbs_amps %>%
     ## # A tibble: 14 x 3
     ##    Phylum                AMP_count AMP_standardaa_90
     ##    <chr>                     <int>             <int>
-    ##  1 Chordata                   1747              1044
-    ##  2 Arthropoda                  685               493
-    ##  3 Streptophyta                556               470
-    ##  4 Mollusca                     33                29
+    ##  1 Chordata                   1747               690
+    ##  2 Arthropoda                  685               331
+    ##  3 Streptophyta                556               380
+    ##  4 Mollusca                     33                16
     ##  5 Evosea                       16                14
     ##  6 Nematoda (roundworms)        15                14
     ##  7 Annelida                     14                10
-    ##  8 Ascomycota                   13                11
-    ##  9 Cnidaria                     10                 9
-    ## 10 Basidiomycota                 8                 4
+    ##  8 Ascomycota                   13                10
+    ##  9 Cnidaria                     10                 7
+    ## 10 Basidiomycota                 8                 1
     ## 11 Echinodermata                 4                 3
     ## 12 Euryarchaeota                 3                 3
     ## 13 Mucoromycota                  1                 0
-    ## 14 Platyhelminthes               1                 1
+    ## 14 Platyhelminthes               1                 0
 
 ## Chordata
 
@@ -117,15 +119,15 @@ uniprot_and_amp_dbs_amps %>%
     ## # Groups:   Class [10]
     ##    Order         Organism            Class            AMP_count AMP_standardaa_…
     ##    <chr>         <chr>               <chr>                <int>            <int>
-    ##  1 Rodentia      Mus_musculus        Mammalia               104               80
-    ##  2 Anura         Bombina_maxima      Amphibia                50               11
-    ##  3 Galliformes   Gallus_gallus       Aves                    25               20
-    ##  4 Salmoniformes Oncorhynchus_mykiss Actinopteri             12                8
-    ##  5 Stolidobranc… Styela_clava        Ascidiacea              11                5
-    ##  6 Squamata      Crotalus_durissus_… Lepidosauria (l…        10                3
-    ##  7 Testudines    Pelodiscus_sinensis <NA>                     2                2
-    ##  8 Myliobatifor… Potamotrygon_cf._h… Chondrichthyes           1                1
-    ##  9 Petromyzonti… Petromyzon_marinus  Hyperoartia              1                1
+    ##  1 Rodentia      Mus_musculus        Mammalia               104               77
+    ##  2 Anura         Bombina_maxima      Amphibia                50                9
+    ##  3 Galliformes   Gallus_gallus       Aves                    25               19
+    ##  4 Salmoniformes Oncorhynchus_mykiss Actinopteri             12                5
+    ##  5 Stolidobranc… Styela_clava        Ascidiacea              11                4
+    ##  6 Squamata      Crotalus_durissus_… Lepidosauria (l…        10                2
+    ##  7 Testudines    Pelodiscus_sinensis <NA>                     2                1
+    ##  8 Myliobatifor… Potamotrygon_cf._h… Chondrichthyes           1                0
+    ##  9 Petromyzonti… Petromyzon_marinus  Hyperoartia              1                0
     ## 10 Amphioxiform… Branchiostoma_belc… Leptocardii              1                1
 
 If taking the top organisms per **Order**, where each organism has at
@@ -150,6 +152,39 @@ are: *Xenopus tropicalis* (*Silurana tropicalis*), *Xenopus leavis* and
 AMPs, respectively. *Lithobates catesbeianus* has the most AMPs of these
 three frogs but also has the most missing values (70%) in its reference
 proteome BUSCO score.
+
+``` r
+uniprot_and_amp_dbs_amps %>%
+  mutate(in_90 = Entry_name %in% amps_standardaa90$seq_name) %>% 
+  filter(Order == "Anura") %>% 
+  group_by(Organism, Order) %>%
+  summarise(AMP_count = n(), AMP_standardaa_90 = sum(in_90)) %>% 
+  arrange(desc(AMP_count)) %>%
+  head(18)
+```
+
+    ## # A tibble: 18 x 4
+    ## # Groups:   Organism [18]
+    ##    Organism                   Order AMP_count AMP_standardaa_90
+    ##    <chr>                      <chr>     <int>             <int>
+    ##  1 Bombina_maxima             Anura        50                 9
+    ##  2 Pelophylax_ridibundus      Anura        24                 0
+    ##  3 Rana_dybowskii             Anura        23                 8
+    ##  4 Phasmahyla_jandaia         Anura        20                 0
+    ##  5 Pithecopus_hypochondrialis Anura        20                 5
+    ##  6 Phyllomedusa_sauvagei      Anura        19                 9
+    ##  7 Xenopus_ruwenzoriensis     Anura        19                 0
+    ##  8 Amolops_jingdongensis      Anura        18                10
+    ##  9 Amolops_loloensis          Anura        18                 4
+    ## 10 Rana_temporaria            Anura        17                 3
+    ## 11 Lithobates_palustris       Anura        16                 3
+    ## 12 Odorrana_grahami           Anura        16                 7
+    ## 13 Cruziohyla_calcarifer      Anura        15                 3
+    ## 14 Pelophylax_lessonae        Anura        15                 2
+    ## 15 Phyllomedusa_bicolor       Anura        14                 8
+    ## 16 Phyllomedusa_trinitatis    Anura        14                 0
+    ## 17 Pithecopus_azureus         Anura        14                 2
+    ## 18 Lithobates_catesbeianus    Anura        13                 3
 
 The tunicate, *Styela clava* and the snake *Crotalus durissus
 terrificus* do not have a proteome either and the other organisms within
@@ -180,22 +215,16 @@ uniprot_and_amp_dbs_amps %>%
     ## # Groups:   Order [10]
     ##    Order       Organism             Class             AMP_count AMP_standardaa_…
     ##    <chr>       <chr>                <chr>                 <int>            <int>
-    ##  1 Rodentia    Mus_musculus         Mammalia                104               80
-    ##  2 Primates    Homo_sapiens         Mammalia                 96               64
-    ##  3 Artiodacty… Bos_taurus           Mammalia                 58               41
-    ##  4 Anura       Bombina_maxima       Amphibia                 50               11
-    ##  5 Galliformes Gallus_gallus        Aves                     25               20
-    ##  6 Lagomorpha  Oryctolagus_cunicul… Mammalia                 17               12
-    ##  7 Salmonifor… Oncorhynchus_mykiss  Actinopteri              12                8
+    ##  1 Rodentia    Mus_musculus         Mammalia                104               77
+    ##  2 Primates    Homo_sapiens         Mammalia                 96               58
+    ##  3 Artiodacty… Bos_taurus           Mammalia                 58               37
+    ##  4 Anura       Bombina_maxima       Amphibia                 50                9
+    ##  5 Galliformes Gallus_gallus        Aves                     25               19
+    ##  6 Lagomorpha  Oryctolagus_cunicul… Mammalia                 17               10
+    ##  7 Salmonifor… Oncorhynchus_mykiss  Actinopteri              12                5
     ##  8 Monotremata Ornithorhynchus_ana… Mammalia                 11               11
-    ##  9 Stolidobra… Styela_clava         Ascidiacea               11                5
-    ## 10 Squamata    Crotalus_durissus_t… Lepidosauria (le…        10                3
-
-``` r
-frog_amps <- uniprot_and_amp_dbs_amps %>%
-  filter(Order == "Anura") %>%
-  count(Order, Organism, sort = TRUE, name = "AMP_count")
-```
+    ##  9 Stolidobra… Styela_clava         Ascidiacea               11                4
+    ## 10 Squamata    Crotalus_durissus_t… Lepidosauria (le…        10                2
 
 ## Arthropoda
 
@@ -233,15 +262,15 @@ uniprot_and_amp_dbs_amps %>%
     ##    Order     Organism           Class                 AMP_count AMP_standardaa_…
     ##    <chr>     <chr>              <chr>                     <int>            <int>
     ##  1 Araneae   Lachesana_tarabae… Arachnida                    28               11
-    ##  2 Diptera   Drosophila_melano… Insecta                      23               17
+    ##  2 Diptera   Drosophila_melano… Insecta                      23               16
     ##  3 Decapoda  Penaeus_vannamei   Malacostraca                 18                4
-    ##  4 Hymenopt… Neoponera_goeldii  Insecta                      15               11
+    ##  4 Hymenopt… Neoponera_goeldii  Insecta                      15                0
     ##  5 Lepidopt… Bombyx_mori        Insecta                      13                9
-    ##  6 Xiphosura Tachypleus_triden… Merostomata (horsesh…        11                8
+    ##  6 Xiphosura Tachypleus_triden… Merostomata (horsesh…        11                6
     ##  7 Scorpion… Chaerilus_tricost… Arachnida                    10                8
-    ##  8 Hemiptera Palomena_prasina   Insecta                       5                4
-    ##  9 Coleopte… Acrocinus_longima… Insecta                       3                2
-    ## 10 Coleopte… Holotrichia_diomp… Insecta                       3                3
+    ##  8 Hemiptera Palomena_prasina   Insecta                       5                0
+    ##  9 Coleopte… Acrocinus_longima… Insecta                       3                0
+    ## 10 Coleopte… Holotrichia_diomp… Insecta                       3                2
 
 ## Streptophyta
 
@@ -266,16 +295,16 @@ uniprot_and_amp_dbs_amps %>%
     ## # Groups:   Order [10]
     ##    Order          Organism               Class        AMP_count AMP_standardaa_…
     ##    <chr>          <chr>                  <chr>            <int>            <int>
-    ##  1 Brassicales    Arabidopsis_thaliana   Magnoliopsi…       294              284
-    ##  2 Poales         Triticum_kiharae       Magnoliopsi…         9                6
-    ##  3 Caryophyllales Spinacia_oleracea      Magnoliopsi…         7                3
-    ##  4 Fabales        Clitoria_ternatea      Magnoliopsi…         7                6
-    ##  5 Malvales       Malva_parviflora       Magnoliopsi…         7                3
-    ##  6 Asterales      Taraxacum_officinale   Magnoliopsi…         5                5
-    ##  7 Ranunculales   Nigella_sativa         Magnoliopsi…         5                3
-    ##  8 Solanales      Solanum_tuberosum      Magnoliopsi…         5                5
-    ##  9 Proteales      Macadamia_integrifolia Magnoliopsi…         4                2
-    ## 10 Arecales       Cocos_nucifera         Magnoliopsi…         3                1
+    ##  1 Brassicales    Arabidopsis_thaliana   Magnoliopsi…       294              282
+    ##  2 Poales         Triticum_kiharae       Magnoliopsi…         9                1
+    ##  3 Caryophyllales Spinacia_oleracea      Magnoliopsi…         7                1
+    ##  4 Fabales        Clitoria_ternatea      Magnoliopsi…         7                1
+    ##  5 Malvales       Malva_parviflora       Magnoliopsi…         7                0
+    ##  6 Asterales      Taraxacum_officinale   Magnoliopsi…         5                0
+    ##  7 Ranunculales   Nigella_sativa         Magnoliopsi…         5                1
+    ##  8 Solanales      Solanum_tuberosum      Magnoliopsi…         5                3
+    ##  9 Proteales      Macadamia_integrifolia Magnoliopsi…         4                1
+    ## 10 Arecales       Cocos_nucifera         Magnoliopsi…         3                0
 
 ## Bacteria
 
@@ -289,8 +318,11 @@ strains [(Askari and Ghanbarpour
 
 ``` r
 bacteriocins <- uniprot_and_amp_dbs_amps %>%
- filter(grepl("Bacteria", Taxonomic_lineage)) %>%
- count(Organism, sort = TRUE, name = "AMP_count")
+  mutate(in_90 = Entry_name %in% amps_standardaa90$seq_name) %>% 
+  filter(grepl("Bacteria", Taxonomic_lineage)) %>% 
+  group_by(Organism) %>%
+  summarise(AMP_count = n(), AMP_standardaa_90 = sum(in_90)) %>% 
+  arrange(desc(AMP_count))
 ```
 
 ## Final organism selection
@@ -311,4 +343,92 @@ Table 5.1: Final organism selection
 | *Bombyx mori* (moth)                  | [UP000005204](https://www.uniprot.org/proteomes/UP000005204) | 14,776         | 15   | 14,773     |
 | *Arabidopsis thaliana* (plant)        | [UP000006548](https://www.uniprot.org/proteomes/UP000006548) | 39,337         | 294  | 27,468     |
 | *Lithobates catesbeianus* (frog)      | [UP000228934](https://www.uniprot.org/proteomes/UP000228934) | 28,218         | 13   | 28,218     |
-| *Escherichia coli K-12* (bacteria)    | [UP000228934](https://www.uniprot.org/proteomes/UP000228934) | 4,438          | 29   | 4,392      |
+| *Escherichia coli K-12* (bacteria)    | [UP000000625](https://www.uniprot.org/proteomes/UP000000625) | 4,438          | 29   | 4,392      |
+
+## Extracting data for model training and query searches
+
+Read in the negative dataset containing non-AMPs from SwissProt prepared
+in 02_create_databases.Rmd
+
+``` r
+swissprot_nonamps_standardaa90 <- readRDS("cache/negative_dataset.rds")
+```
+
+The effectiveness of statistical learning (or machine learning)
+classification models on finding AMPs was compared with homology. To do
+this a training dataset was constructed to train a AMP classification
+model for a given organism, which contained all the AMPs in the AMP
+database **excluding the given organism**, as well as general protein
+sequences which exclude AMPs. To perform BLAST searches, a FASTA file
+containing *only* the AMPs in the AMP database that **exclude the given
+organism**.
+
+A function was written that details the abovementioned process which can
+be used for any organism in the representative AMP database:
+
+1.  Extract all AMPs excluding the targeted organism
+2.  Save AMPs to serve as BLAST query dataset
+3.  Extract the negative background set necessary for creating
+    classification model
+4.  Combine AMPs (positive dataset) and negative dataset
+5.  Calculate features on this combined dataset
+6.  Save feature dataset
+
+``` r
+save_training_and_query_data <- function(organism) {
+  
+  if(!(organism %in% amps_standardaa90$Organism )) {
+    
+    stop("Organism is not in dataset")
+  }
+  
+  group_amps <- amps_standardaa90 %>% filter(Organism != organism) %>% select("seq_name", "seq_aa", "Label")
+  
+  group_amps %>% select("seq_name", "seq_aa") %>% df_to_faa(paste("cache/", organism, ".fasta", sep = ""))
+  
+  print("Query database saved")
+  
+  group_nonamps <- swissprot_nonamps_standardaa90 %>% filter(Organism != organism) %>% select("seq_name", "seq_aa", "Label") %>% 
+    slice_sample(n = 10*nrow(group_amps)) 
+  
+  group_posandneg <- rbind(group_amps, group_nonamps) 
+  
+  group_features <- group_posandneg %>% calculate_features() %>% mutate(Label = as.factor(group_posandneg$Label))
+  
+  saveRDS(group_features, paste("cache/", organism, ".rds", sep = ""))
+  
+  print("Training dataset saved")
+}
+```
+
+``` r
+organisms_round2 <- c("Mus_musculus", "Homo_sapiens", "Bos_taurus", "Oryctolagus_cuniculus", "Ornithorhynchus_anatinus", "Gallus_gallus", "Oncorhynchus_mykiss", "Drosophila_melanogaster", "Penaeus_vannamei", "Bombyx_mori", "Arabidopsis_thaliana", "Lithobates_catesbeianus", "Escherichia_coli")
+```
+
+``` r
+save_training_and_query_data("Mus_musculus")
+
+save_training_and_query_data("Homo_sapiens")
+
+save_training_and_query_data("Bos_taurus")
+
+save_training_and_query_data("Oryctolagus_cuniculus")
+
+save_training_and_query_data("Ornithorhynchus_anatinus")
+
+save_training_and_query_data("Gallus_gallus")
+
+save_training_and_query_data("Oncorhynchus_mykiss")
+
+save_training_and_query_data("Drosophila_melanogaster")
+
+save_training_and_query_data("Penaeus_vannamei")
+
+save_training_and_query_data("Bombyx_mori")
+
+save_training_and_query_data("Arabidopsis_thaliana")
+
+save_training_and_query_data("Lithobates_catesbeianus")
+
+save_training_and_query_data("Escherichia_coli")
+```

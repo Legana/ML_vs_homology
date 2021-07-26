@@ -120,6 +120,16 @@ If taking the top organisms per **Order**, where each organism has at least 10 A
  
 However, the toad *Bombina maxima*, does not have an available reference proteome. The only [reference proteomes available for anurans](https://www.uniprot.org/proteomes/?query=taxonomy%3A%22Anura+%289ANUR%29+%5B8342%5D%22&sort=score) are: *Xenopus tropicalis* (*Silurana tropicalis*), *Xenopus leavis* and *Lithobates catesbeianus* (*Rana catesbeiana*) which have 9, 10 and 13 AMPs, respectively. *Lithobates catesbeianus* has the most AMPs of these three frogs but also has the most missing values (70%) in its reference proteome BUSCO score. 
 
+```{r}
+uniprot_and_amp_dbs_amps %>%
+  mutate(in_90 = Entry_name %in% amps_standardaa90$seq_name) %>% 
+  filter(Order == "Anura") %>% 
+  group_by(Organism, Order) %>%
+  summarise(AMP_count = n(), AMP_standardaa_90 = sum(in_90)) %>% 
+  arrange(desc(AMP_count)) %>%
+  head(18)
+```
+
 The tunicate, *Styela clava* and the snake *Crotalus durissus terrificus* do not have a proteome either and the other organisms within their respective class have less than four known AMPs. 
  
 The majority of this list are mammals. The platypus however, is a monotreme, and not a typical placental (eutherian) mammal, like the mouse, human, cattle and rabbit are. Monotremes diverged earlier from the mammalian common ancestor compared to the placental mammals and subsequently have different characteristics [(Deakin, Graves and Rens 2012)](https://www.karger.com/Article/Fulltext/339433) 
@@ -140,15 +150,6 @@ uniprot_and_amp_dbs_amps %>%
   head(10)
 ```
 
-
-```{r}
-frog_amps <- uniprot_and_amp_dbs_amps %>%
-  mutate(in_90 = Entry_name %in% amps_standardaa90$seq_name) %>% 
-  filter(Order == "Anura") %>% 
-  group_by(Organism, Order) %>%
-  summarise(AMP_count = n(), AMP_standardaa_90 = sum(in_90)) %>% 
-  arrange(desc(AMP_count))
-```
 
 
 ```{r, eval = FALSE, echo = FALSE}
@@ -299,7 +300,7 @@ save_training_and_query_data <- function(organism) {
 organisms_round2 <- c("Mus_musculus", "Homo_sapiens", "Bos_taurus", "Oryctolagus_cuniculus", "Ornithorhynchus_anatinus", "Gallus_gallus", "Oncorhynchus_mykiss", "Drosophila_melanogaster", "Penaeus_vannamei", "Bombyx_mori", "Arabidopsis_thaliana", "Lithobates_catesbeianus", "Escherichia_coli")
 ```
 
-```{r}
+```{r, eval = FALSE}
 save_training_and_query_data("Mus_musculus")
 
 save_training_and_query_data("Homo_sapiens")
