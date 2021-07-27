@@ -77,6 +77,79 @@ bacteria_proteome_metadata <- read_proteome_metadata("data/proteomes/E_coli-prot
 
 ```
 
+## Overlap between AMPs in AMP database and AMPs present in proteomes
+```{r}
+
+amp_overlap_in_proteome_and_amp_db <- function(proteome_metadata, organism){
+  proteome_metadata %>% 
+    filter(Label == "Pos") %>% 
+    mutate(in_amp_database = Entry %in% uniprot_and_amp_dbs_amps$Entry) %>%  
+    summarise(AMPs_in_proteome = n(), AMPs_overlap_in_AMP_db = sum(in_amp_database)) %>% 
+    mutate(Organism = organism)
+}
+
+mouse_amp_overlap <- amp_overlap_in_proteome_and_amp_db(mouse_proteome_metadata, "Mus musculus")
+human_amp_overlap <- amp_overlap_in_proteome_and_amp_db(human_proteome_metadata, "Homo sapiens")
+cow_amp_overlap <- amp_overlap_in_proteome_and_amp_db(cow_proteome_metadata, "Bos taurus")
+rabbit_amp_overlap <- amp_overlap_in_proteome_and_amp_db(rabbit_proteome_metadata, "Oryctolagus cuniculus")
+platypus_amp_overlap <- amp_overlap_in_proteome_and_amp_db(platypus_proteome_metadata, "Ornithorhynchus anatinus")
+junglefowl_amp_overlap <- amp_overlap_in_proteome_and_amp_db(junglefowl_proteome_metadata, "Gallus gallus")
+trout_amp_overlap <- amp_overlap_in_proteome_and_amp_db(trout_proteome_metadata, "Oncorhynchus mykiss")
+fruitfly_amp_overlap <- amp_overlap_in_proteome_and_amp_db(fruitfly_proteome_metadata, "Drosophila melanogaster")
+shrimp_amp_overlap <- amp_overlap_in_proteome_and_amp_db(shrimp_proteome_metadata, "Penaeus vannamei")
+moth_amp_overlap <- amp_overlap_in_proteome_and_amp_db(moth_proteome_metadata, "Bombyx mori")
+cress_amp_overlap <- amp_overlap_in_proteome_and_amp_db(cress_proteome_metadata, "Arabidopsis thaliana")
+frog_amp_overlap <- amp_overlap_in_proteome_and_amp_db(frog_proteome_metadata, "Lithobates catesbeianus")
+bacteria_amp_overlap <- amp_overlap_in_proteome_and_amp_db(bacteria_proteome_metadata, "Escherichia coli")
+
+amp_overlap <- rbind(mouse_amp_overlap, human_amp_overlap, cow_amp_overlap, rabbit_amp_overlap, platypus_amp_overlap, junglefowl_amp_overlap, trout_amp_overlap, fruitfly_amp_overlap, shrimp_amp_overlap, moth_amp_overlap, cress_amp_overlap, frog_amp_overlap, bacteria_amp_overlap) %>% mutate(AMPs_in_AMP_db = c(104, 96, 58, 17, 11, 25, 12, 23 , 18, 15, 294, 13, 29))
+
+amp_overlap
+```
+
+```{r}
+uniprot_and_amp_dbs_amps %>% 
+  filter(Organism == "Oncorhynchus_mykiss")
+
+trout_proteome_metadata %>%
+   filter(str_detect(Sequence, "KVHGSLARAGK"))
+
+trout_proteome_metadata %>%
+   filter(str_detect(Sequence, str_c(seqs, collapse = "|")))
+
+seqs <- uniprot_and_amp_dbs_amps %>% filter(Organism == "Oncorhynchus_mykiss") %>% select(Sequence)
+
+trout_proteome_metadata %>%
+   filter(str_detect(Sequence, str_c(seqs$Sequence, collapse = "|")))
+
+# AMPs in proteomes not labelled "Pos"
+get_missing_amps <- function(proteome_metadata, organism) {
+  seqs <- uniprot_and_amp_dbs_amps %>% filter(Organism == organism) %>% select(Sequence)
+  proteome_metadata %>% filter(Label == "Neg") %>% filter(str_detect(Sequence, str_c(seqs$Sequence, collapse = "|")))
+}
+
+
+
+get_missing_amps(mouse_proteome_metadata, "Mus_musculus")
+get_missing_amps(human_proteome_metadata, "Homo_sapiens")
+get_missing_amps(cow_proteome_metadata, "Bos_taurus")
+get_missing_amps(rabbit_proteome_metadata, "Oryctolagus_cuniculus")
+get_missing_amps(platypus_proteome_metadata, "Ornithorhynchus_anatinus")
+get_missing_amps(junglefowl_proteome_metadata, "Gallus_gallus")
+get_missing_amps(trout_proteome_metadata, "Oncorhynchus_mykiss")
+get_missing_amps(fruitfly_proteome_metadata, "Drosophila_melanogaster")
+get_missing_amps(shrimp_proteome_metadata, "Penaeus_vannamei")
+get_missing_amps(moth_proteome_metadata, "Bombyx_mori")
+get_missing_amps(cress_proteome_metadata, "Arabidopsis_thaliana")
+get_missing_amps(frog_proteome_metadata, "Lithobates_catesbeianus")
+get_missing_amps(bacteria_proteome_metadata, "Escherichia_coli")
+
+
+
+
+```
+
+
 ## BLAST results
 
 The [BLAST+](https://pubmed.ncbi.nlm.nih.gov/20003500/) version used was blast 2.11.0, build Nov 17 2020 for MacOS.
@@ -183,31 +256,5 @@ saveRDS(proteome_predictions, "cache/proteome_predictions13.rds")
 
 ```{r, echo = FALSE}
 proteome_predictions <- readRDS("cache/proteome_predictions13.rds")
-```
-
-bad overlap between AMPs in AMP database and AMPs present in proteomes
-```{r}
-
-amp_overlap_in_proteome_and_amp_db <- function(proteome_metadata, organism){
-  proteome_metadata %>% filter(Label == "Pos") %>% mutate(in_amp_database = Entry %in% uniprot_and_amp_dbs_amps$Entry) %>%  summarise(AMPs_in_proteome = n(), AMPs_overlap_in_AMP_db = sum(in_amp_database)) %>% mutate(Organism = organism)
-}
-
-mouse_amp_overlap <- amp_overlap_in_proteome_and_amp_db(mouse_proteome_metadata, "Mus musculus")
-human_amp_overlap <- amp_overlap_in_proteome_and_amp_db(human_proteome_metadata, "Homo sapiens")
-cow_amp_overlap <- amp_overlap_in_proteome_and_amp_db(cow_proteome_metadata, "Bos taurus")
-rabbit_amp_overlap <- amp_overlap_in_proteome_and_amp_db(rabbit_proteome_metadata, "Oryctolagus cuniculus")
-platypus_amp_overlap <- amp_overlap_in_proteome_and_amp_db(platypus_proteome_metadata, "Ornithorhynchus anatinus")
-junglefowl_amp_overlap <- amp_overlap_in_proteome_and_amp_db(junglefowl_proteome_metadata, "Gallus gallus")
-trout_amp_overlap <- amp_overlap_in_proteome_and_amp_db(trout_proteome_metadata, "Oncorhynchus mykiss")
-fruitfly_amp_overlap <- amp_overlap_in_proteome_and_amp_db(fruitfly_proteome_metadata, "Drosophila melanogaster")
-shrimp_amp_overlap <- amp_overlap_in_proteome_and_amp_db(shrimp_proteome_metadata, "Penaeus vannamei")
-moth_amp_overlap <- amp_overlap_in_proteome_and_amp_db(moth_proteome_metadata, "Bombyx mori")
-cress_amp_overlap <- amp_overlap_in_proteome_and_amp_db(cress_proteome_metadata, "Arabidopsis thaliana")
-frog_amp_overlap <- amp_overlap_in_proteome_and_amp_db(frog_proteome_metadata, "Lithobates catesbeianus")
-bacteria_amp_overlap <- amp_overlap_in_proteome_and_amp_db(bacteria_proteome_metadata, "Escherichia coli")
-
-amp_overlap <- rbind(mouse_amp_overlap, human_amp_overlap, cow_amp_overlap, rabbit_amp_overlap, platypus_amp_overlap, junglefowl_amp_overlap, trout_amp_overlap, fruitfly_amp_overlap, shrimp_amp_overlap, moth_amp_overlap, cress_amp_overlap, frog_amp_overlap, bacteria_amp_overlap) %>% mutate(AMPs_in_AMP_db = c(104, 96, 58, 17, 11, 25, 12, 23 , 18, 15, 294, 13, 29))
-
-amp_overlap
 ```
 
