@@ -66,6 +66,109 @@ frog_proteome_metadata <- read_proteome_metadata("data/proteomes/L_catesbeianus-
 bacteria_proteome_metadata <- read_proteome_metadata("data/proteomes/E_coli-proteome-UP000000625.tab.gz", "Escherichia_coli")
 ```
 
+## Overlap between AMPs in AMP database and AMPs present in proteomes
+
+``` r
+amp_overlap_in_proteome_and_amp_db <- function(proteome_metadata, organism){
+  proteome_metadata %>% 
+    filter(Label == "Pos") %>% 
+    mutate(in_amp_database = Entry %in% uniprot_and_amp_dbs_amps$Entry) %>%  
+    summarise(AMPs_in_proteome = n(), AMPs_overlap_in_AMP_db = sum(in_amp_database)) %>% 
+    mutate(Organism = organism)
+}
+
+mouse_amp_overlap <- amp_overlap_in_proteome_and_amp_db(mouse_proteome_metadata, "Mus musculus")
+human_amp_overlap <- amp_overlap_in_proteome_and_amp_db(human_proteome_metadata, "Homo sapiens")
+cow_amp_overlap <- amp_overlap_in_proteome_and_amp_db(cow_proteome_metadata, "Bos taurus")
+rabbit_amp_overlap <- amp_overlap_in_proteome_and_amp_db(rabbit_proteome_metadata, "Oryctolagus cuniculus")
+platypus_amp_overlap <- amp_overlap_in_proteome_and_amp_db(platypus_proteome_metadata, "Ornithorhynchus anatinus")
+junglefowl_amp_overlap <- amp_overlap_in_proteome_and_amp_db(junglefowl_proteome_metadata, "Gallus gallus")
+trout_amp_overlap <- amp_overlap_in_proteome_and_amp_db(trout_proteome_metadata, "Oncorhynchus mykiss")
+fruitfly_amp_overlap <- amp_overlap_in_proteome_and_amp_db(fruitfly_proteome_metadata, "Drosophila melanogaster")
+shrimp_amp_overlap <- amp_overlap_in_proteome_and_amp_db(shrimp_proteome_metadata, "Penaeus vannamei")
+moth_amp_overlap <- amp_overlap_in_proteome_and_amp_db(moth_proteome_metadata, "Bombyx mori")
+cress_amp_overlap <- amp_overlap_in_proteome_and_amp_db(cress_proteome_metadata, "Arabidopsis thaliana")
+frog_amp_overlap <- amp_overlap_in_proteome_and_amp_db(frog_proteome_metadata, "Lithobates catesbeianus")
+bacteria_amp_overlap <- amp_overlap_in_proteome_and_amp_db(bacteria_proteome_metadata, "Escherichia coli")
+
+amp_overlap <- rbind(mouse_amp_overlap, human_amp_overlap, cow_amp_overlap, rabbit_amp_overlap, platypus_amp_overlap, junglefowl_amp_overlap, trout_amp_overlap, fruitfly_amp_overlap, shrimp_amp_overlap, moth_amp_overlap, cress_amp_overlap, frog_amp_overlap, bacteria_amp_overlap) %>% mutate(AMPs_in_AMP_db = c(104, 96, 58, 17, 11, 25, 12, 23 , 18, 15, 294, 13, 29))
+
+amp_overlap %>% select(Organism, AMPs_in_proteome, AMPs_overlap_in_AMP_db, AMPs_in_AMP_db)
+```
+
+    ## # A tibble: 13 x 4
+    ##    Organism                AMPs_in_proteome AMPs_overlap_in_AMP_… AMPs_in_AMP_db
+    ##    <chr>                              <int>                 <int>          <dbl>
+    ##  1 Mus musculus                         131                    99            104
+    ##  2 Homo sapiens                         115                    95             96
+    ##  3 Bos taurus                           116                    54             58
+    ##  4 Oryctolagus cuniculus                 83                    17             17
+    ##  5 Ornithorhynchus anatin…               27                    11             11
+    ##  6 Gallus gallus                         29                    25             25
+    ##  7 Oncorhynchus mykiss                   15                     0             12
+    ##  8 Drosophila melanogaster               30                    23             23
+    ##  9 Penaeus vannamei                       3                     0             18
+    ## 10 Bombyx mori                           25                    13             15
+    ## 11 Arabidopsis thaliana                 294                   291            294
+    ## 12 Lithobates catesbeianus               11                     0             13
+    ## 13 Escherichia coli                       4                     4             29
+
+From the `amp_overlap` table, it can be seen that there are AMPs in the
+proteomes that do not overlap with the AMPs in the AMP database. A
+possible explanation for this is that the proteome AMPs were found via
+the “Antimicrobial” keyword in UniProt. These contain proteins not
+experimentally verified to contain antimicrobial activity and are
+therefore not included in the AMP database. Additionally, there are AMPs
+in the AMP database not present in the proteomes.
+
+To see if this is due to the presence of mature AMP sequences in the AMP
+database, the AMPs in the AMP database corresponding to each organism
+were matched to full length sequences, annotated as not antimicrobial,
+in the organisms’ respective proteomes. However, only a very few number
+of AMPs were detected with this method. The absence of these AMP in the
+proteome
+
+``` r
+get_missing_amps <- function(proteome_metadata, organism) {
+  seqs <- uniprot_and_amp_dbs_amps %>% filter(Organism == organism) %>% select(Sequence)
+  proteome_metadata %>% filter(Label == "Neg") %>% filter(str_detect(Sequence, str_c(seqs$Sequence, collapse = "|")))
+}
+
+get_missing_amps(mouse_proteome_metadata, "Mus_musculus")
+get_missing_amps(human_proteome_metadata, "Homo_sapiens")
+get_missing_amps(cow_proteome_metadata, "Bos_taurus")
+get_missing_amps(rabbit_proteome_metadata, "Oryctolagus_cuniculus")
+get_missing_amps(platypus_proteome_metadata, "Ornithorhynchus_anatinus")
+get_missing_amps(junglefowl_proteome_metadata, "Gallus_gallus")
+get_missing_amps(trout_proteome_metadata, "Oncorhynchus_mykiss")
+get_missing_amps(fruitfly_proteome_metadata, "Drosophila_melanogaster")
+get_missing_amps(shrimp_proteome_metadata, "Penaeus_vannamei")
+get_missing_amps(moth_proteome_metadata, "Bombyx_mori")
+get_missing_amps(cress_proteome_metadata, "Arabidopsis_thaliana")
+get_missing_amps(frog_proteome_metadata, "Lithobates_catesbeianus")
+get_missing_amps(bacteria_proteome_metadata, "Escherichia_coli")
+```
+
+| Organism Name              | Number of AMPs in proteome not annotated as AMP | AMPs not accounted for |
+|----------------------------|-------------------------------------------------|------------------------|
+| *Mus musculus*             | 1                                               | 4                      |
+| *Homo sapiens*             | 1                                               | 0                      |
+| *Bos taurus*               | 1                                               | 3                      |
+| *Oryctolagus cuniculus*    | 0                                               | 0                      |
+| *Ornithorhynchus anatinus* | 0                                               | 0                      |
+| *Gallus gallus*            | 1                                               | 0                      |
+| *Oncorhynchus mykiss*      | 2                                               | 10                     |
+| *Drosophila melanogaster*  | 3                                               | 0                      |
+| *Penaeus vannamei*         | 0                                               | 18                     |
+| *Bombyx mori*              | 0                                               | 2                      |
+| *Arabidopsis thaliana*     | 2                                               | 1                      |
+| *Lithobates catesbeianus*  | 1                                               | 13                     |
+| *Escherichia coli K-12*    | 0                                               | 25                     |
+
+AMPs not accounted for was calculated by subtracting the
+AMPs_overlap_in_AMP_db from AMPs_in_AMP_db and then substracting this
+number from the Number of AMPs in proteome not annotated as AMP
+
 ## BLAST results
 
 The [BLAST+](https://pubmed.ncbi.nlm.nih.gov/20003500/) version used was
@@ -172,46 +275,3 @@ bacteria_proteome_pred <- join_pred_with_metadata(bacteria_pred, bacteria_proteo
 
 proteome_predictions <- rbind(mouse_proteome_pred, human_proteome_pred, cow_proteome_pred, rabbit_proteome_pred, platypus_proteome_pred, junglefowl_proteome_pred, trout_proteome_pred, fruitfly_proteome_pred, shrimp_proteome_pred, moth_proteome_pred, cress_proteome_pred, frog_proteome_pred, bacteria_proteome_pred)  
 ```
-
-bad overlap between AMPs in AMP database and AMPs present in proteomes
-
-``` r
-amp_overlap_in_proteome_and_amp_db <- function(proteome_metadata, organism){
-  proteome_metadata %>% filter(Label == "Pos") %>% mutate(in_amp_database = Entry %in% uniprot_and_amp_dbs_amps$Entry) %>%  summarise(AMPs_in_proteome = n(), AMPs_overlap_in_AMP_db = sum(in_amp_database)) %>% mutate(Organism = organism)
-}
-
-mouse_amp_overlap <- amp_overlap_in_proteome_and_amp_db(mouse_proteome_metadata, "Mus musculus")
-human_amp_overlap <- amp_overlap_in_proteome_and_amp_db(human_proteome_metadata, "Homo sapiens")
-cow_amp_overlap <- amp_overlap_in_proteome_and_amp_db(cow_proteome_metadata, "Bos taurus")
-rabbit_amp_overlap <- amp_overlap_in_proteome_and_amp_db(rabbit_proteome_metadata, "Oryctolagus cuniculus")
-platypus_amp_overlap <- amp_overlap_in_proteome_and_amp_db(platypus_proteome_metadata, "Ornithorhynchus anatinus")
-junglefowl_amp_overlap <- amp_overlap_in_proteome_and_amp_db(junglefowl_proteome_metadata, "Gallus gallus")
-trout_amp_overlap <- amp_overlap_in_proteome_and_amp_db(trout_proteome_metadata, "Oncorhynchus mykiss")
-fruitfly_amp_overlap <- amp_overlap_in_proteome_and_amp_db(fruitfly_proteome_metadata, "Drosophila melanogaster")
-shrimp_amp_overlap <- amp_overlap_in_proteome_and_amp_db(shrimp_proteome_metadata, "Penaeus vannamei")
-moth_amp_overlap <- amp_overlap_in_proteome_and_amp_db(moth_proteome_metadata, "Bombyx mori")
-cress_amp_overlap <- amp_overlap_in_proteome_and_amp_db(cress_proteome_metadata, "Arabidopsis thaliana")
-frog_amp_overlap <- amp_overlap_in_proteome_and_amp_db(frog_proteome_metadata, "Lithobates catesbeianus")
-bacteria_amp_overlap <- amp_overlap_in_proteome_and_amp_db(bacteria_proteome_metadata, "Escherichia coli")
-
-amp_overlap <- rbind(mouse_amp_overlap, human_amp_overlap, cow_amp_overlap, rabbit_amp_overlap, platypus_amp_overlap, junglefowl_amp_overlap, trout_amp_overlap, fruitfly_amp_overlap, shrimp_amp_overlap, moth_amp_overlap, cress_amp_overlap, frog_amp_overlap, bacteria_amp_overlap) %>% mutate(AMPs_in_AMP_db = c(104, 96, 58, 17, 11, 25, 12, 23 , 18, 15, 294, 13, 29))
-
-amp_overlap
-```
-
-    ## # A tibble: 13 x 4
-    ##    AMPs_in_proteome AMPs_overlap_in_AMP_db Organism               AMPs_in_AMP_db
-    ##               <int>                  <int> <chr>                           <dbl>
-    ##  1              131                     99 Mus musculus                      104
-    ##  2              115                     95 Homo sapiens                       96
-    ##  3              116                     54 Bos taurus                         58
-    ##  4               83                     17 Oryctolagus cuniculus              17
-    ##  5               27                     11 Ornithorhynchus anati…             11
-    ##  6               29                     25 Gallus gallus                      25
-    ##  7               15                      0 Oncorhynchus mykiss                12
-    ##  8               30                     23 Drosophila melanogast…             23
-    ##  9                3                      0 Penaeus vannamei                   18
-    ## 10               25                     13 Bombyx mori                        15
-    ## 11              294                    291 Arabidopsis thaliana              294
-    ## 12               11                      0 Lithobates catesbeian…             13
-    ## 13                4                      4 Escherichia coli                   29

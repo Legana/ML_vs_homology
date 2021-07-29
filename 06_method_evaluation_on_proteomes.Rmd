@@ -104,31 +104,18 @@ bacteria_amp_overlap <- amp_overlap_in_proteome_and_amp_db(bacteria_proteome_met
 
 amp_overlap <- rbind(mouse_amp_overlap, human_amp_overlap, cow_amp_overlap, rabbit_amp_overlap, platypus_amp_overlap, junglefowl_amp_overlap, trout_amp_overlap, fruitfly_amp_overlap, shrimp_amp_overlap, moth_amp_overlap, cress_amp_overlap, frog_amp_overlap, bacteria_amp_overlap) %>% mutate(AMPs_in_AMP_db = c(104, 96, 58, 17, 11, 25, 12, 23 , 18, 15, 294, 13, 29))
 
-amp_overlap
+amp_overlap %>% select(Organism, AMPs_in_proteome, AMPs_overlap_in_AMP_db, AMPs_in_AMP_db)
 ```
 
-```{r}
-uniprot_and_amp_dbs_amps %>% 
-  filter(Organism == "Oncorhynchus_mykiss")
+From the `amp_overlap` table, it can be seen that there are AMPs in the proteomes that do not overlap with the AMPs in the AMP database. A possible explanation for this is that the proteome AMPs were found via the "Antimicrobial" keyword in UniProt. These contain proteins not experimentally verified to contain antimicrobial activity and are therefore not included in the AMP database. Additionally, there are AMPs in the AMP database not present in the proteomes.  
 
-trout_proteome_metadata %>%
-   filter(str_detect(Sequence, "KVHGSLARAGK"))
+To see if this is due to the presence of mature AMP sequences in the AMP database, the AMPs in the AMP database corresponding to each organism were matched to full length sequences, annotated as not antimicrobial, in the organisms' respective proteomes. However, only a very few number of AMPs were detected with this method. The absence of these AMP in the proteome 
 
-trout_proteome_metadata %>%
-   filter(str_detect(Sequence, str_c(seqs, collapse = "|")))
-
-seqs <- uniprot_and_amp_dbs_amps %>% filter(Organism == "Oncorhynchus_mykiss") %>% select(Sequence)
-
-trout_proteome_metadata %>%
-   filter(str_detect(Sequence, str_c(seqs$Sequence, collapse = "|")))
-
-# AMPs in proteomes not labelled "Pos"
+```{r, eval = FALSE}
 get_missing_amps <- function(proteome_metadata, organism) {
   seqs <- uniprot_and_amp_dbs_amps %>% filter(Organism == organism) %>% select(Sequence)
   proteome_metadata %>% filter(Label == "Neg") %>% filter(str_detect(Sequence, str_c(seqs$Sequence, collapse = "|")))
 }
-
-
 
 get_missing_amps(mouse_proteome_metadata, "Mus_musculus")
 get_missing_amps(human_proteome_metadata, "Homo_sapiens")
@@ -143,12 +130,25 @@ get_missing_amps(moth_proteome_metadata, "Bombyx_mori")
 get_missing_amps(cress_proteome_metadata, "Arabidopsis_thaliana")
 get_missing_amps(frog_proteome_metadata, "Lithobates_catesbeianus")
 get_missing_amps(bacteria_proteome_metadata, "Escherichia_coli")
-
-
-
-
 ```
 
+| Organism Name | Number of AMPs in proteome not annotated as AMP | AMPs not accounted for
+| --------------- | --------------- | --------------- |
+| *Mus musculus*  | 1 | 4 |
+| *Homo sapiens*  | 1 | 0 |
+| *Bos taurus*  | 1 | 3 |
+| *Oryctolagus cuniculus* | 0 | 0 | 
+| *Ornithorhynchus anatinus*  | 0 | 0 |
+| *Gallus gallus* | 1 | 0 | 0 |
+| *Oncorhynchus mykiss* | 2 | 10 |
+| *Drosophila melanogaster* | 3 | 0 |
+| *Penaeus vannamei* | 0 | 18 |
+| *Bombyx mori* | 0 | 2 |
+| *Arabidopsis thaliana* | 2 | 1 |
+| *Lithobates catesbeianus* | 1 | 13 |
+| *Escherichia coli K-12* | 0 | 25 |
+
+AMPs not accounted for was calculated by subtracting the AMPs_overlap_in_AMP_db from AMPs_in_AMP_db and then substracting this number from the Number of AMPs in proteome not annotated as AMP
 
 ## BLAST results
 
