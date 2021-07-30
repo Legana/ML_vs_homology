@@ -22,7 +22,7 @@ The selected organisms from were used to create different BLAST query
 sets and classification models for each organism (see
 05_amp_training_data_preparations.Rmd)
 
-Table 6.1: Proteomes used with protein and gene count obtained from
+**Table 6.1:** Proteomes used with protein and gene count obtained from
 UniProt and AMP count obtained from the AMP database
 
 | Organism Name                         | Reference proteome ID                                        | Total proteins | AMPs | Gene count |
@@ -45,7 +45,7 @@ UniProt and AMP count obtained from the AMP database
 
 ``` r
 read_proteome_metadata <- function(path, organism) {
-  read_tsv(path, col_types = cols()) %>%
+  read_tsv(path, col_types = cols(), show_col_types = FALSE) %>%
   rename("Entry_name" = `Entry name`) %>%
   mutate(Organism = organism) %>% 
   mutate(Label = case_when(str_detect(Keywords, "Antimicrobial") ~ "Pos", TRUE ~ "Neg"))
@@ -92,26 +92,26 @@ frog_amp_overlap <- amp_overlap_in_proteome_and_amp_db(frog_proteome_metadata, "
 bacteria_amp_overlap <- amp_overlap_in_proteome_and_amp_db(bacteria_proteome_metadata, "Escherichia coli")
 
 amp_overlap <- rbind(mouse_amp_overlap, human_amp_overlap, cow_amp_overlap, rabbit_amp_overlap, platypus_amp_overlap, junglefowl_amp_overlap, trout_amp_overlap, fruitfly_amp_overlap, shrimp_amp_overlap, moth_amp_overlap, cress_amp_overlap, frog_amp_overlap, bacteria_amp_overlap) %>% mutate(AMPs_in_AMP_db = c(104, 96, 58, 17, 11, 25, 12, 23 , 18, 15, 294, 13, 29))
-
-amp_overlap %>% select(Organism, AMPs_in_proteome, AMPs_overlap_in_AMP_db, AMPs_in_AMP_db)
 ```
 
-    ## # A tibble: 13 x 4
-    ##    Organism                AMPs_in_proteome AMPs_overlap_in_AMP_… AMPs_in_AMP_db
-    ##    <chr>                              <int>                 <int>          <dbl>
-    ##  1 Mus musculus                         131                    99            104
-    ##  2 Homo sapiens                         115                    95             96
-    ##  3 Bos taurus                           116                    54             58
-    ##  4 Oryctolagus cuniculus                 83                    17             17
-    ##  5 Ornithorhynchus anatin…               27                    11             11
-    ##  6 Gallus gallus                         29                    25             25
-    ##  7 Oncorhynchus mykiss                   15                     0             12
-    ##  8 Drosophila melanogaster               30                    23             23
-    ##  9 Penaeus vannamei                       3                     0             18
-    ## 10 Bombyx mori                           25                    13             15
-    ## 11 Arabidopsis thaliana                 294                   291            294
-    ## 12 Lithobates catesbeianus               11                     0             13
-    ## 13 Escherichia coli                       4                     4             29
+**Table 6.2:** AMP count of 13 organisms in their respective proteomes
+and in the AMP database, and the overlap between these AMPs
+
+| Organism                 | AMPs_in_proteome | AMPs_overlap_in_AMP_db | AMPs_in_AMP_db |
+|:-------------------------|-----------------:|-----------------------:|---------------:|
+| Mus musculus             |              131 |                     99 |            104 |
+| Homo sapiens             |              115 |                     95 |             96 |
+| Bos taurus               |              116 |                     54 |             58 |
+| Oryctolagus cuniculus    |               83 |                     17 |             17 |
+| Ornithorhynchus anatinus |               27 |                     11 |             11 |
+| Gallus gallus            |               29 |                     25 |             25 |
+| Oncorhynchus mykiss      |               15 |                      0 |             12 |
+| Drosophila melanogaster  |               30 |                     23 |             23 |
+| Penaeus vannamei         |                3 |                      0 |             18 |
+| Bombyx mori              |               25 |                     13 |             15 |
+| Arabidopsis thaliana     |              294 |                    291 |            294 |
+| Lithobates catesbeianus  |               11 |                      0 |             13 |
+| Escherichia coli         |                4 |                      4 |             29 |
 
 From the `amp_overlap` table, it can be seen that there are AMPs in the
 proteomes that do not overlap with the AMPs in the AMP database. A
@@ -149,6 +149,11 @@ get_missing_amps(frog_proteome_metadata, "Lithobates_catesbeianus")
 get_missing_amps(bacteria_proteome_metadata, "Escherichia_coli")
 ```
 
+**Table 6.3:** AMPs found in proteomes via the matching of AMP sequences
+in the AMP database to the proteomes and remaining AMPs (from the AMP
+database) that were not found in the proteomes, despite belonging to the
+same organism
+
 | Organism Name              | Number of AMPs in proteome not annotated as AMP | AMPs not accounted for |
 |----------------------------|-------------------------------------------------|------------------------|
 | *Mus musculus*             | 1                                               | 4                      |
@@ -166,8 +171,60 @@ get_missing_amps(bacteria_proteome_metadata, "Escherichia_coli")
 | *Escherichia coli K-12*    | 0                                               | 25                     |
 
 AMPs not accounted for was calculated by subtracting the
-AMPs_overlap_in_AMP_db from AMPs_in_AMP_db and then substracting this
-number from the Number of AMPs in proteome not annotated as AMP
+AMPs_overlap_in_AMP_db from AMPs_in_AMP_db (from the previous table 6.2)
+and then substracting this number from the Number of AMPs in proteome
+not annotated as AMP
+
+*E. coli* issue
+
+The current proteome used for *E. coli* is UP000000318 which refers to
+*E. coli* with the organism ID 83333. However, this organism only
+contains four AMPs in the AMP database. The organism with organism ID
+562 includes the most AMPs (25) in the AMP database. Looking at the
+[available proteomes for *E.
+coli*](https://www.uniprot.org/proteomes/?query=taxonomy%3A%22Escherichia+coli+%5B562%5D%22&sort=score),
+it can be seen that the 562 organism does not have a reference proteome.
+
+*How to link this 562 organism to a specific proteome?*
+
+``` r
+uniprot_and_amp_dbs_amps %>% filter(Organism == "Escherichia_coli") %>% select(Entry, Proteomes, `Organism ID`)
+```
+
+    ## # A tibble: 29 x 3
+    ##    Entry  Proteomes                                        `Organism ID`
+    ##    <chr>  <chr>                                                    <dbl>
+    ##  1 P77551 UP000000318: Chromosome, UP000000625: Chromosome         83333
+    ##  2 P75719 UP000000318: Chromosome, UP000000625: Chromosome         83333
+    ##  3 Q46971 <NA>                                                       562
+    ##  4 P06716 <NA>                                                       562
+    ##  5 P04479 <NA>                                                       562
+    ##  6 Q47500 <NA>                                                       562
+    ##  7 P17998 <NA>                                                       562
+    ##  8 P18000 <NA>                                                       562
+    ##  9 P17999 <NA>                                                       562
+    ## 10 Q47125 <NA>                                                       562
+    ## # … with 19 more rows
+
+Change the AMPs labelled as non-AMPs to AMPs
+
+``` r
+mouse_proteome_metadata <- mouse_proteome_metadata %>% mutate(Label = ifelse(Entry == "Q5M9M1", "Pos", Label))
+human_proteome_metadata <- human_proteome_metadata %>% mutate(Label = ifelse(Entry == "J3KNB4", "Pos", Label)) 
+cow_proteome_metadata <- cow_proteome_metadata %>% mutate(Label = ifelse(Entry == "A0A452DIN2", "Pos", Label)) 
+junglefowl_proteome_metadata <- junglefowl_proteome_metadata %>% mutate(Label = ifelse(Entry == "A0A3Q2TTA1", "Pos", Label))
+trout_proteome_metadata <- trout_proteome_metadata %>% mutate(Label = case_when(Entry == "C1BHI8" ~ "Pos",
+                                                                                Entry == "C1BFG2" ~ "Pos",
+                                                                                TRUE ~ Label))
+fruitfly_proteome_metadata <- fruitfly_proteome_metadata %>% mutate(Label = case_when(Entry == "X2J8E8" ~ "Pos",
+                                                                                Entry == "A0A0B4K7Q5" ~ "Pos",
+                                                                                Entry == "D3PFG8" ~ "Pos",
+                                                                                TRUE ~ Label))
+cress_proteome_metadata <- cress_proteome_metadata %>% mutate(Label = case_when(Entry == "A0A1P8B0X4" ~ "Pos",
+                                                                                Entry == "A0A1P8ARX5" ~ "Pos",
+                                                                                TRUE ~ Label))
+frog_proteome_metadata <- frog_proteome_metadata %>% mutate(Label = ifelse(Entry == "A0A2G9Q9C7", "Pos", Label)) 
+```
 
 ## BLAST results
 
@@ -184,7 +241,7 @@ parse_blast_results <- function(blast_results_path, metadata) {
   
   blast_colnames <- c("qaccver","saccver","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore")
   
-  read_tsv(blast_results_path, col_names = blast_colnames) %>% 
+  read_tsv(blast_results_path, col_names = blast_colnames, show_col_types = FALSE) %>% 
   group_by(saccver) %>% 
   slice_max(n = 1, order_by = bitscore) %>%
   separate(saccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
@@ -206,6 +263,8 @@ moth_blast <- parse_blast_results("data/blastp_results/Bombyx_mori.blastp", moth
 cress_blast <- parse_blast_results("data/blastp_results/Arabidopsis_thaliana.blastp", cress_proteome_metadata)
 frog_blast <- parse_blast_results("data/blastp_results/Lithobates_catesbeianus.blastp", frog_proteome_metadata)
 bacteria_blast <- parse_blast_results("data/blastp_results/Escherichia_coli.blastp", bacteria_proteome_metadata)
+
+blast_results <- rbind(mouse_blast, human_blast, cow_blast, rabbit_blast, platypus_blast, junglefowl_blast, trout_blast, fruitfly_blast, shrimp_blast, moth_blast, cress_blast, frog_blast, bacteria_blast)
 ```
 
 ## Prediction with AMP classification model
@@ -275,3 +334,142 @@ bacteria_proteome_pred <- join_pred_with_metadata(bacteria_pred, bacteria_proteo
 
 proteome_predictions <- rbind(mouse_proteome_pred, human_proteome_pred, cow_proteome_pred, rabbit_proteome_pred, platypus_proteome_pred, junglefowl_proteome_pred, trout_proteome_pred, fruitfly_proteome_pred, shrimp_proteome_pred, moth_proteome_pred, cress_proteome_pred, frog_proteome_pred, bacteria_proteome_pred)  
 ```
+
+## Correctly identified AMPs
+
+``` r
+blastAMPsidentified <- blast_results %>% 
+  filter(bitscore >= 50 & Label == "Pos") %>%
+  count(Organism, name = "AMPs_found_BLAST") 
+
+classificationAMPsidentified <- proteome_predictions %>%
+  filter(prob_AMP >= 0.5 & Label == "Pos") %>%
+  count(Organism, name = "AMPs_found_Classification")
+
+total_amp_count <- proteome_predictions %>% 
+  filter(Label == "Pos") %>% 
+  count(Organism, name = "Total_AMP_count")
+
+amps_identified <- blastAMPsidentified %>%
+  left_join(classificationAMPsidentified, by = "Organism") %>%
+  left_join(total_amp_count, by = "Organism")
+```
+
+**Table 6.4:** Correctly identified AMPs in different proteomes with the
+BLAST1, BLAST2 and classification methods.
+
+| Organism                 | AMPs_found_BLAST | AMPs_found_Classification | Total_AMP_count |
+|:-------------------------|-----------------:|--------------------------:|----------------:|
+| Arabidopsis_thaliana     |               23 |                       172 |             296 |
+| Bombyx_mori              |               19 |                        11 |              25 |
+| Bos_taurus               |               85 |                        78 |             117 |
+| Drosophila_melanogaster  |               23 |                        16 |              33 |
+| Escherichia_coli         |                2 |                         2 |               4 |
+| Gallus_gallus            |               14 |                        21 |              30 |
+| Homo_sapiens             |               77 |                        62 |             116 |
+| Lithobates_catesbeianus  |               11 |                         8 |              12 |
+| Mus_musculus             |               96 |                        70 |             132 |
+| Oncorhynchus_mykiss      |               13 |                        11 |              17 |
+| Ornithorhynchus_anatinus |               11 |                        12 |              27 |
+| Oryctolagus_cuniculus    |               54 |                        39 |              83 |
+| Penaeus_vannamei         |                3 |                         1 |               3 |
+
+## Calculate the Precision Recall (PR) curve and the Area Under the Precision Recall Curve (AUPRC) for each method
+
+### PR curve
+
+``` r
+organisms <- unique(proteome_predictions$Organism)
+
+source("scripts/calc_cm_metrics_from_bitscore.R")
+
+get_blast_roc <- function(data, method){
+  do.call(rbind,lapply(organisms,function(org){ 
+    map_df(seq(0, 1000, 1), calc_cm_metrics_from_bitscore, data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
+  add_column(Method = method)
+}
+
+source("scripts/calc_cm_metrics_from_prob.R")
+
+get_proteome_roc <- function(data, method){
+  do.call(rbind,lapply(organisms,function(org){ 
+    map_df(c(seq(0.01, 0.99, 0.01),seq(0.99, 0.990, 0.001)), calc_cm_metrics_from_prob, data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
+  add_column(Method = method)
+}
+```
+
+``` r
+blast_roc <- get_blast_roc(blast_results, "BLAST")
+
+pred_roc <- get_proteome_roc(proteome_predictions, "Classification")
+
+
+blast_and_pred_roc <- rbind(blast_roc, pred_roc)
+```
+
+``` r
+saveRDS(blast_and_pred_roc, "cache/blast_and_pred_roc13.rds")
+```
+
+### AUPRC
+
+First made a function to calculate the AUPRC from a dataset, for the
+classification and BLAST method, and then made a function to loop this
+function to calculate the AUPRC for each organism in the dataset.
+
+``` r
+calculate_auprc_probAMP <- function(df) {
+  evalmod(scores = df[["prob_AMP"]], labels = df[["Label"]], mode = "rocprc") %>%
+  precrec::auc() %>%
+  select(curvetypes, aucs) %>%
+  filter(curvetypes == "PRC") %>%
+  pivot_wider(names_from = curvetypes, values_from = aucs) %>%
+  rename(AUPRC = "PRC") %>%
+  round(digits = 3)
+}
+
+organisms <- unique(proteome_predictions$Organism)
+
+get_probAMP_auprc <- function(prediction_data, method_name){
+  do.call(rbind,lapply(organisms,function(org){ 
+    calculate_auprc_probAMP(prediction_data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
+  add_column(Method = method_name)
+}
+
+calculate_auprc_bitscore <- function(df) {
+  evalmod(scores = df[["bitscore"]], labels = df[["Label"]], mode = "rocprc") %>%
+  precrec::auc() %>%
+  select(curvetypes, aucs) %>%
+  filter(curvetypes == "PRC") %>%
+  pivot_wider(names_from = curvetypes, values_from = aucs) %>%
+  rename(AUPRC = "PRC") %>%
+  round(digits = 3)
+}
+
+get_bitscore_auprc <- function(blast_results_data, method_name){
+  do.call(rbind,lapply(organisms,function(org){ 
+    calculate_auprc_bitscore(blast_results_data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
+  add_column(Method = method_name)
+}
+
+
+classification_auprc <- get_probAMP_auprc(proteome_predictions, "Classification")
+blast_auprc <- get_bitscore_auprc(blast_results, "BLAST")
+
+
+methods_auprc <- rbind(classification_auprc, blast_auprc)
+```
+
+![](06_method_evaluation_on_proteomes_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+
+**Figure 6.1:** The precision-recall curve (A) and the area under the
+precision-recall curve (B) for each organism and AMP finding method
+(BLAST and classification models)

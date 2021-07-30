@@ -33,7 +33,7 @@ uniprot_and_amp_dbs_amps <- readRDS("data/uniprot_amps_w_amp_dbsJuly21.rds") %>%
 
 The selected organisms from were used to create different BLAST query sets and classification models for each organism (see 05_amp_training_data_preparations.Rmd)
 
-Table 6.1: Proteomes used with protein and gene count obtained from UniProt and AMP count obtained from the AMP database
+**Table 6.1:** Proteomes used with protein and gene count obtained from UniProt and AMP count obtained from the AMP database
 
 | Organism Name | Reference proteome ID | Total proteins | AMPs | Gene count |
 | --------------- | --------------- | --------------- | --------------- | --------------- |
@@ -55,7 +55,7 @@ Table 6.1: Proteomes used with protein and gene count obtained from UniProt and 
 
 ```{r}
 read_proteome_metadata <- function(path, organism) {
-  read_tsv(path, col_types = cols()) %>%
+  read_tsv(path, col_types = cols(), show_col_types = FALSE) %>%
   rename("Entry_name" = `Entry name`) %>%
   mutate(Organism = organism) %>% 
   mutate(Label = case_when(str_detect(Keywords, "Antimicrobial") ~ "Pos", TRUE ~ "Neg"))
@@ -79,7 +79,6 @@ bacteria_proteome_metadata <- read_proteome_metadata("data/proteomes/E_coli-prot
 
 ## Overlap between AMPs in AMP database and AMPs present in proteomes
 ```{r}
-
 amp_overlap_in_proteome_and_amp_db <- function(proteome_metadata, organism){
   proteome_metadata %>% 
     filter(Label == "Pos") %>% 
@@ -103,8 +102,12 @@ frog_amp_overlap <- amp_overlap_in_proteome_and_amp_db(frog_proteome_metadata, "
 bacteria_amp_overlap <- amp_overlap_in_proteome_and_amp_db(bacteria_proteome_metadata, "Escherichia coli")
 
 amp_overlap <- rbind(mouse_amp_overlap, human_amp_overlap, cow_amp_overlap, rabbit_amp_overlap, platypus_amp_overlap, junglefowl_amp_overlap, trout_amp_overlap, fruitfly_amp_overlap, shrimp_amp_overlap, moth_amp_overlap, cress_amp_overlap, frog_amp_overlap, bacteria_amp_overlap) %>% mutate(AMPs_in_AMP_db = c(104, 96, 58, 17, 11, 25, 12, 23 , 18, 15, 294, 13, 29))
+```
 
-amp_overlap %>% select(Organism, AMPs_in_proteome, AMPs_overlap_in_AMP_db, AMPs_in_AMP_db)
+**Table 6.2:** AMP count of 13 organisms in their respective proteomes and in the AMP database, and the overlap between these AMPs
+
+```{r, echo = FALSE}
+knitr::kable(amp_overlap %>% select(Organism, AMPs_in_proteome, AMPs_overlap_in_AMP_db, AMPs_in_AMP_db))
 ```
 
 From the `amp_overlap` table, it can be seen that there are AMPs in the proteomes that do not overlap with the AMPs in the AMP database. A possible explanation for this is that the proteome AMPs were found via the "Antimicrobial" keyword in UniProt. These contain proteins not experimentally verified to contain antimicrobial activity and are therefore not included in the AMP database. Additionally, there are AMPs in the AMP database not present in the proteomes.  
@@ -132,6 +135,8 @@ get_missing_amps(frog_proteome_metadata, "Lithobates_catesbeianus")
 get_missing_amps(bacteria_proteome_metadata, "Escherichia_coli")
 ```
 
+**Table 6.3:** AMPs found in proteomes via the matching of AMP sequences in the AMP database to the proteomes and remaining AMPs (from the AMP database) that were not found in the proteomes, despite belonging to the same organism
+
 | Organism Name | Number of AMPs in proteome not annotated as AMP | AMPs not accounted for
 | --------------- | --------------- | --------------- |
 | *Mus musculus*  | 1 | 4 |
@@ -148,7 +153,37 @@ get_missing_amps(bacteria_proteome_metadata, "Escherichia_coli")
 | *Lithobates catesbeianus* | 1 | 13 |
 | *Escherichia coli K-12* | 0 | 25 |
 
-AMPs not accounted for was calculated by subtracting the AMPs_overlap_in_AMP_db from AMPs_in_AMP_db and then substracting this number from the Number of AMPs in proteome not annotated as AMP
+AMPs not accounted for was calculated by subtracting the AMPs_overlap_in_AMP_db from AMPs_in_AMP_db (from the previous table 6.2) and then substracting this number from the Number of AMPs in proteome not annotated as AMP
+
+*E. coli* issue
+
+The current proteome used for *E. coli* is UP000000318 which refers to *E. coli* with the organism ID 83333. However, this organism only contains four AMPs in the AMP database. The organism with organism ID 562 includes the most AMPs (25) in the AMP database. Looking at the [available proteomes for *E. coli*](https://www.uniprot.org/proteomes/?query=taxonomy%3A%22Escherichia+coli+%5B562%5D%22&sort=score), it can be seen that the 562 organism does not have a reference proteome. 
+
+*How to link this 562 organism to a specific proteome?*
+
+```{r}
+uniprot_and_amp_dbs_amps %>% filter(Organism == "Escherichia_coli") %>% select(Entry, Proteomes, `Organism ID`)
+```
+
+
+Change the AMPs labelled as non-AMPs to AMPs 
+```{r}
+mouse_proteome_metadata <- mouse_proteome_metadata %>% mutate(Label = ifelse(Entry == "Q5M9M1", "Pos", Label))
+human_proteome_metadata <- human_proteome_metadata %>% mutate(Label = ifelse(Entry == "J3KNB4", "Pos", Label)) 
+cow_proteome_metadata <- cow_proteome_metadata %>% mutate(Label = ifelse(Entry == "A0A452DIN2", "Pos", Label)) 
+junglefowl_proteome_metadata <- junglefowl_proteome_metadata %>% mutate(Label = ifelse(Entry == "A0A3Q2TTA1", "Pos", Label))
+trout_proteome_metadata <- trout_proteome_metadata %>% mutate(Label = case_when(Entry == "C1BHI8" ~ "Pos",
+                                                                                Entry == "C1BFG2" ~ "Pos",
+                                                                                TRUE ~ Label))
+fruitfly_proteome_metadata <- fruitfly_proteome_metadata %>% mutate(Label = case_when(Entry == "X2J8E8" ~ "Pos",
+                                                                                Entry == "A0A0B4K7Q5" ~ "Pos",
+                                                                                Entry == "D3PFG8" ~ "Pos",
+                                                                                TRUE ~ Label))
+cress_proteome_metadata <- cress_proteome_metadata %>% mutate(Label = case_when(Entry == "A0A1P8B0X4" ~ "Pos",
+                                                                                Entry == "A0A1P8ARX5" ~ "Pos",
+                                                                                TRUE ~ Label))
+frog_proteome_metadata <- frog_proteome_metadata %>% mutate(Label = ifelse(Entry == "A0A2G9Q9C7", "Pos", Label)) 
+```
 
 ## BLAST results
 
@@ -161,7 +196,7 @@ parse_blast_results <- function(blast_results_path, metadata) {
   
   blast_colnames <- c("qaccver","saccver","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore")
   
-  read_tsv(blast_results_path, col_names = blast_colnames) %>% 
+  read_tsv(blast_results_path, col_names = blast_colnames, show_col_types = FALSE) %>% 
   group_by(saccver) %>% 
   slice_max(n = 1, order_by = bitscore) %>%
   separate(saccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
@@ -183,6 +218,8 @@ moth_blast <- parse_blast_results("data/blastp_results/Bombyx_mori.blastp", moth
 cress_blast <- parse_blast_results("data/blastp_results/Arabidopsis_thaliana.blastp", cress_proteome_metadata)
 frog_blast <- parse_blast_results("data/blastp_results/Lithobates_catesbeianus.blastp", frog_proteome_metadata)
 bacteria_blast <- parse_blast_results("data/blastp_results/Escherichia_coli.blastp", bacteria_proteome_metadata)
+
+blast_results <- rbind(mouse_blast, human_blast, cow_blast, rabbit_blast, platypus_blast, junglefowl_blast, trout_blast, fruitfly_blast, shrimp_blast, moth_blast, cress_blast, frog_blast, bacteria_blast)
 ```
 
 ## Prediction with AMP classification model  
@@ -257,4 +294,171 @@ saveRDS(proteome_predictions, "cache/proteome_predictions13.rds")
 ```{r, echo = FALSE}
 proteome_predictions <- readRDS("cache/proteome_predictions13.rds")
 ```
+
+## Correctly identified AMPs
+
+```{r}
+blastAMPsidentified <- blast_results %>% 
+  filter(bitscore >= 50 & Label == "Pos") %>%
+  count(Organism, name = "AMPs_found_BLAST") 
+
+classificationAMPsidentified <- proteome_predictions %>%
+  filter(prob_AMP >= 0.5 & Label == "Pos") %>%
+  count(Organism, name = "AMPs_found_Classification")
+
+total_amp_count <- proteome_predictions %>% 
+  filter(Label == "Pos") %>% 
+  count(Organism, name = "Total_AMP_count")
+
+amps_identified <- blastAMPsidentified %>%
+  left_join(classificationAMPsidentified, by = "Organism") %>%
+  left_join(total_amp_count, by = "Organism")
+```
+
+**Table 6.4:** Correctly identified AMPs in different proteomes with the BLAST1, BLAST2 and classification methods.
+
+```{r, echo=FALSE}
+knitr::kable(amps_identified)
+```
+
+## Calculate the Precision Recall (PR) curve and the Area Under the Precision Recall Curve (AUPRC) for each method
+
+### PR curve
+
+```{r}
+organisms <- unique(proteome_predictions$Organism)
+
+source("scripts/calc_cm_metrics_from_bitscore.R")
+
+get_blast_roc <- function(data, method){
+  do.call(rbind,lapply(organisms,function(org){ 
+    map_df(seq(0, 1000, 1), calc_cm_metrics_from_bitscore, data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
+  add_column(Method = method)
+}
+
+source("scripts/calc_cm_metrics_from_prob.R")
+
+get_proteome_roc <- function(data, method){
+  do.call(rbind,lapply(organisms,function(org){ 
+    map_df(c(seq(0.01, 0.99, 0.01),seq(0.99, 0.990, 0.001)), calc_cm_metrics_from_prob, data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
+  add_column(Method = method)
+}
+```
+
+```{r, eval = FALSE}
+blast_roc <- get_blast_roc(blast_results, "BLAST")
+
+pred_roc <- get_proteome_roc(proteome_predictions, "Classification")
+
+
+blast_and_pred_roc <- rbind(blast_roc, pred_roc)
+```
+
+```{r, eval = FALSE}
+saveRDS(blast_and_pred_roc, "cache/blast_and_pred_roc13.rds")
+```
+
+```{r, echo = FALSE}
+blast_and_pred_roc <- readRDS("cache/blast_and_pred_roc13.rds")
+```
+
+### AUPRC
+
+First made a function to calculate the AUPRC from a dataset, for the classification and BLAST method, and then made a function to loop this function to calculate the AUPRC for each organism in the dataset. 
+
+```{r}
+calculate_auprc_probAMP <- function(df) {
+  evalmod(scores = df[["prob_AMP"]], labels = df[["Label"]], mode = "rocprc") %>%
+  precrec::auc() %>%
+  select(curvetypes, aucs) %>%
+  filter(curvetypes == "PRC") %>%
+  pivot_wider(names_from = curvetypes, values_from = aucs) %>%
+  rename(AUPRC = "PRC") %>%
+  round(digits = 3)
+}
+
+organisms <- unique(proteome_predictions$Organism)
+
+get_probAMP_auprc <- function(prediction_data, method_name){
+  do.call(rbind,lapply(organisms,function(org){ 
+    calculate_auprc_probAMP(prediction_data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
+  add_column(Method = method_name)
+}
+
+calculate_auprc_bitscore <- function(df) {
+  evalmod(scores = df[["bitscore"]], labels = df[["Label"]], mode = "rocprc") %>%
+  precrec::auc() %>%
+  select(curvetypes, aucs) %>%
+  filter(curvetypes == "PRC") %>%
+  pivot_wider(names_from = curvetypes, values_from = aucs) %>%
+  rename(AUPRC = "PRC") %>%
+  round(digits = 3)
+}
+
+get_bitscore_auprc <- function(blast_results_data, method_name){
+  do.call(rbind,lapply(organisms,function(org){ 
+    calculate_auprc_bitscore(blast_results_data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
+  add_column(Method = method_name)
+}
+
+
+classification_auprc <- get_probAMP_auprc(proteome_predictions, "Classification")
+blast_auprc <- get_bitscore_auprc(blast_results, "BLAST")
+
+
+methods_auprc <- rbind(classification_auprc, blast_auprc)
+```
+
+
+```{r, echo=FALSE}
+saveRDS(methods_auprc, "cache/methods_auprc13.rds")
+```
+
+```{r, echo = FALSE}
+pr13_plot <- ggplot(blast_and_pred_roc, aes(x = Recall, y = Precision) ) +
+  geom_line(aes(colour = Method)) +
+  facet_wrap(~Organism, ncol = 2) +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        strip.background = element_blank(),
+        strip.text = element_text(face = "bold.italic",
+                                  size = 10)) +
+  labs(colour = "") +
+  scale_colour_manual(breaks = c("BLAST", "Classification"),
+                       values = c("forestgreen","violetred")) 
+
+auprc13_plot <- ggplot(methods_auprc, aes(x = Method, y = AUPRC, fill = Method)) +
+  geom_col(width = 0.7) +
+  facet_wrap(~Organism, ncol = 2) +
+  theme_classic() +
+  theme(strip.text = element_text(face = "bold.italic",
+                                  size = 10),
+        strip.background = element_rect(fill = NA, color = NA),
+        legend.position = "bottom") +
+  labs(fill = "") +
+  scale_fill_manual(breaks = c("BLAST", "Classification"),
+                       values = c("forestgreen","violetred"))
+```
+
+
+```{r, echo = FALSE, fig.width=9, fig.height=8}
+pr13_plot + auprc13_plot + plot_annotation(tag_levels = 'A') & theme(plot.tag = element_text(face = "bold"))
+```
+
+
+```{r, echo = FALSE}
+ggsave("figures/auprcs13.png", width = 9, height = 10)
+```
+
+**Figure 6.1:** The precision-recall curve (A) and the area under the precision-recall curve (B) for each organism and AMP finding method (BLAST and classification models)
+
+
 
