@@ -112,7 +112,7 @@ knitr::kable(amp_overlap %>% select(Organism, AMPs_in_proteome, AMPs_overlap_in_
 
 From the `amp_overlap` table, it can be seen that there are AMPs in the proteomes that do not overlap with the AMPs in the AMP database. A possible explanation for this is that the proteome AMPs were found via the "Antimicrobial" keyword in UniProt. These contain proteins not experimentally verified to contain antimicrobial activity and are therefore not included in the AMP database. Additionally, there are AMPs in the AMP database not present in the proteomes.  
 
-To see if this is due to the presence of mature AMP sequences in the AMP database, the AMPs in the AMP database corresponding to each organism were matched to full length sequences, annotated as not antimicrobial, in the organisms' respective proteomes. However, only a very few number of AMPs were detected with this method. The absence of these AMP in the proteome 
+To see if this is due to the presence of mature AMP sequences in the AMP database, the AMPs in the AMP database corresponding to each organism were matched to full length sequences, annotated as not antimicrobial, in the organisms' respective proteomes. However, only a very few number of AMPs were detected with this method. The absence of these AMP in the proteome could be because these AMPs correspond to genes not yet annotated 
 
 ```{r, eval = FALSE}
 get_missing_amps <- function(proteome_metadata, organism) {
@@ -159,12 +159,10 @@ AMPs not accounted for was calculated by subtracting the AMPs_overlap_in_AMP_db 
 
 The current proteome used for *E. coli* is UP000000318 which refers to *E. coli* with the organism ID 83333. However, this organism only contains four AMPs in the AMP database. The organism with organism ID 562 includes the most AMPs (25) in the AMP database. Looking at the [available proteomes for *E. coli*](https://www.uniprot.org/proteomes/?query=taxonomy%3A%22Escherichia+coli+%5B562%5D%22&sort=score), it can be seen that the 562 organism does not have a reference proteome. 
 
-*How to link this 562 organism to a specific proteome?*
 
 ```{r}
 uniprot_and_amp_dbs_amps %>% filter(Organism == "Escherichia_coli") %>% select(Entry, Proteomes, `Organism ID`)
 ```
-
 
 Change the AMPs labelled as non-AMPs to AMPs 
 ```{r}
@@ -183,6 +181,25 @@ cress_proteome_metadata <- cress_proteome_metadata %>% mutate(Label = case_when(
                                                                                 Entry == "A0A1P8ARX5" ~ "Pos",
                                                                                 TRUE ~ Label))
 frog_proteome_metadata <- frog_proteome_metadata %>% mutate(Label = ifelse(Entry == "A0A2G9Q9C7", "Pos", Label)) 
+```
+
+### Creating a more stringent test set 
+
+Table 6.2 shows that there are generally more AMPs in the proteomes for each organism compared to the AMPs in the AMP database. To keep the highest quality data (with more likely experimentally verified AMPs), proteomes were selected that had more than 10 AMPs overlap with the AMP database and proteins in these proteomes were only annotated as an AMP if the proteins were also present in the AMP database. *O. mykiss*, *P. vannamei*, *L. catesbeianus* and *E. coli* all had less than 10 AMPs with the AMP database and were therefore excluded.
+
+For the remaining nine organisms, a new "positive" label was added to the sequences, if these were present in the AMP database. The same analysis were performed on these nine organisms as to the full 13 organisms that contain less stringent AMP labels.
+*CONTINUE FROM HERE*
+
+```{r}
+mouse_proteome_metadata <- mouse_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+human_proteome_metadata <- human_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+cow_proteome_metadata <- cow_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+rabbit_proteome_metadata <- mouse_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+platypus_proteome_metadata <- mouse_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+junglefowl_proteome_metadata <-junglefowl_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+fruitfly_proteome_metadata <- fruitfly_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+moth_proteome_metadata <- moth_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+cress_proteome_metadata <- cress_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
 ```
 
 ## BLAST results
