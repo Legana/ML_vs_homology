@@ -126,7 +126,8 @@ database, the AMPs in the AMP database corresponding to each organism
 were matched to full length sequences, annotated as not antimicrobial,
 in the organisms’ respective proteomes. However, only a very few number
 of AMPs were detected with this method. The absence of these AMP in the
-proteome
+proteome could be because these AMPs correspond to genes not yet
+annotated
 
 ``` r
 get_missing_amps <- function(proteome_metadata, organism) {
@@ -185,8 +186,6 @@ contains four AMPs in the AMP database. The organism with organism ID
 coli*](https://www.uniprot.org/proteomes/?query=taxonomy%3A%22Escherichia+coli+%5B562%5D%22&sort=score),
 it can be seen that the 562 organism does not have a reference proteome.
 
-*How to link this 562 organism to a specific proteome?*
-
 ``` r
 uniprot_and_amp_dbs_amps %>% filter(Organism == "Escherichia_coli") %>% select(Entry, Proteomes, `Organism ID`)
 ```
@@ -224,6 +223,40 @@ cress_proteome_metadata <- cress_proteome_metadata %>% mutate(Label = case_when(
                                                                                 Entry == "A0A1P8ARX5" ~ "Pos",
                                                                                 TRUE ~ Label))
 frog_proteome_metadata <- frog_proteome_metadata %>% mutate(Label = ifelse(Entry == "A0A2G9Q9C7", "Pos", Label)) 
+```
+
+### Creating a more stringent test set
+
+Table 6.2 shows that there are generally more AMPs in the proteomes for
+each organism compared to the AMPs in the AMP database. To keep the
+highest quality data (with more likely experimentally verified AMPs),
+proteomes were selected that had more than 10 AMPs overlap with the AMP
+database and proteins in these proteomes were only annotated as an AMP
+if the proteins were also present in the AMP database. *O. mykiss*, *P.
+vannamei*, *L. catesbeianus* and *E. coli* all had less than 10 AMPs
+with the AMP database and were therefore excluded.
+
+For the remaining nine organisms, a new “positive” label was added to
+the sequences, if these were present in the AMP database. The same
+analysis were performed on these nine organisms as to the full 13
+organisms that contain less stringent AMP labels.
+
+``` r
+mouse_proteome_metadata <- mouse_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+human_proteome_metadata <- human_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+cow_proteome_metadata <- cow_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+rabbit_proteome_metadata <- rabbit_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+platypus_proteome_metadata <- platypus_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+junglefowl_proteome_metadata <-junglefowl_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+fruitfly_proteome_metadata <- fruitfly_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+moth_proteome_metadata <- moth_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+cress_proteome_metadata <- cress_proteome_metadata %>% mutate(Label_strict = ifelse(Entry %in% uniprot_and_amp_dbs_amps$Entry, "Pos", "Neg"))
+
+# add NA values column so datasets maintain same columns for combining them later
+trout_proteome_metadata <- trout_proteome_metadata %>% mutate(Label_strict = NA)
+shrimp_proteome_metadata <- shrimp_proteome_metadata %>% mutate(Label_strict = NA)
+frog_proteome_metadata <- frog_proteome_metadata %>% mutate(Label_strict = NA)
+bacteria_proteome_metadata <- bacteria_proteome_metadata %>% mutate(Label_strict = NA)
 ```
 
 ## BLAST results
@@ -356,27 +389,73 @@ amps_identified <- blastAMPsidentified %>%
 ```
 
 **Table 6.4:** Correctly identified AMPs in different proteomes with the
-BLAST1, BLAST2 and classification methods.
+BLAST and classification methods.
 
 | Organism                 | AMPs_found_BLAST | AMPs_found_Classification | Total_AMP_count |
 |:-------------------------|-----------------:|--------------------------:|----------------:|
-| Arabidopsis_thaliana     |               23 |                       172 |             296 |
+| Arabidopsis_thaliana     |               23 |                       172 |             294 |
 | Bombyx_mori              |               19 |                        11 |              25 |
-| Bos_taurus               |               85 |                        78 |             117 |
-| Drosophila_melanogaster  |               23 |                        16 |              33 |
+| Bos_taurus               |               85 |                        78 |             116 |
+| Drosophila_melanogaster  |               23 |                        16 |              30 |
 | Escherichia_coli         |                2 |                         2 |               4 |
-| Gallus_gallus            |               14 |                        21 |              30 |
-| Homo_sapiens             |               77 |                        62 |             116 |
-| Lithobates_catesbeianus  |               11 |                         8 |              12 |
-| Mus_musculus             |               96 |                        70 |             132 |
-| Oncorhynchus_mykiss      |               13 |                        11 |              17 |
-| Ornithorhynchus_anatinus |               11 |                        12 |              27 |
-| Oryctolagus_cuniculus    |               54 |                        39 |              83 |
+| Gallus_gallus            |               14 |                        20 |              29 |
+| Homo_sapiens             |               77 |                        62 |             115 |
+| Lithobates_catesbeianus  |               11 |                         7 |              11 |
+| Mus_musculus             |               96 |                        70 |             393 |
+| Oncorhynchus_mykiss      |               13 |                        11 |              15 |
+| Ornithorhynchus_anatinus |               11 |                        NA |              NA |
+| Oryctolagus_cuniculus    |               54 |                        NA |              NA |
 | Penaeus_vannamei         |                3 |                         1 |               3 |
+
+None of the 11 AMPs in platypus were identified by BLAST in the stricter
+AMP criteria. `count` does not count zeros in the current version
+
+``` r
+organism_strict_selection <- c("Mus_musculus","Homo_sapiens","Bos_taurus","Oryctolagus_cuniculus","Ornithorhynchus_anatinus","Gallus_gallus", "Drosophila_melanogaster","Bombyx_mori","Arabidopsis_thaliana")
+
+platypus_amp_count_found_by_blast <- blast_results %>% filter(Organism == "Ornithorhynchus_anatinus" & bitscore >= 50 & Label_strict == "Pos") %>% nrow() 
+
+blastAMPsidentified2 <- blast_results %>% 
+  filter(Organism %in% organism_strict_selection) %>%
+  filter(bitscore >= 50 & Label_strict== "Pos") %>%
+  count(Organism, name = "AMPs_found_BLAST") %>%
+  add_row(Organism = "Ornithorhynchus_anatinus", AMPs_found_BLAST = platypus_amp_count_found_by_blast)
+
+classificationAMPsidentified2 <- proteome_predictions %>%
+  filter(prob_AMP >= 0.5 & Label_strict == "Pos") %>%
+  count(Organism, name = "AMPs_found_Classification")
+
+total_amp_count2 <- uniprot_and_amp_dbs_amps %>% 
+  filter(Organism %in% organism_strict_selection) %>%
+  count(Organism, name = "AMPs_in_db_count")
+
+amps_identified2 <- blastAMPsidentified2 %>%
+  left_join(classificationAMPsidentified2, by = "Organism") %>%
+  left_join(total_amp_count2, by = "Organism")
+```
+
+**Table 6.5:** Same as Table 6.4 but using the stricter AMP criteria,
+i.e. where a protein is considered to be an AMP if it overlaps with the
+AMP database
+
+| Organism                 | AMPs_found_BLAST | AMPs_found_Classification | AMPs_in_db_count |
+|:-------------------------|-----------------:|--------------------------:|-----------------:|
+| Arabidopsis_thaliana     |               23 |                       172 |              294 |
+| Bombyx_mori              |               10 |                         9 |               13 |
+| Bos_taurus               |               39 |                        37 |               58 |
+| Drosophila_melanogaster  |               17 |                        15 |               23 |
+| Gallus_gallus            |               11 |                        17 |               25 |
+| Homo_sapiens             |               73 |                        58 |               96 |
+| Mus_musculus             |               82 |                        61 |              104 |
+| Oryctolagus_cuniculus    |               12 |                        NA |               17 |
+| Ornithorhynchus_anatinus |                0 |                        NA |               11 |
 
 ## Calculate the Precision Recall (PR) curve and the Area Under the Precision Recall Curve (AUPRC) for each method
 
 ### PR curve
+
+**For all 13 organisms using the “Antimicrobial” keyword as positive
+AMP**
 
 ``` r
 organisms <- unique(proteome_predictions$Organism)
@@ -415,11 +494,80 @@ blast_and_pred_roc <- rbind(blast_roc, pred_roc)
 saveRDS(blast_and_pred_roc, "cache/blast_and_pred_roc13.rds")
 ```
 
+**For nine organisms using the AMPs that overlap with the AMP database
+as positive AMP**
+
+``` r
+calc_pr_bitscore <- function(p_threshold, df) {
+  
+  TP <- df %>% filter((Label_strict =="Pos")) %>% filter(bitscore > p_threshold) %>% n_distinct()
+  FP <- df %>% filter((Label_strict =="Neg")) %>% filter(bitscore > p_threshold) %>% n_distinct()
+  TN <- df %>% filter((Label_strict =="Neg")) %>% filter(bitscore < p_threshold) %>% n_distinct()
+  FN <- df %>% filter((Label_strict =="Pos")) %>% filter(bitscore < p_threshold) %>% n_distinct()
+  
+  Recall <- TP / (TP + FN) 
+  Precision <- TP / (TP + FP) 
+
+  cm <- c(Recall, Precision, p_threshold)
+  names(cm) <-c("Recall", "Precision","p_threshold") 
+  cm
+}
+
+calc_pr_prob <- function(p_threshold, df) {
+  
+  TP <- df %>% filter((Label_strict =="Pos")) %>% filter(prob_AMP > p_threshold) %>% n_distinct()
+  FP <- df %>% filter((Label_strict =="Neg")) %>% filter(prob_AMP > p_threshold) %>% n_distinct()
+  TN <- df %>% filter((Label_strict =="Neg")) %>% filter(prob_AMP < p_threshold) %>% n_distinct()
+  FN <- df %>% filter((Label_strict =="Pos")) %>% filter(prob_AMP < p_threshold) %>% n_distinct()
+  
+  Recall <- TP / (TP + FN) 
+  Precision <- TP / (TP + FP) 
+
+  cm <- c(Recall, Precision, p_threshold)
+  names(cm) <-c("Recall", "Precision","p_threshold") 
+  cm
+}
+
+get_blast_roc_strict <- function(data, method){
+  do.call(rbind,lapply(organism_strict_selection,function(org){ 
+    map_df(seq(0, 1000, 1), calc_pr_bitscore, data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
+  add_column(Method = method)
+}
+
+get_proteome_roc_strict <- function(data, method){
+  do.call(rbind,lapply(organism_strict_selection,function(org){ 
+    map_df(c(seq(0.01, 0.99, 0.01),seq(0.99, 0.990, 0.001)), calc_pr_prob, data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
+  add_column(Method = method)
+}
+```
+
+``` r
+proteome_predictions_9 <- filter(proteome_predictions, Organism %in% organism_strict_selection)
+blast_results_9 <- filter(blast_results, Organism %in% organism_strict_selection)
+
+blast_roc_strict <- get_blast_roc_strict(blast_results_9, "BLAST")
+
+pred_roc_strict <- get_proteome_roc_strict(proteome_predictions_9, "Classification")
+
+
+blast_and_pred_roc_strict <- rbind(blast_roc_strict, pred_roc_strict)
+```
+
+``` r
+saveRDS(blast_and_pred_roc_strict, "cache/blast_and_pred_roc_strict_9.rds")
+```
+
 ### AUPRC
 
 First made a function to calculate the AUPRC from a dataset, for the
 classification and BLAST method, and then made a function to loop this
-function to calculate the AUPRC for each organism in the dataset.
+function to calculate the AUPRC for each organism in the dataset. This
+step was done twice, once for the 13 organisms and once for the nine
+with stricter AMP
 
 ``` r
 calculate_auprc_probAMP <- function(df) {
@@ -468,8 +616,64 @@ blast_auprc <- get_bitscore_auprc(blast_results, "BLAST")
 methods_auprc <- rbind(classification_auprc, blast_auprc)
 ```
 
-![](06_method_evaluation_on_proteomes_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+``` r
+proteome_predictions_9 <- filter(proteome_predictions, Organism %in% organism_strict_selection)
+blast_results_9 <- filter(blast_results, Organism %in% organism_strict_selection)
+
+organisms9 <- unique(proteome_predictions_9$Organism)
+
+calculate_auprc_probAMP_9 <- function(df) {
+  evalmod(scores = df[["prob_AMP"]], labels = df[["Label_strict"]], mode = "rocprc") %>%
+  precrec::auc() %>%
+  select(curvetypes, aucs) %>%
+  filter(curvetypes == "PRC") %>%
+  pivot_wider(names_from = curvetypes, values_from = aucs) %>%
+  rename(AUPRC = "PRC") %>%
+  round(digits = 3)
+}
+
+get_probAMP_auprc_9 <- function(prediction_data, method_name){
+  do.call(rbind,lapply(organisms9,function(org){ 
+    calculate_auprc_probAMP_9(prediction_data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
+  add_column(Method = method_name)
+}
+
+calculate_auprc_bitscore_9 <- function(df) {
+  evalmod(scores = df[["bitscore"]], labels = df[["Label_strict"]], mode = "rocprc") %>%
+  precrec::auc() %>%
+  select(curvetypes, aucs) %>%
+  filter(curvetypes == "PRC") %>%
+  pivot_wider(names_from = curvetypes, values_from = aucs) %>%
+  rename(AUPRC = "PRC") %>%
+  round(digits = 3)
+}
+
+get_bitscore_auprc_9 <- function(blast_results_data, method_name){
+  do.call(rbind,lapply(organisms9,function(org){ 
+    calculate_auprc_bitscore_9(blast_results_data %>% filter(Organism==org)) %>%
+    add_column(Organism = org)
+  })) %>%   
+  add_column(Method = method_name)
+}
+
+classification_auprc_9 <- get_probAMP_auprc_9(proteome_predictions_9, "Classification")
+blast_auprc_9 <- get_bitscore_auprc_9(blast_results_9, "BLAST")
+
+
+methods_auprc_9 <- rbind(classification_auprc_9, blast_auprc_9)
+```
+
+![](06_method_evaluation_on_proteomes_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
 **Figure 6.1:** The precision-recall curve (A) and the area under the
 precision-recall curve (B) for each organism and AMP finding method
 (BLAST and classification models)
+
+![](06_method_evaluation_on_proteomes_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
+
+**Figure 6.2:** The precision-recall curve (A) and the area under the
+precision-recall curve (B) for each organism and AMP finding method
+(BLAST and classification models) for nine organisms with AMPs
+identified from the AMP database
