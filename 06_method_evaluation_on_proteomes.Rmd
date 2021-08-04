@@ -360,9 +360,9 @@ classificationAMPsidentified2 <- proteome_predictions %>%
   filter(prob_AMP >= 0.5 & Label_strict == "Pos") %>%
   count(Organism, name = "AMPs_found_Classification")
 
-total_amp_count2 <- uniprot_and_amp_dbs_amps %>% 
-  filter(Organism %in% organism_strict_selection) %>%
-  count(Organism, name = "AMPs_in_db_count")
+total_amp_count2 <- proteome_predictions %>% 
+  filter(Organism %in% organism_strict_selection & Label_strict == "Pos") %>%
+  count(Organism, name = "Total_AMPs_present")
 
 amps_identified2 <- blastAMPsidentified2 %>%
   left_join(classificationAMPsidentified2, by = "Organism") %>%

@@ -190,7 +190,7 @@ it can be seen that the 562 organism does not have a reference proteome.
 uniprot_and_amp_dbs_amps %>% filter(Organism == "Escherichia_coli") %>% select(Entry, Proteomes, `Organism ID`)
 ```
 
-    ## # A tibble: 29 x 3
+    ## # A tibble: 29 × 3
     ##    Entry  Proteomes                                        `Organism ID`
     ##    <chr>  <chr>                                                    <dbl>
     ##  1 P77551 UP000000318: Chromosome, UP000000625: Chromosome         83333
@@ -426,9 +426,9 @@ classificationAMPsidentified2 <- proteome_predictions %>%
   filter(prob_AMP >= 0.5 & Label_strict == "Pos") %>%
   count(Organism, name = "AMPs_found_Classification")
 
-total_amp_count2 <- uniprot_and_amp_dbs_amps %>% 
-  filter(Organism %in% organism_strict_selection) %>%
-  count(Organism, name = "AMPs_in_db_count")
+total_amp_count2 <- proteome_predictions %>% 
+  filter(Organism %in% organism_strict_selection & Label_strict == "Pos") %>%
+  count(Organism, name = "Total_AMPs_present")
 
 amps_identified2 <- blastAMPsidentified2 %>%
   left_join(classificationAMPsidentified2, by = "Organism") %>%
@@ -439,17 +439,17 @@ amps_identified2 <- blastAMPsidentified2 %>%
 i.e. where a protein is considered to be an AMP if it overlaps with the
 AMP database
 
-| Organism                 | AMPs_found_BLAST | AMPs_found_Classification | AMPs_in_db_count |
-|:-------------------------|-----------------:|--------------------------:|-----------------:|
-| Arabidopsis_thaliana     |               23 |                       172 |              294 |
-| Bombyx_mori              |               10 |                         9 |               13 |
-| Bos_taurus               |               39 |                        37 |               58 |
-| Drosophila_melanogaster  |               17 |                        15 |               23 |
-| Gallus_gallus            |               11 |                        17 |               25 |
-| Homo_sapiens             |               73 |                        58 |               96 |
-| Mus_musculus             |               82 |                        61 |              104 |
-| Oryctolagus_cuniculus    |               12 |                        10 |               17 |
-| Ornithorhynchus_anatinus |                0 |                         7 |               11 |
+| Organism                 | AMPs_found_BLAST | AMPs_found_Classification | Total_AMPs_present |
+|:-------------------------|-----------------:|--------------------------:|-------------------:|
+| Arabidopsis_thaliana     |               23 |                       172 |                291 |
+| Bombyx_mori              |               10 |                         9 |                 13 |
+| Bos_taurus               |               39 |                        37 |                 54 |
+| Drosophila_melanogaster  |               17 |                        15 |                 23 |
+| Gallus_gallus            |               11 |                        17 |                 25 |
+| Homo_sapiens             |               73 |                        58 |                 95 |
+| Mus_musculus             |               82 |                        61 |                 99 |
+| Oryctolagus_cuniculus    |               12 |                        10 |                 17 |
+| Ornithorhynchus_anatinus |                0 |                         7 |                 11 |
 
 ## Calculate the Precision Recall (PR) curve and the Area Under the Precision Recall Curve (AUPRC) for each method
 
@@ -685,7 +685,7 @@ methods_auprc_13_wide_w_count <- methods_auprc_13_wide %>% left_join(total_amps_
 methods_auprc_13_wide_w_count
 ```
 
-    ## # A tibble: 13 x 4
+    ## # A tibble: 13 × 4
     ##    Organism                 Classification BLAST Total_AMPs_in_test
     ##    <chr>                             <dbl> <dbl>              <int>
     ##  1 Mus_musculus                      0.365 0.305                132
@@ -714,7 +714,7 @@ methods_auprc_9_wide_w_count <- methods_auprc_9_wide %>% left_join(total_amps_in
 methods_auprc_9_wide_w_count
 ```
 
-    ## # A tibble: 9 x 4
+    ## # A tibble: 9 × 4
     ##   Organism                 Classification BLAST Total_AMPs_in_test
     ##   <chr>                             <dbl> <dbl>              <int>
     ## 1 Mus_musculus                      0.398 0.332                 99
