@@ -393,22 +393,23 @@ BLAST and classification methods.
 
 | Organism                 | AMPs_found_BLAST | AMPs_found_Classification | Total_AMP_count |
 |:-------------------------|-----------------:|--------------------------:|----------------:|
-| Arabidopsis_thaliana     |               23 |                       172 |             294 |
+| Arabidopsis_thaliana     |               23 |                       172 |             296 |
 | Bombyx_mori              |               19 |                        11 |              25 |
-| Bos_taurus               |               85 |                        78 |             116 |
-| Drosophila_melanogaster  |               23 |                        16 |              30 |
+| Bos_taurus               |               85 |                        78 |             117 |
+| Drosophila_melanogaster  |               23 |                        16 |              33 |
 | Escherichia_coli         |                2 |                         2 |               4 |
-| Gallus_gallus            |               14 |                        20 |              29 |
-| Homo_sapiens             |               77 |                        62 |             115 |
-| Lithobates_catesbeianus  |               11 |                         7 |              11 |
-| Mus_musculus             |               96 |                        70 |             393 |
-| Oncorhynchus_mykiss      |               13 |                        11 |              15 |
-| Ornithorhynchus_anatinus |               11 |                        NA |              NA |
-| Oryctolagus_cuniculus    |               54 |                        NA |              NA |
+| Gallus_gallus            |               14 |                        21 |              30 |
+| Homo_sapiens             |               77 |                        62 |             116 |
+| Lithobates_catesbeianus  |               11 |                         8 |              12 |
+| Mus_musculus             |               96 |                        70 |             132 |
+| Oncorhynchus_mykiss      |               13 |                        11 |              17 |
+| Ornithorhynchus_anatinus |               11 |                        12 |              27 |
+| Oryctolagus_cuniculus    |               54 |                        39 |              83 |
 | Penaeus_vannamei         |                3 |                         1 |               3 |
 
 None of the 11 AMPs in platypus were identified by BLAST in the stricter
-AMP criteria. `count` does not count zeros in the current version
+AMP criteria. `count` does not count zeros in the current version so the
+BLAST results for platypus was manually added as a row
 
 ``` r
 organism_strict_selection <- c("Mus_musculus","Homo_sapiens","Bos_taurus","Oryctolagus_cuniculus","Ornithorhynchus_anatinus","Gallus_gallus", "Drosophila_melanogaster","Bombyx_mori","Arabidopsis_thaliana")
@@ -447,8 +448,8 @@ AMP database
 | Gallus_gallus            |               11 |                        17 |               25 |
 | Homo_sapiens             |               73 |                        58 |               96 |
 | Mus_musculus             |               82 |                        61 |              104 |
-| Oryctolagus_cuniculus    |               12 |                        NA |               17 |
-| Ornithorhynchus_anatinus |                0 |                        NA |               11 |
+| Oryctolagus_cuniculus    |               12 |                        10 |               17 |
+| Ornithorhynchus_anatinus |                0 |                         7 |               11 |
 
 ## Calculate the Precision Recall (PR) curve and the Area Under the Precision Recall Curve (AUPRC) for each method
 

@@ -343,7 +343,8 @@ amps_identified <- blastAMPsidentified %>%
 knitr::kable(amps_identified)
 ```
 
-None of the 11 AMPs in platypus were identified by BLAST in the stricter AMP criteria. `count` does not count zeros in the current version
+None of the 11 AMPs in platypus were identified by BLAST in the stricter AMP criteria. `count` does not count zeros in the current version so the BLAST results for platypus was manually added as a row
+
 ```{r}
 organism_strict_selection <- c("Mus_musculus","Homo_sapiens","Bos_taurus","Oryctolagus_cuniculus","Ornithorhynchus_anatinus","Gallus_gallus", "Drosophila_melanogaster","Bombyx_mori","Arabidopsis_thaliana")
 
