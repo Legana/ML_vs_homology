@@ -666,13 +666,74 @@ blast_auprc_9 <- get_bitscore_auprc_9(blast_results_9, "BLAST")
 methods_auprc_9 <- rbind(classification_auprc_9, blast_auprc_9)
 ```
 
-![](06_method_evaluation_on_proteomes_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+Change methods_auprc to wide format and add their respective AMP counts
+used in performance evaluation to save for use in the next workflow. For
+methods_auprc_13, the AMP count in the proteomes (found via the
+“Antimicrobial” keyword) was used. For methods_auprc_9, the AMP count in
+the proteomes that overlapped with the AMPs in the AMP database was used
+(see Table 6.2)
+
+``` r
+methods_auprc_13_wide <- pivot_wider(methods_auprc, names_from = Method, values_from = AUPRC)
+
+total_amps_in_proteomes_antimicrobial_kw_13 <- proteome_predictions %>% 
+  filter(Label == "Pos") %>%
+  count(Organism, name = "Total_AMPs_in_test") 
+
+methods_auprc_13_wide_w_count <- methods_auprc_13_wide %>% left_join(total_amps_in_proteomes_antimicrobial_kw_13, by = "Organism")
+
+methods_auprc_13_wide_w_count
+```
+
+    ## # A tibble: 13 x 4
+    ##    Organism                 Classification BLAST Total_AMPs_in_test
+    ##    <chr>                             <dbl> <dbl>              <int>
+    ##  1 Mus_musculus                      0.365 0.305                132
+    ##  2 Homo_sapiens                      0.286 0.391                116
+    ##  3 Bos_taurus                        0.37  0.299                117
+    ##  4 Oryctolagus_cuniculus             0.22  0.205                 83
+    ##  5 Ornithorhynchus_anatinus          0.157 0.097                 27
+    ##  6 Gallus_gallus                     0.435 0.121                 30
+    ##  7 Oncorhynchus_mykiss               0.071 0.108                 17
+    ##  8 Drosophila_melanogaster           0.053 0.193                 33
+    ##  9 Penaeus_vannamei                  0.014 0.064                  3
+    ## 10 Bombyx_mori                       0.065 0.14                  25
+    ## 11 Arabidopsis_thaliana              0.318 0.041                296
+    ## 12 Lithobates_catesbeianus           0.022 0.214                 12
+    ## 13 Escherichia_coli                  0.227 0.5                    4
+
+``` r
+methods_auprc_9_wide <- pivot_wider(methods_auprc_9, names_from = Method, values_from = AUPRC)
+
+total_amps_in_proteome_overlap_w_amp_db_9 <- proteome_predictions_9 %>%
+  filter(Label_strict == "Pos") %>%
+  count(Organism, name = "Total_AMPs_in_test") 
+
+methods_auprc_9_wide_w_count <- methods_auprc_9_wide %>% left_join(total_amps_in_proteome_overlap_w_amp_db_9, by = "Organism")
+
+methods_auprc_9_wide_w_count
+```
+
+    ## # A tibble: 9 x 4
+    ##   Organism                 Classification BLAST Total_AMPs_in_test
+    ##   <chr>                             <dbl> <dbl>              <int>
+    ## 1 Mus_musculus                      0.398 0.332                 99
+    ## 2 Homo_sapiens                      0.296 0.437                 95
+    ## 3 Bos_taurus                        0.142 0.211                 54
+    ## 4 Oryctolagus_cuniculus             0.043 0.087                 17
+    ## 5 Ornithorhynchus_anatinus          0.149 0.017                 11
+    ## 6 Gallus_gallus                     0.439 0.078                 25
+    ## 7 Drosophila_melanogaster           0.058 0.186                 23
+    ## 8 Bombyx_mori                       0.079 0.094                 13
+    ## 9 Arabidopsis_thaliana              0.323 0.041                291
+
+![](06_method_evaluation_on_proteomes_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
 
 **Figure 6.1:** The precision-recall curve (A) and the area under the
 precision-recall curve (B) for each organism and AMP finding method
 (BLAST and classification models)
 
-![](06_method_evaluation_on_proteomes_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
+![](06_method_evaluation_on_proteomes_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
 
 **Figure 6.2:** The precision-recall curve (A) and the area under the
 precision-recall curve (B) for each organism and AMP finding method

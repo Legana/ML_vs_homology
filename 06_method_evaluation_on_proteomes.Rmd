@@ -592,10 +592,32 @@ blast_auprc_9 <- get_bitscore_auprc_9(blast_results_9, "BLAST")
 methods_auprc_9 <- rbind(classification_auprc_9, blast_auprc_9)
 ```
 
+Change methods_auprc to wide format and add their respective AMP counts used in performance evaluation to save for use in the next workflow. For methods_auprc_13, the AMP count in the proteomes (found via the "Antimicrobial" keyword) was used. For methods_auprc_9, the AMP count in the proteomes that overlapped with the AMPs in the AMP database was used (see Table 6.2)
+```{r}
+methods_auprc_13_wide <- pivot_wider(methods_auprc, names_from = Method, values_from = AUPRC)
+
+total_amps_in_proteomes_antimicrobial_kw_13 <- proteome_predictions %>% 
+  filter(Label == "Pos") %>%
+  count(Organism, name = "Total_AMPs_in_test") 
+
+methods_auprc_13_wide_w_count <- methods_auprc_13_wide %>% left_join(total_amps_in_proteomes_antimicrobial_kw_13, by = "Organism")
+
+methods_auprc_13_wide_w_count
+
+methods_auprc_9_wide <- pivot_wider(methods_auprc_9, names_from = Method, values_from = AUPRC)
+
+total_amps_in_proteome_overlap_w_amp_db_9 <- proteome_predictions_9 %>%
+  filter(Label_strict == "Pos") %>%
+  count(Organism, name = "Total_AMPs_in_test") 
+
+methods_auprc_9_wide_w_count <- methods_auprc_9_wide %>% left_join(total_amps_in_proteome_overlap_w_amp_db_9, by = "Organism")
+
+methods_auprc_9_wide_w_count
+```
 
 ```{r, echo=FALSE}
-saveRDS(methods_auprc, "cache/methods_auprc13.rds")
-saveRDS(methods_auprc_9, "cache/methods_auprc9.rds")
+saveRDS(methods_auprc_13_wide_w_count, "cache/methods_auprc13_w_totalAMPs_wide.rds")
+saveRDS(methods_auprc_9_wide_w_count, "cache/methods_auprc9_w_totalAMPs_wide.rds")
 ```
 
 ```{r, echo = FALSE}
