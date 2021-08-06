@@ -354,37 +354,36 @@ ggplot(auprc_and_distance_metric_long_9, aes(x = Inverse_distance_sum, y = AUPRC
 ```
 
 Images were obtained from [phylopic.org](http://phylopic.org/)
+all images used were dedicated to the [public domain](https://creativecommons.org/publicdomain/zero/1.0/) and are not copyrighted.
 
 ```{r, echo = FALSE}
 library(ggimage)
 
 
-pics13 <- c("http://phylopic.org/assets/images/submissions/92989e35-4e68-4a2d-b3a2-191ba9da671a.512.png",
-          "http://phylopic.org/assets/images/submissions/acf1cbec-f6ef-4a82-8ab5-be2f963b93f5.512.png",
-          "http://phylopic.org/assets/images/submissions/938008ab-0501-4c4d-88c5-fee17189ead3.512.png",
-          "http://phylopic.org/assets/images/submissions/d71fcd12-90f6-40c4-b918-0dac0ba3e809.512.png",
-          "http://phylopic.org/assets/images/submissions/b406c409-2735-4a3d-a7aa-8afe0b6e72dc.512.png",
-          "http://phylopic.org/assets/images/submissions/2de1c95c-7e1f-429b-9c08-17f0a27d176f.512.png",
-          "http://phylopic.org/assets/images/submissions/1df5b970-3302-4e5b-8df1-a3d9fb5744d3.512.png",
-          "http://phylopic.org/assets/images/submissions/31aba24a-a797-42bb-9601-5227d0dc8f75.512.png",
-          "http://phylopic.org/assets/images/submissions/afbc3136-8e5d-4417-a8b1-b7e50c09d56b.512.png",
-          "http://phylopic.org/assets/images/submissions/6b9f52e9-3f9d-49b8-865b-9f2718f91ee6.512.png",
-          "http://phylopic.org/assets/images/submissions/7fb6a9de-0024-4e45-bb8d-1cc32fb2470f.512.png",
-          "http://phylopic.org/assets/images/submissions/4042ad12-98d4-4761-becc-9684dc071f43.512.png",
-          "http://phylopic.org/assets/images/submissions/a905f3af-c8f9-470b-9496-7efb1e55e651.512.png")
-          
-     
+pics13 <- c("http://phylopic.org/assets/images/submissions/92989e35-4e68-4a2d-b3a2-191ba9da671a.thumb.png",
+          "http://phylopic.org/assets/images/submissions/c089caae-43ef-4e4e-bf26-973dd4cb65c5.thumb.png",
+          "http://phylopic.org/assets/images/submissions/938008ab-0501-4c4d-88c5-fee17189ead3.thumb.png",
+          "http://phylopic.org/assets/images/submissions/1e15411c-5394-4a9d-a209-76c8ac0c331d.thumb.png",
+          "http://phylopic.org/assets/images/submissions/61932f57-1fd2-49d9-bb86-042d6005581a.thumb.png",
+          "http://phylopic.org/assets/images/submissions/2de1c95c-7e1f-429b-9c08-17f0a27d176f.thumb.png",
+          "http://phylopic.org/assets/images/submissions/1df5b970-3302-4e5b-8df1-a3d9fb5744d3.thumb.png",#
+          "http://phylopic.org/assets/images/submissions/31aba24a-a797-42bb-9601-5227d0dc8f75.thumb.png", 
+          "http://phylopic.org/assets/images/submissions/aed2513d-2386-4218-b913-384838c0107b.thumb.png", #
+          "http://phylopic.org/assets/images/submissions/6dcbac7b-0caa-493a-8aa3-92babffb6f07.thumb.png",
+          "http://phylopic.org/assets/images/submissions/7fb6a9de-0024-4e45-bb8d-1cc32fb2470f.thumb.png",
+          "http://phylopic.org/assets/images/submissions/4679516b-405b-444f-974d-9775876716e2.thumb.png", #
+          "http://phylopic.org/assets/images/submissions/e4dde003-8a3b-4c9e-b4ed-1f6e4d894163.thumb.png") #
      
 
-pics9 <- c("http://phylopic.org/assets/images/submissions/92989e35-4e68-4a2d-b3a2-191ba9da671a.512.png",
-          "http://phylopic.org/assets/images/submissions/acf1cbec-f6ef-4a82-8ab5-be2f963b93f5.512.png",
-          "http://phylopic.org/assets/images/submissions/938008ab-0501-4c4d-88c5-fee17189ead3.512.png",
-          "http://phylopic.org/assets/images/submissions/d71fcd12-90f6-40c4-b918-0dac0ba3e809.512.png",
-          "http://phylopic.org/assets/images/submissions/b406c409-2735-4a3d-a7aa-8afe0b6e72dc.512.png",
-          "http://phylopic.org/assets/images/submissions/2de1c95c-7e1f-429b-9c08-17f0a27d176f.512.png",
-          "http://phylopic.org/assets/images/submissions/31aba24a-a797-42bb-9601-5227d0dc8f75.512.png",
-          "http://phylopic.org/assets/images/submissions/6b9f52e9-3f9d-49b8-865b-9f2718f91ee6.512.png",
-          "http://phylopic.org/assets/images/submissions/7fb6a9de-0024-4e45-bb8d-1cc32fb2470f.512.png")
+pics9 <- c("http://phylopic.org/assets/images/submissions/92989e35-4e68-4a2d-b3a2-191ba9da671a.thumb.png",
+          "http://phylopic.org/assets/images/submissions/c089caae-43ef-4e4e-bf26-973dd4cb65c5.thumb.png",
+          "http://phylopic.org/assets/images/submissions/938008ab-0501-4c4d-88c5-fee17189ead3.thumb.png",
+          "http://phylopic.org/assets/images/submissions/1e15411c-5394-4a9d-a209-76c8ac0c331d.thumb.png",
+          "http://phylopic.org/assets/images/submissions/61932f57-1fd2-49d9-bb86-042d6005581a.thumb.png",
+          "http://phylopic.org/assets/images/submissions/2de1c95c-7e1f-429b-9c08-17f0a27d176f.thumb.png",
+          "http://phylopic.org/assets/images/submissions/31aba24a-a797-42bb-9601-5227d0dc8f75.thumb.png", 
+          "http://phylopic.org/assets/images/submissions/6dcbac7b-0caa-493a-8aa3-92babffb6f07.thumb.png",
+          "http://phylopic.org/assets/images/submissions/7fb6a9de-0024-4e45-bb8d-1cc32fb2470f.thumb.png")
 ```
 
 aspect ratio solution from https://themockup.blog/posts/2020-10-11-embedding-images-in-ggplot/ 
@@ -430,3 +429,36 @@ auprcplot_img_13 / auprcplot_img_9 + plot_annotation(tag_levels = "A")
 ```{r}
 ggsave("figures/auprc13_9_img.png", height = 9, width = 12 * asp_ratio)
 ```
+
+
+```{r}
+link_to_img <- function(x, size = 25) {
+  paste0("<img src='", x, "' width='", size, "'/>")
+}
+
+library(ggtext)
+
+auprc_and_distance_metric_wAMPcount_13 %>%
+  mutate(images = link_to_img(pics13)) %>% 
+  filter(Organism != "Escherichia_coli") %>%
+  pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
+  ggplot(aes(x = Inverse_distance_sum, y = AUPRC, label = images)) +
+  geom_richtext(fill = NA, label.color = NA) +
+  geom_line(aes(linetype = Method)) +
+  geom_point(aes(size = Total_AMPs_in_test), colour = "forestgreen", shape = 1) +
+  theme_classic() +
+  theme(legend.position = "bottom") +
+  labs(x = "The sum of the inverse pairwise distance", linetype = "")
+
+auprc_and_distance_metric_wAMPcount_9 %>%
+  mutate(images = link_to_img(pics9)) %>% 
+  pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
+  ggplot(aes(x = Inverse_distance_sum, y = AUPRC, label = images)) +
+  geom_richtext(fill = NA, label.color = NA) +
+  geom_line(aes(linetype = Method)) +
+  geom_point(aes(size = Total_AMPs_in_test), colour = "forestgreen", shape = 1) +
+  theme_classic() +
+  theme(legend.position = "bottom") +
+  labs(x = "The sum of the inverse pairwise distance", linetype = "")
+```
+

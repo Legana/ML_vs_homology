@@ -433,7 +433,10 @@ ggplot(auprc_and_distance_metric_long_9, aes(x = Inverse_distance_sum, y = AUPRC
 
 ![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
-Images were obtained from [phylopic.org](http://phylopic.org/)
+Images were obtained from [phylopic.org](http://phylopic.org/) all
+images used were dedicated to the [public
+domain](https://creativecommons.org/publicdomain/zero/1.0/) and are not
+copyrighted.
 
 aspect ratio solution from
 <https://themockup.blog/posts/2020-10-11-embedding-images-in-ggplot/>
@@ -482,3 +485,40 @@ dbAMP databases.
 ``` r
 ggsave("figures/auprc13_9_img.png", height = 9, width = 12 * asp_ratio)
 ```
+
+``` r
+link_to_img <- function(x, size = 25) {
+  paste0("<img src='", x, "' width='", size, "'/>")
+}
+
+library(ggtext)
+
+auprc_and_distance_metric_wAMPcount_13 %>%
+  mutate(images = link_to_img(pics13)) %>% 
+  filter(Organism != "Escherichia_coli") %>%
+  pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
+  ggplot(aes(x = Inverse_distance_sum, y = AUPRC, label = images)) +
+  geom_richtext(fill = NA, label.color = NA) +
+  geom_line(aes(linetype = Method)) +
+  geom_point(aes(size = Total_AMPs_in_test), colour = "forestgreen", shape = 1) +
+  theme_classic() +
+  theme(legend.position = "bottom") +
+  labs(x = "The sum of the inverse pairwise distance", linetype = "")
+```
+
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+
+``` r
+auprc_and_distance_metric_wAMPcount_9 %>%
+  mutate(images = link_to_img(pics9)) %>% 
+  pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
+  ggplot(aes(x = Inverse_distance_sum, y = AUPRC, label = images)) +
+  geom_richtext(fill = NA, label.color = NA) +
+  geom_line(aes(linetype = Method)) +
+  geom_point(aes(size = Total_AMPs_in_test), colour = "forestgreen", shape = 1) +
+  theme_classic() +
+  theme(legend.position = "bottom") +
+  labs(x = "The sum of the inverse pairwise distance", linetype = "")
+```
+
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-25-2.png)<!-- -->
