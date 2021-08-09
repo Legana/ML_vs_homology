@@ -12,6 +12,7 @@ library(ape)
 library(treeio)
 library(patchwork)
 library(pals)
+library(ggtext)
 ```
 
 Read in AMP database to extract organisms from to submit to [TimeTree](http://timetree.org/) for phylogenetic data.
@@ -295,13 +296,13 @@ auprc_and_distance_metric_wAMPcount_9 <- left_join(methods_auprc_9_wide_w_count,
 
 **Table 7.1:** The inverse distance and AMP count for each organism and the AUPRC for the classification and BLAST methods for 13 organisms
 
-```{r}
+```{r, echo = FALSE}
 knitr::kable(auprc_and_distance_metric_wAMPcount_13)
 ```
 
 **Table 7.2:** The inverse distance and AMP count for each organism and the AUPRC for the classification and BLAST methods for 9 organisms
 
-```{r}
+```{r, echo = FALSE}
 knitr::kable(auprc_and_distance_metric_wAMPcount_9)
 ```
 
@@ -357,9 +358,6 @@ Images were obtained from [phylopic.org](http://phylopic.org/)
 all images used were dedicated to the [public domain](https://creativecommons.org/publicdomain/zero/1.0/) and are not copyrighted.
 
 ```{r, echo = FALSE}
-library(ggimage)
-
-
 pics13 <- c("http://phylopic.org/assets/images/submissions/92989e35-4e68-4a2d-b3a2-191ba9da671a.thumb.png",
           "http://phylopic.org/assets/images/submissions/c089caae-43ef-4e4e-bf26-973dd4cb65c5.thumb.png",
           "http://phylopic.org/assets/images/submissions/938008ab-0501-4c4d-88c5-fee17189ead3.thumb.png",
@@ -386,49 +384,6 @@ pics9 <- c("http://phylopic.org/assets/images/submissions/92989e35-4e68-4a2d-b3a
           "http://phylopic.org/assets/images/submissions/7fb6a9de-0024-4e45-bb8d-1cc32fb2470f.thumb.png")
 ```
 
-aspect ratio solution from https://themockup.blog/posts/2020-10-11-embedding-images-in-ggplot/ 
-
-```{r}
-asp_ratio <- 1.618 
-
-auprcplot_img_13 <- auprc_and_distance_metric_wAMPcount_13 %>%
-  mutate(images = pics13) %>% 
-  pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
-  filter(Organism != "Escherichia_coli") %>%
-  ggplot(aes(x = Inverse_distance_sum, y = AUPRC)) +
-  geom_line(aes(linetype = Method)) +
-  geom_point(aes(size = Total_AMPs_in_test), colour = "grey50") +
-  geom_image(aes(image = images), nudge_x = 0.2, size = 0.05, asp = asp_ratio) +
-  theme_classic() +
-  theme(legend.position = "none",
-         aspect.ratio = 1/asp_ratio) +
-  labs(x = "", linetype = "") 
-
-auprcplot_img_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
-  mutate(images = pics9) %>% 
-  pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
-  ggplot(aes(x = Inverse_distance_sum, y = AUPRC)) +
-  geom_line(aes(linetype = Method)) +
-  geom_point(aes(size = Total_AMPs_in_test), colour = "grey50") +
-  geom_image(aes(image = images), nudge_x = 0.2, size = 0.05, asp = asp_ratio) +
-  theme_classic() +
-  theme(legend.position = "bottom",
-        aspect.ratio = 1/asp_ratio) +
-  labs(x = "The sum of the inverse pairwise distance", linetype = "") +
-  expand_limits(y = 0.5)
-```
-
-
-```{r, echo=FALSE, fig.width=13, fig.height=10}
-auprcplot_img_13 / auprcplot_img_9 + plot_annotation(tag_levels = "A")
-```
-
-**Figure 7.3** The performance of BLAST and classification models measured in Area under the Precision-Recall curve (AUPRC) in finding AMPs in the proteomes of **A)** 12 organisms where AMPs were labelled as AMPs exclusively by using the "Antimicrobial" keyword from UniProt and **B** nine organisms where AMPs were labelled as AMPs if annotated with the UniProt "Antimicrobial" keyword **and** if these AMPs overlapped with the AMP database generated from SwissProt and the APD, DRAMP or dbAMP databases.
-
-
-```{r}
-ggsave("figures/auprc13_9_img.png", height = 9, width = 12 * asp_ratio)
-```
 
 
 ```{r}
@@ -436,9 +391,7 @@ link_to_img <- function(x, size = 25) {
   paste0("<img src='", x, "' width='", size, "'/>")
 }
 
-library(ggtext)
-
-auprc_and_distance_metric_wAMPcount_13 %>%
+auprcplot_img_13 <- auprc_and_distance_metric_wAMPcount_13 %>%
   mutate(images = link_to_img(pics13)) %>% 
   filter(Organism != "Escherichia_coli") %>%
   pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
@@ -447,10 +400,12 @@ auprc_and_distance_metric_wAMPcount_13 %>%
   geom_line(aes(linetype = Method)) +
   geom_point(aes(size = Total_AMPs_in_test), colour = "forestgreen", shape = 1) +
   theme_classic() +
-  theme(legend.position = "bottom") +
-  labs(x = "The sum of the inverse pairwise distance", linetype = "")
+  theme(legend.position = "none") +
+  labs(x = "The sum of the inverse pairwise distance", linetype = "") +
+  scale_x_continuous(breaks=c(2, 4, 6, 8, 10))
 
-auprc_and_distance_metric_wAMPcount_9 %>%
+
+auprcplot_img_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
   mutate(images = link_to_img(pics9)) %>% 
   pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
   ggplot(aes(x = Inverse_distance_sum, y = AUPRC, label = images)) +
@@ -459,6 +414,16 @@ auprc_and_distance_metric_wAMPcount_9 %>%
   geom_point(aes(size = Total_AMPs_in_test), colour = "forestgreen", shape = 1) +
   theme_classic() +
   theme(legend.position = "bottom") +
-  labs(x = "The sum of the inverse pairwise distance", linetype = "")
+  labs(x = "The sum of the inverse pairwise distance", linetype = "", size = "AMP count")
 ```
 
+```{r, echo=FALSE, fig.width=13, fig.height=10}
+auprcplot_img_13 / auprcplot_img_9 + plot_annotation(tag_levels = "A")
+```
+
+**Figure 7.3** The performance of BLAST and classification models measured in Area under the Precision-Recall curve (AUPRC) in finding AMPs in the proteomes of **A)** 12 organisms where AMPs were labelled as AMPs exclusively by using the "Antimicrobial" keyword from UniProt and **B** nine organisms where AMPs were labelled as AMPs if annotated with the UniProt "Antimicrobial" keyword **and** if these AMPs overlapped with the AMP database generated from SwissProt and the APD, DRAMP or dbAMP databases.
+
+
+```{r, echo = FALSE}
+ggsave("figures/auprc13_9_img.png", height = 9, width = 12)
+```

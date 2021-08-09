@@ -5,6 +5,7 @@ library(ape)
 library(treeio)
 library(patchwork)
 library(pals)
+library(ggtext)
 ```
 
 Read in AMP database to extract organisms from to submit to
@@ -338,10 +339,6 @@ auprc_and_distance_metric_wAMPcount_9 <- left_join(methods_auprc_9_wide_w_count,
 **Table 7.1:** The inverse distance and AMP count for each organism and
 the AUPRC for the classification and BLAST methods for 13 organisms
 
-``` r
-knitr::kable(auprc_and_distance_metric_wAMPcount_13)
-```
-
 | Organism                 | Classification | BLAST | Total_AMPs_in_test | Inverse_distance_sum |
 |:-------------------------|---------------:|------:|-------------------:|---------------------:|
 | Mus_musculus             |          0.365 | 0.305 |                132 |             6.218183 |
@@ -360,10 +357,6 @@ knitr::kable(auprc_and_distance_metric_wAMPcount_13)
 
 **Table 7.2:** The inverse distance and AMP count for each organism and
 the AUPRC for the classification and BLAST methods for 9 organisms
-
-``` r
-knitr::kable(auprc_and_distance_metric_wAMPcount_9)
-```
 
 | Organism                 | Classification | BLAST | Total_AMPs_in_test | Inverse_distance_sum |
 |:-------------------------|---------------:|------:|-------------------:|---------------------:|
@@ -438,37 +431,35 @@ images used were dedicated to the [public
 domain](https://creativecommons.org/publicdomain/zero/1.0/) and are not
 copyrighted.
 
-aspect ratio solution from
-<https://themockup.blog/posts/2020-10-11-embedding-images-in-ggplot/>
-
 ``` r
-asp_ratio <- 1.618 
+link_to_img <- function(x, size = 25) {
+  paste0("<img src='", x, "' width='", size, "'/>")
+}
 
 auprcplot_img_13 <- auprc_and_distance_metric_wAMPcount_13 %>%
-  mutate(images = pics13) %>% 
-  pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
+  mutate(images = link_to_img(pics13)) %>% 
   filter(Organism != "Escherichia_coli") %>%
-  ggplot(aes(x = Inverse_distance_sum, y = AUPRC)) +
+  pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
+  ggplot(aes(x = Inverse_distance_sum, y = AUPRC, label = images)) +
+  geom_richtext(fill = NA, label.color = NA) +
   geom_line(aes(linetype = Method)) +
-  geom_point(aes(size = Total_AMPs_in_test), colour = "grey50") +
-  geom_image(aes(image = images), nudge_x = 0.2, size = 0.05, asp = asp_ratio) +
+  geom_point(aes(size = Total_AMPs_in_test), colour = "forestgreen", shape = 1) +
   theme_classic() +
-  theme(legend.position = "none",
-         aspect.ratio = 1/asp_ratio) +
-  labs(x = "", linetype = "") 
+  theme(legend.position = "none") +
+  labs(x = "The sum of the inverse pairwise distance", linetype = "") +
+  scale_x_continuous(breaks=c(2, 4, 6, 8, 10))
+
 
 auprcplot_img_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
-  mutate(images = pics9) %>% 
+  mutate(images = link_to_img(pics9)) %>% 
   pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
-  ggplot(aes(x = Inverse_distance_sum, y = AUPRC)) +
+  ggplot(aes(x = Inverse_distance_sum, y = AUPRC, label = images)) +
+  geom_richtext(fill = NA, label.color = NA) +
   geom_line(aes(linetype = Method)) +
-  geom_point(aes(size = Total_AMPs_in_test), colour = "grey50") +
-  geom_image(aes(image = images), nudge_x = 0.2, size = 0.05, asp = asp_ratio) +
+  geom_point(aes(size = Total_AMPs_in_test), colour = "forestgreen", shape = 1) +
   theme_classic() +
-  theme(legend.position = "bottom",
-        aspect.ratio = 1/asp_ratio) +
-  labs(x = "The sum of the inverse pairwise distance", linetype = "") +
-  expand_limits(y = 0.5)
+  theme(legend.position = "bottom") +
+  labs(x = "The sum of the inverse pairwise distance", linetype = "", size = "AMP count")
 ```
 
 ![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
@@ -481,44 +472,3 @@ AMPs exclusively by using the “Antimicrobial” keyword from UniProt and
 the UniProt “Antimicrobial” keyword **and** if these AMPs overlapped
 with the AMP database generated from SwissProt and the APD, DRAMP or
 dbAMP databases.
-
-``` r
-ggsave("figures/auprc13_9_img.png", height = 9, width = 12 * asp_ratio)
-```
-
-``` r
-link_to_img <- function(x, size = 25) {
-  paste0("<img src='", x, "' width='", size, "'/>")
-}
-
-library(ggtext)
-
-auprc_and_distance_metric_wAMPcount_13 %>%
-  mutate(images = link_to_img(pics13)) %>% 
-  filter(Organism != "Escherichia_coli") %>%
-  pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
-  ggplot(aes(x = Inverse_distance_sum, y = AUPRC, label = images)) +
-  geom_richtext(fill = NA, label.color = NA) +
-  geom_line(aes(linetype = Method)) +
-  geom_point(aes(size = Total_AMPs_in_test), colour = "forestgreen", shape = 1) +
-  theme_classic() +
-  theme(legend.position = "bottom") +
-  labs(x = "The sum of the inverse pairwise distance", linetype = "")
-```
-
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
-
-``` r
-auprc_and_distance_metric_wAMPcount_9 %>%
-  mutate(images = link_to_img(pics9)) %>% 
-  pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
-  ggplot(aes(x = Inverse_distance_sum, y = AUPRC, label = images)) +
-  geom_richtext(fill = NA, label.color = NA) +
-  geom_line(aes(linetype = Method)) +
-  geom_point(aes(size = Total_AMPs_in_test), colour = "forestgreen", shape = 1) +
-  theme_classic() +
-  theme(legend.position = "bottom") +
-  labs(x = "The sum of the inverse pairwise distance", linetype = "")
-```
-
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-25-2.png)<!-- -->
