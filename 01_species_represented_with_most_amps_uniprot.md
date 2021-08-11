@@ -5,8 +5,7 @@ library(patchwork)
 source("scripts/theme_black.R")
 ```
 
-All Uniprot AMPs were downloaded from UniProt on 02 July 2021 which
-included \~20 more reviewed AMPs
+All Uniprot AMPs were downloaded from UniProt on 07 July 2021
 
 ``` r
 uniprot_amps <- read_tsv("data/uniprot_amps_07Jul21_3371rev42126unrev.tab.gz") %>%
@@ -85,7 +84,7 @@ chordates (left) and Arthropods (right)
 **Figure 1.3:** The number of antimicrobial peptides in mammal species
 (left) and insect species (right)
 
-![](01_species_represented_with_most_amps_uniprot_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](01_species_represented_with_most_amps_uniprot_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 **Figure 1.4:** The number of antimicrobial peptides in frogs and toads
 (top 20)
@@ -106,7 +105,7 @@ uniprot_amps %>% filter(grepl("Mammalia", Taxonomic_lineage)) %>%
   theme(axis.text.y = element_text(face = "italic"))
 ```
 
-![](01_species_represented_with_most_amps_uniprot_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](01_species_represented_with_most_amps_uniprot_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 Similar to the reviewed AMPs, the orders Primates, Artiodactyla dominate
 the top three orders that have the highest AMP count. However, in the
@@ -134,7 +133,7 @@ effectiveness of the model/BLAST methods )*
 uniprot_amps %>% filter(grepl("Carnivora", Taxonomic_lineage))  %>% count(Organism, sort = TRUE) %>% slice_head(n=6)
 ```
 
-    ## # A tibble: 6 x 2
+    ## # A tibble: 6 × 2
     ##   Organism                   n
     ##   <chr>                  <int>
     ## 1 Canis_lupus_familiaris    72
@@ -148,7 +147,7 @@ uniprot_amps %>% filter(grepl("Carnivora", Taxonomic_lineage))  %>% count(Organi
 uniprot_amps %>% filter(grepl("Chiroptera", Taxonomic_lineage)) %>% count(Organism, sort = TRUE) %>% slice_head(n=6)
 ```
 
-    ## # A tibble: 6 x 2
+    ## # A tibble: 6 × 2
     ##   Organism                      n
     ##   <chr>                     <int>
     ## 1 Rhinolophus_ferrumequinum    54
@@ -164,7 +163,7 @@ Marsupials and Monotremes
 uniprot_amps %>% filter(grepl("Metatheria", Taxonomic_lineage)) %>% count(Organism, sort = TRUE)
 ```
 
-    ## # A tibble: 6 x 2
+    ## # A tibble: 6 × 2
     ##   Organism                     n
     ##   <chr>                    <int>
     ## 1 Vombatus_ursinus            24
@@ -178,7 +177,7 @@ uniprot_amps %>% filter(grepl("Metatheria", Taxonomic_lineage)) %>% count(Organi
 uniprot_amps %>% filter(grepl("Monotremata", Taxonomic_lineage)) %>% count(Organism, sort = TRUE)
 ```
 
-    ## # A tibble: 2 x 2
+    ## # A tibble: 2 × 2
     ##   Organism                             n
     ##   <chr>                            <int>
     ## 1 Ornithorhynchus_anatinus            27
