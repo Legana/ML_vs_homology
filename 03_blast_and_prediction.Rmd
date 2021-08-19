@@ -43,9 +43,9 @@ read_proteome_metadata <- function(path, organism) {
   mutate(Label = case_when(str_detect(Keywords, "Antimicrobial") ~ "Pos", TRUE ~ "Neg"))
 }
 
-mouse_proteome_metadata <- read_proteome_metadata("data/proteomes/M_musculus-proteome-UP000000589.tab.gz", "Mus_musculus")
-cow_proteome_metadata <- read_proteome_metadata("data/proteomes/B_taurus-proteome-UP000009136.tab.gz", "Bos_taurus")
-human_proteome_metadata <- read_proteome_metadata("data/proteomes/H_sapiens-proteome-UP000005640.tab.gz", "Homo_sapiens")
+mouse_proteome_metadata <- read_proteome_metadata("data/proteomes/M_musculus-proteome-UP000000589.tab.gz", "Mus_musculus") %>% select(!Sequence)
+cow_proteome_metadata <- read_proteome_metadata("data/proteomes/B_taurus-proteome-UP000009136.tab.gz", "Bos_taurus") %>% select(!Sequence)
+human_proteome_metadata <- read_proteome_metadata("data/proteomes/H_sapiens-proteome-UP000005640.tab.gz", "Homo_sapiens") %>% select(!Sequence)
 rat_proteome_metadata <- read_proteome_metadata("data/proteomes/R_norvegicus-proteome-UP000002494.tab.gz", "Rattus_norvegicus")
 chimp_proteome_metadata <- read_proteome_metadata("data/proteomes/P_troglodytes-proteome-UP000002277.tab.gz", "Pan_troglodytes")
 pig_proteome_metadata <- read_proteome_metadata("data/proteomes/S_scrofa-uniprot-proteome-UP000008227.tab.gz", "Sus_scrofa")
@@ -116,7 +116,7 @@ parse_blast_results <- function(blast_results_path, metadata) {
   
   blast_colnames <- c("qaccver","saccver","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore")
   
-  read_tsv(blast_results_path, col_names = blast_colnames) %>% 
+  read_tsv(blast_results_path, col_names = blast_colnames, show_col_types = FALSE) %>% 
   group_by(saccver) %>% 
   slice_max(n = 1, order_by = bitscore) %>%
   separate(saccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
@@ -142,7 +142,7 @@ blast1results <- rbind(mouse_amps_blast, cow_amps_blast, human_amps_blast, rat_a
 ```{r}
 parse_blast2_results <- function(blast_results_path, metadata) {
   blast_colnames <- c("qaccver","saccver","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore")
-  read_tsv(blast_results_path, col_names = blast_colnames) %>% 
+  read_tsv(blast_results_path, col_names = blast_colnames, show_col_types = FALSE) %>% 
   group_by(qaccver) %>% 
   slice_max(n = 1, order_by = bitscore) %>%
   separate(qaccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
@@ -295,14 +295,23 @@ saveRDS(methods_auprc, "cache/methods_auprc.rds")
 
 
 ```{r, echo = FALSE}
-ggplot(methods_auprc, aes(x = Method, y = AUPRC, fill = Method)) +
+methods_auprc %>% 
+    mutate(Organism = str_replace_all(Organism, "_", " ")) %>%
+  ggplot(aes(x = Method, y = AUPRC, fill = Method)) +
   geom_col(width = 0.7) +
-  facet_wrap(~Organism, ncol = 2) +
-  theme_black() +
-  theme(strip.text = element_text(face = "italic")) +
-  labs(fill = "")
+  facet_wrap(~factor(Organism, levels = c("Homo sapiens", "Pan troglodytes","Mus musculus" , "Rattus norvegicus" , "Bos taurus", "Sus scrofa", "Canis lupus familiaris", "Rhinolophus ferrumequinum")), ncol = 2, scales = "free") +
+  theme_classic() +
+  theme(strip.text = element_text(face = "italic"),
+        legend.position = "bottom",
+        strip.background = element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  labs(fill = "") +
+  scale_fill_manual(breaks = c("BLAST1", "BLAST2", "Classification"),
+                       values = c("forestgreen","violetred", "grey1")) 
 
-ggsave("figures/auprcs.png", width = 7, height = 7)
+
+ggsave("figures/auprcs_mammals.png", width = 6, height = 5)
 ```
 
 **Figure 2.1:** The area under the precision recall curve for each method and organism
@@ -392,7 +401,9 @@ Figure colours were tested with a [colorblindness simulator](http://hclwizard.or
 
 Modify dataframes to add labels with the Orders of the organisms to the facet plot
 ```{r}
-blast1and2andpred_roc <- blast1and2andpred_roc %>% mutate(Organism = factor(Organism, levels = c("Homo_sapiens", "Pan_troglodytes","Mus_musculus" , "Rattus_norvegicus" , "Bos_taurus", "Sus_scrofa", "Canis_lupus_familiaris", "Rhinolophus_ferrumequinum"))) %>% mutate(Order = case_when(
+blast1and2andpred_roc <- blast1and2andpred_roc %>% 
+   mutate(Organism = str_replace_all(Organism, "_", " ")) %>%
+   mutate(Organism = factor(Organism, levels = c("Homo sapiens", "Pan troglodytes","Mus musculus" , "Rattus norvegicus" , "Bos taurus", "Sus scrofa", "Canis lupus familiaris", "Rhinolophus ferrumequinum"))) %>% mutate(Order = case_when(
   str_detect(Organism, "Mus") ~ "Rodentia",
   str_detect(Organism, "Rat") ~ "Rodentia",
   str_detect(Organism, "Homo") ~ "Primates",
@@ -403,6 +414,7 @@ blast1and2andpred_roc <- blast1and2andpred_roc %>% mutate(Organism = factor(Orga
   str_detect(Organism, "Rhino") ~ "Chiroptera",
                           TRUE ~ "other")) %>% 
   mutate(Order = factor(Order))
+
   
 
 figure_text <- tibble(
@@ -418,24 +430,26 @@ figure_text <- tibble(
   str_detect(Organism, "Bos") ~ "Artiodactyla",
   str_detect(Organism, "Canis") ~ "Carnivora",
   str_detect(Organism, "Rhino") ~ "Chiroptera",
-                          TRUE ~ "other")) %>%
-  mutate(Organism = factor(Organism, levels = c("Homo_sapiens", "Pan_troglodytes","Mus_musculus" , "Rattus_norvegicus" , "Bos_taurus", "Sus_scrofa", "Canis_lupus_familiaris", "Rhinolophus_ferrumequinum")))
+                          TRUE ~ "other")) 
 ```
 
 
 ```{r, echo = FALSE}
 ggplot(blast1and2andpred_roc, aes(x = Recall, y = Precision) ) +
   geom_line(aes(colour = Method)) +
-  geom_text(aes(label = label), data = figure_text, check_overlap = TRUE, vjust = "top", hjust = "right", size = 3, fontface = "bold") +
+  geom_text(aes(label = label), data = figure_text, check_overlap = TRUE, vjust = "top", hjust = "right", size = 4, fontface = "bold") +
   facet_wrap(~Organism, ncol = 2) +
   theme_classic() +
   theme(legend.position = "bottom",
         strip.background = element_blank(),
         strip.text = element_text(face = "italic",
-                                  size = 10)) +
+                                  size = 12)) +
   labs(colour = "") +
   scale_colour_manual(breaks = c("BLAST1", "BLAST2", "Classification"),
                        values = c("forestgreen","violetred", "grey1")) 
+
+ggsave("figures/mammals_prcurve.png", width = 10, height = 9)
+
 
 blast1and2andpred_roc_plot_theme_black <- ggplot(blast1and2andpred_roc, aes(x = Recall, y = Precision) ) +
   geom_line(aes(colour = Method)) +
@@ -450,7 +464,7 @@ blast1and2andpred_roc_plot_theme_black <- ggplot(blast1and2andpred_roc, aes(x = 
   scale_colour_manual(breaks = c("BLAST1", "BLAST2", "Classification"),
                        values = c("forestgreen","violetred", "yellow")) 
 
-ggsave(plot = blast1and2andpred_roc_plot_theme_black, "figures/methods_prcurve.png", width = 10, height = 9)
+ggsave(plot = blast1and2andpred_roc_plot_theme_black, "figures/mammals_prcurve_black.png", width = 10, height = 9)
 
 ```
 

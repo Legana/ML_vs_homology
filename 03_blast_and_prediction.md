@@ -27,9 +27,9 @@ read_proteome_metadata <- function(path, organism) {
   mutate(Label = case_when(str_detect(Keywords, "Antimicrobial") ~ "Pos", TRUE ~ "Neg"))
 }
 
-mouse_proteome_metadata <- read_proteome_metadata("data/proteomes/M_musculus-proteome-UP000000589.tab.gz", "Mus_musculus")
-cow_proteome_metadata <- read_proteome_metadata("data/proteomes/B_taurus-proteome-UP000009136.tab.gz", "Bos_taurus")
-human_proteome_metadata <- read_proteome_metadata("data/proteomes/H_sapiens-proteome-UP000005640.tab.gz", "Homo_sapiens")
+mouse_proteome_metadata <- read_proteome_metadata("data/proteomes/M_musculus-proteome-UP000000589.tab.gz", "Mus_musculus") %>% select(!Sequence)
+cow_proteome_metadata <- read_proteome_metadata("data/proteomes/B_taurus-proteome-UP000009136.tab.gz", "Bos_taurus") %>% select(!Sequence)
+human_proteome_metadata <- read_proteome_metadata("data/proteomes/H_sapiens-proteome-UP000005640.tab.gz", "Homo_sapiens") %>% select(!Sequence)
 rat_proteome_metadata <- read_proteome_metadata("data/proteomes/R_norvegicus-proteome-UP000002494.tab.gz", "Rattus_norvegicus")
 chimp_proteome_metadata <- read_proteome_metadata("data/proteomes/P_troglodytes-proteome-UP000002277.tab.gz", "Pan_troglodytes")
 pig_proteome_metadata <- read_proteome_metadata("data/proteomes/S_scrofa-uniprot-proteome-UP000008227.tab.gz", "Sus_scrofa")
@@ -57,7 +57,7 @@ blast 2.11.0, build Nov 17 2020 for MacOS.
 Each proteome was used to make a local BLAST database using
 `makeblastdb`. This proteome database was then used to query the AMP
 dataset with `blastp`, Protein-Protein BLAST 2.11.0+. The
-[blast01_proteomeagainstAMPs](scripts/blast01_proteomeagainstAMPs.sh)
+[blast01\_proteomeagainstAMPs](scripts/blast01_proteomeagainstAMPs.sh)
 script was used for this. This BLAST method is henceforth referred to as
 the “BLAST1” method.
 
@@ -71,10 +71,10 @@ blastp -db data/proteomes/M_musculus_UP000000589_10090.fasta -query cache/Mus_mu
 find data/proteomes/ -type f -not -name '*.gz' -delete
 ```
 
-BLAST was also performed the other way around, using Mus_musculus.fasta
-as the database and query it against M_musculus proteome (referred to as
-the BLAST2 method) This was done on the HPC. See
-[blast02_AMPsagainstproteome.sh](scripts/blast02_AMPsagainstproteome.sh)
+BLAST was also performed the other way around, using Mus\_musculus.fasta
+as the database and query it against M\_musculus proteome (referred to
+as the BLAST2 method) This was done on the HPC. See
+[blast02\_AMPsagainstproteome.sh](scripts/blast02_AMPsagainstproteome.sh)
 for the script used.
 
 The standard BLAST tabular output consists of nine columns:
@@ -99,7 +99,7 @@ parse_blast_results <- function(blast_results_path, metadata) {
   
   blast_colnames <- c("qaccver","saccver","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore")
   
-  read_tsv(blast_results_path, col_names = blast_colnames) %>% 
+  read_tsv(blast_results_path, col_names = blast_colnames, show_col_types = FALSE) %>% 
   group_by(saccver) %>% 
   slice_max(n = 1, order_by = bitscore) %>%
   separate(saccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
@@ -125,7 +125,7 @@ blast1results <- rbind(mouse_amps_blast, cow_amps_blast, human_amps_blast, rat_a
 ``` r
 parse_blast2_results <- function(blast_results_path, metadata) {
   blast_colnames <- c("qaccver","saccver","pident","length","mismatch","gapopen","qstart","qend","sstart","send","evalue","bitscore")
-  read_tsv(blast_results_path, col_names = blast_colnames) %>% 
+  read_tsv(blast_results_path, col_names = blast_colnames, show_col_types = FALSE) %>% 
   group_by(qaccver) %>% 
   slice_max(n = 1, order_by = bitscore) %>%
   separate(qaccver, into = c(NA, NA, "Entry_name"), sep = "\\|") %>%
@@ -281,7 +281,7 @@ predicted at a probability of 0.5 or higher is considered to be an AMP.
 The bitscores for the BLAST results range between 0 and 982 According to
 [Pearson 2013, pp. 4-5](https://doi.org/10.1002/0471250953.bi0301s42):
 “For average length proteins, a bit score of 50 is almost always
-significant. A bit score of 40 is only significant (E() \< 0.001) in
+significant. A bit score of 40 is only significant (E() &lt; 0.001) in
 searches of protein databases with fewer than 7000 entries”. Therefore,
 a bitscore threshold of 50 or higher was used to categorise a protein as
 an AMP.
@@ -312,16 +312,16 @@ amps_identified <- blast1AMPsidentified %>%
 **Table 2:** Correctly identified AMPs in different proteomes with the
 BLAST1, BLAST2 and classification methods.
 
-| Organism                  | AMPs_found_BLAST1 | AMPs_found_BLAST2 | AMPs_found_Classification | Total_AMP_count |
-|:--------------------------|------------------:|------------------:|--------------------------:|----------------:|
-| Bos_taurus                |                80 |                99 |                        83 |             116 |
-| Canis_lupus_familiaris    |                39 |                38 |                        30 |              51 |
-| Homo_sapiens              |                72 |                77 |                        62 |             115 |
-| Mus_musculus              |                94 |               107 |                        68 |             131 |
-| Pan_troglodytes           |                52 |                52 |                        49 |              65 |
-| Rattus_norvegicus         |                72 |                73 |                        62 |              88 |
-| Rhinolophus_ferrumequinum |                31 |                31 |                        26 |              37 |
-| Sus_scrofa                |                60 |                61 |                        48 |              75 |
+| Organism                   | AMPs\_found\_BLAST1 | AMPs\_found\_BLAST2 | AMPs\_found\_Classification | Total\_AMP\_count |
+|:---------------------------|--------------------:|--------------------:|----------------------------:|------------------:|
+| Bos\_taurus                |                  84 |                  99 |                          83 |               116 |
+| Canis\_lupus\_familiaris   |                  39 |                  38 |                          30 |                51 |
+| Homo\_sapiens              |                  77 |                  77 |                          62 |               115 |
+| Mus\_musculus              |                  96 |                 107 |                          68 |               131 |
+| Pan\_troglodytes           |                  52 |                  52 |                          49 |                65 |
+| Rattus\_norvegicus         |                  72 |                  73 |                          62 |                88 |
+| Rhinolophus\_ferrumequinum |                  31 |                  31 |                          26 |                37 |
+| Sus\_scrofa                |                  60 |                  61 |                          48 |                75 |
 
 ## Calculate metrics for PR curves for BLAST and classification methods
 
@@ -372,7 +372,9 @@ Modify dataframes to add labels with the Orders of the organisms to the
 facet plot
 
 ``` r
-blast1and2andpred_roc <- blast1and2andpred_roc %>% mutate(Organism = factor(Organism, levels = c("Homo_sapiens", "Pan_troglodytes","Mus_musculus" , "Rattus_norvegicus" , "Bos_taurus", "Sus_scrofa", "Canis_lupus_familiaris", "Rhinolophus_ferrumequinum"))) %>% mutate(Order = case_when(
+blast1and2andpred_roc <- blast1and2andpred_roc %>% 
+   mutate(Organism = str_replace_all(Organism, "_", " ")) %>%
+   mutate(Organism = factor(Organism, levels = c("Homo sapiens", "Pan troglodytes","Mus musculus" , "Rattus norvegicus" , "Bos taurus", "Sus scrofa", "Canis lupus familiaris", "Rhinolophus ferrumequinum"))) %>% mutate(Order = case_when(
   str_detect(Organism, "Mus") ~ "Rodentia",
   str_detect(Organism, "Rat") ~ "Rodentia",
   str_detect(Organism, "Homo") ~ "Primates",
@@ -383,6 +385,7 @@ blast1and2andpred_roc <- blast1and2andpred_roc %>% mutate(Organism = factor(Orga
   str_detect(Organism, "Rhino") ~ "Chiroptera",
                           TRUE ~ "other")) %>% 
   mutate(Order = factor(Order))
+
   
 
 figure_text <- tibble(
@@ -398,8 +401,7 @@ figure_text <- tibble(
   str_detect(Organism, "Bos") ~ "Artiodactyla",
   str_detect(Organism, "Canis") ~ "Carnivora",
   str_detect(Organism, "Rhino") ~ "Chiroptera",
-                          TRUE ~ "other")) %>%
-  mutate(Organism = factor(Organism, levels = c("Homo_sapiens", "Pan_troglodytes","Mus_musculus" , "Rattus_norvegicus" , "Bos_taurus", "Sus_scrofa", "Canis_lupus_familiaris", "Rhinolophus_ferrumequinum")))
+                          TRUE ~ "other")) 
 ```
 
 ![](03_blast_and_prediction_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
