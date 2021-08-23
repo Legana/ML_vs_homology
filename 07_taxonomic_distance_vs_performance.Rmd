@@ -216,7 +216,8 @@ distance_plot <- amps_w_distance %>%
   select(all_of(organism_selection)) %>%
   pivot_longer(names_to = "Organism", values_to = "Distance", cols = everything()) %>%
   ggplot(aes(x = Distance)) +
-  geom_histogram(bins = 40) +
+  #geom_histogram(bins = 40) +
+  geom_density() +
   facet_wrap(~Organism, ncol = 2, scales = "free") +
   theme_classic() +
   theme(strip.text.x = element_text(face = "italic"),
@@ -226,7 +227,8 @@ inverse_distance_plot <- amps_w_distance %>%
   select(all_of(organism_selection_inverse)) %>%
   pivot_longer(names_to = "Organism", values_to = "Distance_inverse", cols = everything()) %>%
   ggplot(aes(x = Distance_inverse)) +
-  geom_histogram(bins = 40) +
+ # geom_histogram(bins = 40) +
+  geom_density() +
   facet_wrap(~Organism, ncol = 2, scales = "free") +
   theme_classic() +
   theme(strip.text.x = element_text(face = "italic"),
@@ -236,6 +238,30 @@ distance_plot + inverse_distance_plot + plot_annotation(tag_levels = "A")
 ```
 
 **Figure 4.1:** **A** Histogram of pairwise distance **B** Histogram of the inverse pairwise distance between each faceted organism and 648 out of the 788 other organisms present in the AMP dataset
+
+```{r}
+min(amps_w_distance$Gloydius_halys, na.rm = TRUE)
+max(amps_w_distance$Gloydius_halys, na.rm = TRUE)
+
+min(amps_w_distance$Arabidopsis_thaliana, na.rm = TRUE)
+max(amps_w_distance$Arabidopsis_thaliana, na.rm = TRUE)
+
+amps_w_distance %>% 
+  select(Arabidopsis_thaliana) %>% 
+  count(Arabidopsis_thaliana, sort = TRUE)
+
+amps_w_distance %>% 
+  select(Gloydius_halys) %>% 
+  count(Gloydius_halys, sort = TRUE)
+
+amps_w_distance %>% 
+  select(Mus_musculus) %>% 
+  count(Mus_musculus, sort = TRUE)
+
+amps_w_distance %>% 
+  select(Bos_taurus) %>% 
+  count(Bos_taurus, sort = TRUE)
+```
 
 ```{r, echo = FALSE}
 ggsave("figures/distancevsinversedistance_ampdb.png", width = 10, height = 9)
@@ -427,3 +453,5 @@ auprcplot_img_13 / auprcplot_img_9 + plot_annotation(tag_levels = "A")
 ```{r, echo = FALSE}
 ggsave("figures/auprc13_9_img.png", height = 9, width = 12)
 ```
+
+

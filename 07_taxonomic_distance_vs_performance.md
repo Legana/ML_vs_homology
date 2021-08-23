@@ -231,6 +231,114 @@ amps_w_distance <- amp_database %>%
 the inverse pairwise distance between each faceted organism and 648 out
 of the 788 other organisms present in the AMP dataset
 
+``` r
+min(amps_w_distance$Gloydius_halys, na.rm = TRUE)
+```
+
+    ## [1] 0
+
+``` r
+max(amps_w_distance$Gloydius_halys, na.rm = TRUE)
+```
+
+    ## [1] 8580
+
+``` r
+min(amps_w_distance$Arabidopsis_thaliana, na.rm = TRUE)
+```
+
+    ## [1] 0
+
+``` r
+max(amps_w_distance$Arabidopsis_thaliana, na.rm = TRUE)
+```
+
+    ## [1] 8580
+
+``` r
+amps_w_distance %>% 
+  select(Arabidopsis_thaliana) %>% 
+  count(Arabidopsis_thaliana, sort = TRUE)
+```
+
+    ## # A tibble: 33 × 2
+    ##    Arabidopsis_thaliana     n
+    ##                   <dbl> <int>
+    ##  1                2992.   979
+    ##  2                  NA    479
+    ##  3                2992.   407
+    ##  4                2992.   352
+    ##  5                   0    294
+    ##  6                2992.   221
+    ##  7                8580.   188
+    ##  8                2992.    58
+    ##  9                2992.    54
+    ## 10                 321.    42
+    ## # … with 23 more rows
+
+``` r
+amps_w_distance %>% 
+  select(Gloydius_halys) %>% 
+  count(Gloydius_halys, sort = TRUE)
+```
+
+    ## # A tibble: 56 × 2
+    ##    Gloydius_halys     n
+    ##             <dbl> <int>
+    ##  1           704.   549
+    ##  2            NA    479
+    ##  3          2992.   362
+    ##  4          1593.   198
+    ##  5           624.   197
+    ##  6          8580    188
+    ##  7           624.   149
+    ##  8           624.   139
+    ##  9          1593.   113
+    ## 10           704.    74
+    ## # … with 46 more rows
+
+``` r
+amps_w_distance %>% 
+  select(Mus_musculus) %>% 
+  count(Mus_musculus, sort = TRUE)
+```
+
+    ## # A tibble: 60 × 2
+    ##    Mus_musculus     n
+    ##           <dbl> <int>
+    ##  1         704.   497
+    ##  2          NA    479
+    ##  3        2992.   362
+    ##  4        8580.   188
+    ##  5        1593.   156
+    ##  6         180.   148
+    ##  7         193.   118
+    ##  8        1593.   113
+    ##  9           0    104
+    ## 10         704.    74
+    ## # … with 50 more rows
+
+``` r
+amps_w_distance %>% 
+  select(Bos_taurus) %>% 
+  count(Bos_taurus, sort = TRUE)
+```
+
+    ## # A tibble: 58 × 2
+    ##    Bos_taurus     n
+    ##         <dbl> <int>
+    ##  1       704.   497
+    ##  2        NA    479
+    ##  3      2992.   363
+    ##  4      1593.   198
+    ##  5      8580    188
+    ##  6       193.   176
+    ##  7       193.   148
+    ##  8      1593.   113
+    ##  9       193.    80
+    ## 10       704.    74
+    ## # … with 48 more rows
+
 Examine values. There are 479 NA values for each column in both the
 normal distance and inverse distance. The inverse distance columns
 contain `Inf` values for each organism. The `Inf` values match up to the
@@ -320,7 +428,7 @@ refer to AMPs in their respective proteomes found via the UniProt
 refer to AMPs in their respective proteomes that overlap with the AMPs
 in the AMP database.
 
-Widen data so its easier to add the summed\_inverse\_distance dataframe
+Widen data so it’s easier to add the summed\_inverse\_distance dataframe
 to it
 
 ``` r
@@ -391,7 +499,7 @@ ggplot(auprc_and_distance_metric_long_13, aes(x = Inverse_distance_sum, y = AUPR
   guides(colour = guide_legend(label.theme = element_text(face = "italic", size = 9)))
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 **Figure 7.1:** **A** Scatter and line plot of the summed inverse
 pairwise distance and the AUPRC for each AMP finding method for AMPs in
@@ -409,7 +517,7 @@ ggplot(filter(auprc_and_distance_metric_long_13, Organism != "Escherichia_coli")
   guides(colour = guide_legend(label.theme = element_text(face = "italic", size = 9)))
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
 **Figure 7.2:** Same as Figure 7.1, excluding *E. coli*
 
@@ -424,7 +532,7 @@ ggplot(auprc_and_distance_metric_long_9, aes(x = Inverse_distance_sum, y = AUPRC
   guides(colour = guide_legend(label.theme = element_text(face = "italic", size = 9)))
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 Images were obtained from [phylopic.org](http://phylopic.org/) all
 images used were dedicated to the [public
@@ -462,7 +570,7 @@ auprcplot_img_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
   labs(x = "The sum of the inverse pairwise distance", linetype = "", size = "AMP count")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 **Figure 7.3** The performance of BLAST and classification models
 measured in Area under the Precision-Recall curve (AUPRC) in finding
