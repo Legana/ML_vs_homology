@@ -8,6 +8,7 @@ echo data/uniprot_amps_w_amp_dbsJuly21.rds >> data_list
 echo data/swissprot_amps_standardaa_90.fasta >> data_list
 echo data/swissprot_nonamps_standardaa_90.fasta >> data_list
 echo cache/amps_standardaa.fasta90.fasta >> data_list 
+echo cache/negative_dataset.rds >> data_list
 
 # Proteomes
 
