@@ -449,9 +449,6 @@ refer to AMPs in their respective proteomes found via the UniProt
 refer to AMPs in their respective proteomes that overlap with the AMPs
 in the AMP database.
 
-Widen data so it’s easier to add the summed\_inverse\_distance dataframe
-to it
-
 ``` r
 methods_auprc_13_wide_w_count <- readRDS("cache/methods_auprc13_w_totalAMPs_wide.rds")
 methods_auprc_9_wide_w_count <- readRDS("cache/methods_auprc9_w_totalAMPs_wide.rds")
