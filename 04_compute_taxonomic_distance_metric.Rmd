@@ -1,9 +1,11 @@
 ---
-output: github_document
+output: 
+  github_document:
+    pandoc_args: "--webtex"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```
 
 ```{r}
@@ -13,6 +15,8 @@ library(treeio)
 library(patchwork)
 library(cowplot)
 library(pals)
+
+options(dplyr.summarise.inform = FALSE,readr.show_types = FALSE)
 ```
 
 ## Prepare AMP and tree datasets
@@ -45,6 +49,7 @@ write_lines(unique(swissprot_amps$Organism), "cache/organism_list.txt")
 ```
 
 Add in the unreviewed horseshoe bat AMPs (used in previous analysis)
+
 ```{r}
 horseshoe_bat_amps <- read_tsv("data/uniprot_amps_07Jul21_3371rev42126unrev.tab.gz") %>%
   rename(Entry_name = `Entry name`) %>% 
@@ -206,58 +211,85 @@ Calculate pairwise distances between pairs of tips from the tree using the branc
 timetree_distance_matrix <- cophenetic.phylo(timetree_reworded_phylo)
 ```
 
-Convert matrix to dataframe and left join to SwissProt AMPs dataset (by organism). Then calculate the inverse pairwise distance (1/distance) for each organism
+
+Convert matrix to dataframe, tidy it, and left join to SwissProt AMPs dataset (by organism). This results in a long tibble with two columns that contain organism names.  Each row represents the potential contribution of an AMP (from one organism) to the database of AMPs available for training models that could potentially be used to predict amps in a second organism. In this framework we refer to the first organism using the column `Organism` and the second using the column, `target`. 
+
 ```{r}
-timetree_dm_df <- as.data.frame(timetree_distance_matrix) %>% rownames_to_column("Organism")
+timetree_dm_df <- as.data.frame(timetree_distance_matrix) %>% 
+  rownames_to_column("Organism") %>% 
+  pivot_longer(-Organism, names_to = "target", values_to = "Distance")
 
 amps_w_distance <- swissprot_amps %>%
-  left_join(timetree_dm_df, by = "Organism") %>% 
-  mutate(across(.cols = Haloarchaeon_S8a:Cycas_revoluta, function(x) 1/x, .names = "{.col}_inverse" ))
+  left_join(timetree_dm_df, by = "Organism")
 ```
 
+## Taxonomic Representation Score
 
-```{r, echo = FALSE, fig.height=10}
-distance_plot <- amps_w_distance %>% 
-  select(Homo_sapiens, Pan_troglodytes, Mus_musculus , Rattus_norvegicus , Bos_taurus, Sus_scrofa, Canis_lupus, Rhinolophus_ferrumequinum) %>%
-  pivot_longer(names_to = "Organism", values_to = "Distance", cols = everything()) %>%
+For each `target` organism we could potentially construct a database for AMP prediction (either via BLAST or ML approaches) using AMPs from all remaining (non-target) organisms.  Our hypothesis is that predictive performance will be better for target organisms where the remaining database has a large number of AMPs from closely related taxa. To capture this effect we propose the following score. 
+
+Let $A_i = \{ a_i^1,a_i^2,...,a_i^{n_i} \}$ be the $n_i$ known AMPs in the proteome of species $i$, all of which have the same taxonomic distance, $d_i$ to the target organism. The representation score, $S_t$ for target organism $t$ is then given by
+
+$$
+S_t = \sum_{i \ne t} \frac{s}{s+e^{\frac{d_i}{s}}} n_i
+$$
+
+
+
+where $s$ is a parameter controlling the shape of a sigmoid curve that determines the relative weighting of AMPs given their taxonomic distance from the target. 
+
+In order to choose an appropriate value for $s$ we examine the distribution of taxonomic distances for a  selection of target organisms
+
+
+```{r, echo = FALSE, fig.height=8}
+taxon_reps <- c("Homo_sapiens","Mus_musculus","Drosophila_melanogaster","Arabidopsis_thaliana")
+
+amps_w_distance %>% 
+  filter(target %in% taxon_reps) %>%
+  filter(Organism %in% taxon_reps) %>%  
+  filter(target!=Organism) %>% 
   ggplot(aes(x = Distance)) +
-  geom_histogram(bins = 40) +
-  facet_wrap(~Organism, ncol = 2, scales = "free") +
-  theme_classic() +
-  theme(strip.text.x = element_text(face = "italic"),
-        strip.background = element_rect(fill = "white", color = "white"))
+  geom_histogram(aes(fill=Organism)) +
+  facet_wrap(~target, ncol = 2, scales = "free") +
+ theme_classic() +
+ theme(strip.text.x = element_text(face = "italic"),
+       strip.background = element_rect(fill = "white", color = "white"))
 
-inverse_distance_plot <- amps_w_distance %>% 
-  select(Homo_sapiens_inverse, Pan_troglodytes_inverse, Mus_musculus_inverse , Rattus_norvegicus_inverse , Bos_taurus_inverse, Sus_scrofa_inverse, Canis_lupus_inverse, Rhinolophus_ferrumequinum_inverse) %>%
-  pivot_longer(names_to = "Organism", values_to = "Distance_inverse", cols = everything()) %>%
-  ggplot(aes(x = Distance_inverse)) +
-  geom_histogram(bins = 40) +
-  facet_wrap(~Organism, ncol = 2, scales = "free") +
-  theme_classic() +
-  theme(strip.text.x = element_text(face = "italic"),
-        strip.background = element_rect(fill = "white", color = "white"))
-
-distance_plot / inverse_distance_plot + plot_annotation(tag_levels = "A")
-
-ggsave("figures/distancevsinversedistance.png", width = 8, height = 9)
+ggsave("figures/distancevsinversedistance.png")
 ```
 
-**Figure 4.1:** **A** Histogram of pairwise distance **B** Histogram of the inverse pairwise distance between each faceted organism and 623 out of the 756 other organisms present in the AMP dataset
+**Figure 4.1:** **A** Histogram of pairwise distance between each faceted organism and other selected organisms present in the AMP dataset
+
+Based on this we can see that relatively close taxonomic distances (ie within mammalia) are around 100, those from mammals to insects are ~1500 and those from mammals to plants are `>3000`.   A value of $s=200$ gives full weight to relatives within the same class (ie mammalia) and rapidly diminishing weight to more distant relatives.
+
+```{r}
+distance_score <- function(d,s){
+  s/(s+exp(d/s))
+}
+x <- 1:300
+plot(x,distance_score(x,30))
+```
+
+
+
+```{r}
+target_organisms <- c("Homo_sapiens", "Pan_troglodytes", "Mus_musculus" , "Rattus_norvegicus" , "Bos_taurus","Sus_scrofa", "Canis_lupus", "Rhinolophus_ferrumequinum")
+
+amps_w_distance_sum <- amps_w_distance %>%  
+  filter(Organism!=target) %>% 
+  select(Organism,target,Distance) %>% 
+  group_by(Organism,target) %>% 
+  summarise(namps = n(), dscore = sum(distance_score(Distance,30))) %>% 
+  ungroup() 
+
+amps_w_distance_sum %>% group_by(target) %>% 
+  slice_max(dscore, n=5) %>% 
+  filter(target %in% target_organisms) %>% 
+  ggplot(aes(x=target)) + geom_col(aes(y=dscore,fill=Organism)) + coord_flip() 
+
+```
+
 
 ## Summed inverse pairwise distance vs. AUPRC 
-
-Replace `inf` values to `NA` and sum inverse distance values. Then rename columns to original organism names and transform to longer format so it can be more easily combined to the AUPRC results dataframe  
-```{r}
-
-summed_inverse_distance <- amps_w_distance %>%
-  map_df(function(x) replace(x, is.infinite(x), NA)) %>%
-  summarise(across(.cols = c(Homo_sapiens_inverse, Pan_troglodytes_inverse, Mus_musculus_inverse , Rattus_norvegicus_inverse , Bos_taurus_inverse, Sus_scrofa_inverse, Canis_lupus_inverse, Rhinolophus_ferrumequinum_inverse), sum, na.rm = TRUE, .names = "{.col}_sum"))
-
-summed_inverse_distance <- amps_w_distance %>%
-  map_df(function(x) replace(x, is.infinite(x), NA)) %>%
-  summarise(across(.cols = c(Homo_sapiens_inverse, Pan_troglodytes_inverse, Mus_musculus_inverse , Rattus_norvegicus_inverse , Bos_taurus_inverse, Sus_scrofa_inverse, Canis_lupus_inverse, Rhinolophus_ferrumequinum_inverse), sum, na.rm = TRUE, .names = "{.col}_sum")) %>% rename("Homo_sapiens" = Homo_sapiens_inverse_sum, "Pan_troglodytes" = Pan_troglodytes_inverse_sum, "Mus_musculus" = Mus_musculus_inverse_sum, "Rattus_norvegicus" = Rattus_norvegicus_inverse_sum, "Bos_taurus" = Bos_taurus_inverse_sum, "Sus_scrofa" = Sus_scrofa_inverse_sum, "Canis_lupus_familiaris" = Canis_lupus_inverse_sum,"Rhinolophus_ferrumequinum" = Rhinolophus_ferrumequinum_inverse_sum) %>% pivot_longer(cols = everything(), names_to = "Organism", values_to = "Inverse_distance_sum")
-
-```
 
 Read in previously calculated AUPRC values (see 03_blast_and_prediction.Rmd). 
 Widen data so its easier to add the summed_inverse_distance dataframe to it
@@ -265,39 +297,36 @@ Widen data so its easier to add the summed_inverse_distance dataframe to it
 ```{r}
 methods_auprc <- readRDS("cache/methods_auprc.rds")
 
-methods_auprc_wide <- pivot_wider(methods_auprc, names_from = Method, values_from = AUPRC)
+#methods_auprc_wide <- pivot_wider(methods_auprc, names_from = Method, values_from = AUPRC)
 ```
 
 Join the AUPRC values and distance metric for each organism
 ```{r}
-auprc_and_distance_metric <- left_join(methods_auprc_wide, summed_inverse_distance, by = "Organism")
+auprc_and_distance_metric <- amps_w_distance_sum %>% 
+  group_by(target) %>% 
+  summarise(score = sum(dscore,na.rm = TRUE)) %>% 
+  left_join(methods_auprc, by = c("target"="Organism")) %>% 
+  na.omit()
 ```
 
 
 Add AMP count to plot as point size
 ```{r}
-organisms <- c("Mus_musculus", "Bos_taurus", "Homo_sapiens","Rattus_norvegicus","Pan_troglodytes","Sus_scrofa", "Canis_lupus"  ,"Rhinolophus_ferrumequinum")
-
-organisms_amp_count <- amps_w_distance %>% 
-  filter(Organism %in% organisms) %>%
+target_amp_counts <- amps_w_distance %>% 
+  filter(Organism %in% target_organisms) %>%
+  filter(Organism==target) %>% 
   count(Organism, name = "AMP_count") %>%
   mutate(Organism = ifelse(Organism == "Canis_lupus", "Canis_lupus_familiaris", Organism))
 
-auprc_and_distance_metric_wAMPcount <- left_join(auprc_and_distance_metric, organisms_amp_count, by = "Organism")
-```
-
-
-Change back to long format for plotting 
-```{r}
-auprc_and_distance_metric_long <- auprc_and_distance_metric_wAMPcount %>% pivot_longer(cols = c(Classification, BLAST1, BLAST2), names_to = "Method", values_to = "AUPRC")
+auprc_and_distance_metric_wAMPcount <- left_join(auprc_and_distance_metric, target_amp_counts, by = c("target"="Organism"))
 ```
 
 
 ```{r, echo  = FALSE, fig.width = 9}
-theplot <- ggplot(auprc_and_distance_metric_long, aes(x = Inverse_distance_sum, y = AUPRC)) +
+theplot <- ggplot(auprc_and_distance_metric_wAMPcount, aes(x = score, y = AUPRC)) +
   geom_line(aes(linetype = Method)) +
-  geom_point(aes(colour = Organism, size = AMP_count)) +
-  labs(x = "The sum of the inverse pairwise distance", colour = "", linetype = "") +
+  geom_point(aes(colour = target, size = AMP_count)) +
+  labs(x = "Taxonomic representation score", colour = "", linetype = "") +
   theme_classic() +
   theme(legend.position = "right") +
   scale_colour_manual(values = watlington(8)) +
@@ -321,66 +350,5 @@ ggsave("figures/auprc_distance_amps.png", width = 10, height = 5)
 **Figure 4.3:** **A** Scatter and line plot of the summed inverse pairwise distance and the AUPRC for each AMP finding method for AMPs in different organisms. The size of points depends on the number of AMPs in the organism, represented by the AMP_count.
 
 
-```{r, fig.height=6, echo = FALSE}
-auprc_no_primates_scatter <- ggplot(filter(auprc_and_distance_metric_long, !Organism %in% c("Homo_sapiens", "Pan_troglodytes")), aes(x = Inverse_distance_sum, y = AUPRC, colour = Method)) +
-  geom_point() +
-  labs(x = "The sum of the inverse pairwise distance", colour = "") +
-  theme_classic() +
-  theme(legend.position = "bottom") +
-  labs(x = "", colour = "")
-
-auprc_no_primates_line <- ggplot(filter(auprc_and_distance_metric_long, !Organism %in% c("Homo_sapiens", "Pan_troglodytes")), aes(x = Inverse_distance_sum, y = AUPRC, colour = Method)) +
-  geom_line() +
-  labs(x = "The sum of the inverse pairwise distance", colour = "") +
-  theme_classic() +
-  theme(legend.position = "bottom")
-
-auprc_no_primates_scatter / auprc_no_primates_line + plot_annotation(tag_levels = "A")
-
-ggsave("figures/auprc_vs_distance_scatter_linear.png", width = 7, height = 7)
-
-```
-
-**Figure 4.3:** **A** Scatterplot and **B** line plot of the summed inverse pairwise distance and the AUPRC for each AMP finding method, excluding the primates *Homo sapiens* and *Pan troglodytes*
-
-
-*inverse values have a fair `inf` values*
-```{r}
-length(which(is.infinite(amps_w_distance$Homo_sapiens_inverse))) #99
-
-length(which(is.infinite(amps_w_distance$Mus_musculus_inverse))) #100
-
-length(which(is.infinite(amps_w_distance$Pan_troglodytes_inverse))) #38
-
-length(which(is.infinite(amps_w_distance$Bos_taurus_inverse))) #55
-
-length(which(is.infinite(amps_w_distance$Canis_lupus_inverse))) #6
-
-length(which(is.infinite(amps_w_distance$Rhinolophus_ferrumequinum_inverse))) #54
-
-length(which(is.infinite(amps_w_distance$Sus_scrofa_inverse))) #29
-```
-
-
-<i>
-
-**Method notes:**
-
-Take column belonging to each organism (will have all distances between that organism and all other organisms)
-
-
-take inverse from all organisms and add them all up . single number is representation of histogram
-
-How weighted are organisms towards low values. expect for mammals to have a common set of AMPs that fall outside of mammals (only distantly related to mammals) which will have low difference between them and to mammals. Values within mammals will change more (higher values in histogram)
-
-set values to 0 for really distant taxonomic distance?
-
-
-Sum up the inverse (1/distance) for distances so that a large value of distance translates to a small value (or weighting) of the AMP.
-Inverse because an AMP that is taxonomically far away (e.g bacterial AMP to a human AMP) will be difficult to BLAST (not likely to have high sequence similarity) so we give that a low weighting. 
-
-histogram for both normal and inverse?
-
-</i>
 
 

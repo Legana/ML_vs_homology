@@ -176,6 +176,12 @@ chimp_model <- readRDS("models/Pan_troglodytes_model.rds")
 pig_model <- readRDS("models/Sus_scrofa_model.rds")
 dog_model <- readRDS("models/Canis_familiaris_model.rds")
 general_model <- readRDS("models/general_model.rds")
+moth_model <- readRDS("models/moth_model.rds")
+cress_model <- readRDS("models/cress_model.rds")
+trout_model <- readRDS("models/trout_model.rds")
+frog_model <- readRDS("models/frog_model.rds")
+fruitfly_model <- readRDS("models/fruitfly_model.rds")
+junglefowl_model <- readRDS("models/junglefowl_model.rds")
 ```
 
 Predict AMPs in proteomes 
@@ -188,6 +194,12 @@ chimp_pred <- read_faa("data/proteomes/P_troglodytes_UP000002277_9598.fasta.gz")
 pig_pred <- read_faa("data/proteomes/S_scrofa_UP000008227_9823.fasta.gz") %>% predict_amps(n_cores = 4, model = pig_model)
 dog_pred <- read_faa("data/proteomes/C_familiaris_UP000002254_9615.fasta.gz") %>% predict_amps(n_cores = 4, model = dog_model)
 bat_pred <- read_faa("data/proteomes/R_ferrumequinum_UP000472240_59479.fasta.gz") %>% predict_amps(n_cores = 4, model = general_model)
+moth_pred <- read_faa("data/proteomes/B_mori_UP000005204_7091.fasta.gz") %>% predict_amps(n_cores = 4, model = moth_model)
+cress_pred <- read_faa("data/proteomes/A_thaliana_UP000006548_3702.fasta.gz") %>% predict_amps(n_cores = 4, model = cress_model)
+trout_pred <- read_faa("data/proteomes/O_mykiss_UP000193380_8022.fasta.gz") %>% predict_amps(n_cores = 4, model = trout_model)
+frog_pred <- read_faa("data/proteomes/L_catesbeianus_UP000228934_8400.fasta.gz") %>% predict_amps(n_cores = 4, model = frog_model)
+fruitfly_pred <- read_faa("data/proteomes/D_melanogaster_UP000000803_7227.fasta.gz") %>% predict_amps(n_cores = 4, model = fruitfly_model)
+junglefowl_pred <- read_faa("data/proteomes/G_gallus_UP000000539_9031.fasta.gz") %>% predict_amps(n_cores = 4, model = junglefowl_model)
 ```
 
 
