@@ -109,11 +109,10 @@ diminishing weight to more distant relatives.
 
 ![](04_compute_taxonomic_distance_metric_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
-## Summed inverse pairwise distance vs. AUPRC
+## Taxonomic distance score vs. AUPRC
 
 Read in previously calculated AUPRC values (see
-03\_blast\_and\_prediction.Rmd). Widen data so its easier to add the
-summed\_inverse\_distance dataframe to it
+03\_blast\_and\_prediction.Rmd).
 
 Join the AUPRC values and distance metric for each organism
 

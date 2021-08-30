@@ -237,7 +237,7 @@ $$
 
 where $s$ is a parameter controlling the shape of a sigmoid curve that determines the relative weighting of AMPs given their taxonomic distance from the target. 
 
-In order to choose an appropriate value for $s$ we examine the distribution of taxonomic distances for a  selection of target organisms
+In order to choose an appropriate value for $s$ we examine the distribution of taxonomic distances for a selection of target organisms
 
 
 ```{r, echo = FALSE, fig.height=8}
@@ -253,13 +253,11 @@ amps_w_distance %>%
  theme_classic() +
  theme(strip.text.x = element_text(face = "italic"),
        strip.background = element_rect(fill = "white", color = "white"))
-
-ggsave("figures/distancevsinversedistance.png")
 ```
 
 **Figure 4.1:** **A** Histogram of pairwise distance between each faceted organism and other selected organisms present in the AMP dataset
 
-Based on this we can see that relatively close taxonomic distances (ie within mammalia) are around 100, those from mammals to insects are ~1500 and those from mammals to plants are `>3000`.   A value of $s=200$ gives full weight to relatives within the same class (ie mammalia) and rapidly diminishing weight to more distant relatives.
+Based on this we can see that relatively close taxonomic distances (ie within mammalia) are around 100, those from mammals to insects are ~1500 and those from mammals to plants are `>3000`. A value of $s=200$ gives full weight to relatives within the same class (ie mammalia) and rapidly diminishing weight to more distant relatives.
 
 ```{r}
 distance_score <- function(d,s){
@@ -285,19 +283,15 @@ amps_w_distance_sum %>% group_by(target) %>%
   slice_max(dscore, n=5) %>% 
   filter(target %in% target_organisms) %>% 
   ggplot(aes(x=target)) + geom_col(aes(y=dscore,fill=Organism)) + coord_flip() 
-
 ```
 
 
-## Summed inverse pairwise distance vs. AUPRC 
+## Taxonomic distance score vs. AUPRC 
 
 Read in previously calculated AUPRC values (see 03_blast_and_prediction.Rmd). 
-Widen data so its easier to add the summed_inverse_distance dataframe to it
 
 ```{r}
 methods_auprc <- readRDS("cache/methods_auprc.rds")
-
-#methods_auprc_wide <- pivot_wider(methods_auprc, names_from = Method, values_from = AUPRC)
 ```
 
 Join the AUPRC values and distance metric for each organism
@@ -331,7 +325,6 @@ theplot <- ggplot(auprc_and_distance_metric_wAMPcount, aes(x = score, y = AUPRC)
   theme(legend.position = "right") +
   scale_colour_manual(values = watlington(8)) +
   guides(colour = guide_legend(label.theme = element_text(face = "italic", size = 9)))
-
 
 size_legend <- get_legend(theplot + guides(linetype = "none"))
 
