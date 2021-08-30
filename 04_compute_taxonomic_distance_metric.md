@@ -68,21 +68,29 @@ database has a large number of AMPs from closely related taxa. To
 capture this effect we propose the following score.
 
 Let
-*A*<sub>*i*</sub> = {*a*<sub>*i*</sub><sup>1</sup>, *a*<sub>*i*</sub><sup>2</sup>, ..., *a*<sub>*i*</sub><sup>*n*<sub>*i*</sub></sup>}
-be the *n*<sub>*i*</sub> known AMPs in the proteome of species *i*, all
-of which have the same taxonomic distance, *d*<sub>*i*</sub> to the
-target organism. The representation score, *S*<sub>*t*</sub> for target
-organism *t* is then given by;
+![A\_i = \\{ a\_i^1,a\_i^2,...,a\_i^{n\_i} \\}](https://latex.codecogs.com/png.latex?A_i%20%3D%20%5C%7B%20a_i%5E1%2Ca_i%5E2%2C...%2Ca_i%5E%7Bn_i%7D%20%5C%7D "A_i = \{ a_i^1,a_i^2,...,a_i^{n_i} \}")
+be the ![n\_i](https://latex.codecogs.com/png.latex?n_i "n_i") known
+AMPs in the proteome of species
+![i](https://latex.codecogs.com/png.latex?i "i"), all of which have the
+same taxonomic distance,
+![d\_i](https://latex.codecogs.com/png.latex?d_i "d_i") to the target
+organism. The representation score,
+![S\_t](https://latex.codecogs.com/png.latex?S_t "S_t") for target
+organism ![t](https://latex.codecogs.com/png.latex?t "t") is then given
+by
 
-$$
+![
 S\_t = \\sum\_{i \\ne t} \\frac{s}{s+e^{\\frac{d\_i}{s}}} n\_i
-$$
+](https://latex.codecogs.com/png.latex?%0AS_t%20%3D%20%5Csum_%7Bi%20%5Cne%20t%7D%20%5Cfrac%7Bs%7D%7Bs%2Be%5E%7B%5Cfrac%7Bd_i%7D%7Bs%7D%7D%7D%20n_i%0A "
+S_t = \sum_{i \ne t} \frac{s}{s+e^{\frac{d_i}{s}}} n_i
+")
 
-where *s* is a parameter controlling the shape of a sigmoid curve that
-determines the relative weighting of AMPs given their taxonomic distance
-from the target.
+where ![s](https://latex.codecogs.com/png.latex?s "s") is a parameter
+controlling the shape of a sigmoid curve that determines the relative
+weighting of AMPs given their taxonomic distance from the target.
 
-In order to choose an appropriate value for *s* we examine the
+In order to choose an appropriate value for
+![s](https://latex.codecogs.com/png.latex?s "s") we examine the
 distribution of taxonomic distances for a selection of target organisms
 
 ![](04_compute_taxonomic_distance_metric_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
@@ -93,8 +101,9 @@ faceted organism and other selected organisms present in the AMP dataset
 Based on this we can see that relatively close taxonomic distances (ie
 within mammalia) are around 100, those from mammals to insects are
 \~1500 and those from mammals to plants are `>3000`. A value of
-*s* = 200 gives full weight to relatives within the same class (ie
-mammalia) and rapidly diminishing weight to more distant relatives.
+![s=200](https://latex.codecogs.com/png.latex?s%3D200 "s=200") gives
+full weight to relatives within the same class (ie mammalia) and rapidly
+diminishing weight to more distant relatives.
 
 ![](04_compute_taxonomic_distance_metric_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
