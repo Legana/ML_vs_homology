@@ -214,232 +214,84 @@ timetree_distance_matrix <- cophenetic.phylo(timetree_reworded_phylo)
 ```
 
 Convert matrix to dataframe and left join to AMP database (by organism).
-Then calculate the inverse pairwise distance (1/distance) for each
-organism
+
+Convert matrix to dataframe, tidy it, and left join to the AMP database
+(by organism). This results in a long tibble with two columns that
+contain organism names. Each row represents the potential contribution
+of an AMP (from one organism) to the database of AMPs available for
+training models that could potentially be used to predict amps in a
+second organism. In this framework we refer to the first organism using
+the column `Organism` and the second using the column, `Target`.
 
 ``` r
-timetree_dm_df <- as.data.frame(timetree_distance_matrix) %>% rownames_to_column("Organism")
+timetree_dm_df <- as.data.frame(timetree_distance_matrix) %>% 
+  rownames_to_column("Organism") %>% 
+  pivot_longer(-Organism, names_to = "Target", values_to = "Distance")
 
 amps_w_distance <- amp_database %>%
-  left_join(timetree_dm_df, by = "Organism") %>% 
-  mutate(across(.cols = Haloarchaeon_S8a:Cycas_revoluta, function(x) 1/x, .names = "{.col}_inverse" ))
+  left_join(timetree_dm_df, by = "Organism")
 ```
 
 ![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
-**Figure 4.1:** **A** Histogram of pairwise distance **B** Histogram of
-the inverse pairwise distance between each faceted organism and 648 out
-of the 788 other organisms present in the AMP dataset
+**Figure 7.1:** **A** Histogram of pairwise distance between each
+faceted organism and 648 out of the 788 other organisms present in the
+AMP dataset
+
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+**same as Figure 7.1 but excluding E coli**
+
+## Taxonomic distance score
 
 ``` r
-min(amps_w_distance$Gloydius_halys, na.rm = TRUE)
+distance_score <- function(d, s){
+  s/(s + exp(d/s))
+}
+
+x <- 1:300
+plot(x, distance_score(x, 30))
 ```
 
-    ## [1] 0
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+**Figure 7.2:** Sigmoid curve
 
 ``` r
-max(amps_w_distance$Gloydius_halys, na.rm = TRUE)
+amps_w_distance_sum <- amps_w_distance %>%  
+  filter(Organism != Target) %>% 
+  select(Organism, Target, Distance) %>% 
+  group_by(Organism, Target) %>% 
+  summarise(AMP_count = n(), dscore = sum(distance_score(Distance, 30))) %>% 
+  ungroup() 
+
+amps_w_distance_sum %>% group_by(Target) %>% 
+  slice_max(dscore, n = 3) %>% 
+  filter(Target %in% organism_selection) %>% 
+  ggplot(aes(x = Target)) + 
+  geom_col(aes(y = dscore, fill = Organism)) + 
+  coord_flip() +
+  theme(legend.position = "bottom")
 ```
 
-    ## [1] 8580
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+**Figure 7.3:**
+
+**what to call this figure / x axis? the sum of the taxonomic distance
+score with value 30 -.0**
+
+## Taxonomic distance score vs. AUPRC
+
+Sum the distance score and filter out the selected organisms. The sum of
+the distance score equals the taxonomic representation of AMPs in the
+AMP dataset
 
 ``` r
-min(amps_w_distance$Arabidopsis_thaliana, na.rm = TRUE)
-```
-
-    ## [1] 0
-
-``` r
-max(amps_w_distance$Arabidopsis_thaliana, na.rm = TRUE)
-```
-
-    ## [1] 8580
-
-``` r
-amps_w_distance %>% 
-  select(Arabidopsis_thaliana) %>% 
-  count(Arabidopsis_thaliana, sort = TRUE)
-```
-
-    ## # A tibble: 33 × 2
-    ##    Arabidopsis_thaliana     n
-    ##                   <dbl> <int>
-    ##  1                2992.   979
-    ##  2                  NA    479
-    ##  3                2992.   407
-    ##  4                2992.   352
-    ##  5                   0    294
-    ##  6                2992.   221
-    ##  7                8580.   188
-    ##  8                2992.    58
-    ##  9                2992.    54
-    ## 10                 321.    42
-    ## # … with 23 more rows
-
-``` r
-amps_w_distance %>% 
-  select(Gloydius_halys) %>% 
-  count(Gloydius_halys, sort = TRUE)
-```
-
-    ## # A tibble: 56 × 2
-    ##    Gloydius_halys     n
-    ##             <dbl> <int>
-    ##  1           704.   549
-    ##  2            NA    479
-    ##  3          2992.   362
-    ##  4          1593.   198
-    ##  5           624.   197
-    ##  6          8580    188
-    ##  7           624.   149
-    ##  8           624.   139
-    ##  9          1593.   113
-    ## 10           704.    74
-    ## # … with 46 more rows
-
-``` r
-amps_w_distance %>% 
-  select(Mus_musculus) %>% 
-  count(Mus_musculus, sort = TRUE)
-```
-
-    ## # A tibble: 60 × 2
-    ##    Mus_musculus     n
-    ##           <dbl> <int>
-    ##  1         704.   497
-    ##  2          NA    479
-    ##  3        2992.   362
-    ##  4        8580.   188
-    ##  5        1593.   156
-    ##  6         180.   148
-    ##  7         193.   118
-    ##  8        1593.   113
-    ##  9           0    104
-    ## 10         704.    74
-    ## # … with 50 more rows
-
-``` r
-amps_w_distance %>% 
-  select(Bos_taurus) %>% 
-  count(Bos_taurus, sort = TRUE)
-```
-
-    ## # A tibble: 58 × 2
-    ##    Bos_taurus     n
-    ##         <dbl> <int>
-    ##  1       704.   497
-    ##  2        NA    479
-    ##  3      2992.   363
-    ##  4      1593.   198
-    ##  5      8580    188
-    ##  6       193.   176
-    ##  7       193.   148
-    ##  8      1593.   113
-    ##  9       193.    80
-    ## 10       704.    74
-    ## # … with 48 more rows
-
-Examine values. There are 479 NA values for each column in both the
-normal distance and inverse distance. The inverse distance columns
-contain `Inf` values for each organism. The `Inf` values match up to the
-number of AMPs for these organisms. In the original distance matrix
-these values would have been 0, as an organism has 0 taxonomic distance
-to itself. Because division by 0 is prohibited, the inverse distances
-for these rows subsequently become `Inf` values.
-
-``` r
-amps_w_distance %>% 
-  select(all_of(organism_selection)) %>%
-  summarise(across(everything(), ~ sum(is.na(.)))) %>%
-  pivot_longer(cols = everything(), names_to = "Organism", values_to = "NA values count")
-```
-
-    ## # A tibble: 13 × 2
-    ##    Organism                 `NA values count`
-    ##    <chr>                                <int>
-    ##  1 Mus_musculus                           479
-    ##  2 Homo_sapiens                           479
-    ##  3 Bos_taurus                             479
-    ##  4 Oryctolagus_cuniculus                  479
-    ##  5 Ornithorhynchus_anatinus               479
-    ##  6 Gallus_gallus                          479
-    ##  7 Oncorhynchus_mykiss                    479
-    ##  8 Drosophila_melanogaster                479
-    ##  9 Penaeus_vannamei                       479
-    ## 10 Bombyx_mori                            479
-    ## 11 Arabidopsis_thaliana                   479
-    ## 12 Lithobates_catesbeianus                479
-    ## 13 Escherichia_coli                       479
-
-``` r
-amps_w_distance %>% 
-  select(all_of(organism_selection_inverse)) %>%
-  summarise(across(everything(), ~ sum(is.infinite(.)))) %>%
-  pivot_longer(cols = everything(), names_to = "Organism", values_to = "Inf values count")
-```
-
-    ## # A tibble: 13 × 2
-    ##    Organism                         `Inf values count`
-    ##    <chr>                                         <int>
-    ##  1 Mus_musculus_inverse                            104
-    ##  2 Homo_sapiens_inverse                             96
-    ##  3 Bos_taurus_inverse                               58
-    ##  4 Oryctolagus_cuniculus_inverse                    17
-    ##  5 Ornithorhynchus_anatinus_inverse                 11
-    ##  6 Gallus_gallus_inverse                            25
-    ##  7 Oncorhynchus_mykiss_inverse                      12
-    ##  8 Drosophila_melanogaster_inverse                  23
-    ##  9 Penaeus_vannamei_inverse                         18
-    ## 10 Bombyx_mori_inverse                              13
-    ## 11 Arabidopsis_thaliana_inverse                    294
-    ## 12 Lithobates_catesbeianus_inverse                  13
-    ## 13 Escherichia_coli_inverse                         30
-
-## Summed inverse pairwise distance vs. AUPRC
-
-Replace `Inf` values to `NA` and sum inverse distance values. Then
-rename columns to original organism names and transform to longer format
-so it can be more easily combined to the AUPRC results dataframe
-
-``` r
-summed_inverse_distance <- amps_w_distance %>%
-  map_df(function(x) replace(x, is.infinite(x), NA)) %>%
-  summarise(across(.cols = all_of(organism_selection_inverse), sum, na.rm = TRUE, .names = "{.col}_sum")) %>% 
-  rename("Mus_musculus" = Mus_musculus_inverse_sum,
-         "Homo_sapiens" = Homo_sapiens_inverse_sum,
-         "Bos_taurus" = Bos_taurus_inverse_sum,
-         "Oryctolagus_cuniculus" = Oryctolagus_cuniculus_inverse_sum,
-         "Ornithorhynchus_anatinus" = Ornithorhynchus_anatinus_inverse_sum,
-         "Gallus_gallus" = Gallus_gallus_inverse_sum,
-         "Oncorhynchus_mykiss" = Oncorhynchus_mykiss_inverse_sum,
-         "Drosophila_melanogaster" = Drosophila_melanogaster_inverse_sum,
-         "Penaeus_vannamei" = Penaeus_vannamei_inverse_sum,
-         "Bombyx_mori" = Bombyx_mori_inverse_sum,
-         "Arabidopsis_thaliana" = Arabidopsis_thaliana_inverse_sum,
-         "Lithobates_catesbeianus" = Lithobates_catesbeianus_inverse_sum,
-         "Escherichia_coli" = Escherichia_coli_inverse_sum) %>%
-  pivot_longer(cols = everything(), names_to = "Organism", values_to = "Inverse_distance_sum")
-```
-
-also get the normal distance sum to see how that works
-
-``` r
-summed_distance <- amps_w_distance %>%
-  summarise(across(.cols = all_of(organism_selection), sum, na.rm = TRUE, .names = "{.col}_sum")) %>% 
-  rename("Mus_musculus" = Mus_musculus_sum,
-         "Homo_sapiens" = Homo_sapiens_sum,
-         "Bos_taurus" = Bos_taurus_sum,
-         "Oryctolagus_cuniculus" = Oryctolagus_cuniculus_sum,
-         "Ornithorhynchus_anatinus" = Ornithorhynchus_anatinus_sum,
-         "Gallus_gallus" = Gallus_gallus_sum,
-         "Oncorhynchus_mykiss" = Oncorhynchus_mykiss_sum,
-         "Drosophila_melanogaster" = Drosophila_melanogaster_sum,
-         "Penaeus_vannamei" = Penaeus_vannamei_sum,
-         "Bombyx_mori" = Bombyx_mori_sum,
-         "Arabidopsis_thaliana" = Arabidopsis_thaliana_sum,
-         "Lithobates_catesbeianus" = Lithobates_catesbeianus_sum,
-         "Escherichia_coli" = Escherichia_coli_sum) %>%
-  pivot_longer(cols = everything(), names_to = "Organism", values_to = "Distance_sum")
+distance_metric <- amps_w_distance_sum %>% 
+  group_by(Target) %>% 
+  summarise(score = sum(dscore,na.rm = TRUE)) %>%
+  rename(Organism = Target) %>% 
+  filter(Organism %in% organism_selection)
 ```
 
 Read in previously calculated AUPRC values (see
@@ -454,49 +306,49 @@ methods_auprc_13_wide_w_count <- readRDS("cache/methods_auprc13_w_totalAMPs_wide
 methods_auprc_9_wide_w_count <- readRDS("cache/methods_auprc9_w_totalAMPs_wide.rds")
 ```
 
-Add the inverse distance metric to the performance and AMP count
-datasets
+Add the distance metric to the performance and AMP count datasets
 
 ``` r
-auprc_and_distance_metric_wAMPcount_13 <- left_join(methods_auprc_13_wide_w_count, summed_inverse_distance, by = "Organism") %>% left_join(summed_distance)
-auprc_and_distance_metric_wAMPcount_9 <- left_join(methods_auprc_9_wide_w_count, summed_inverse_distance, by = "Organism") %>% left_join(summed_distance)
+auprc_and_distance_metric_wAMPcount_13 <- left_join(methods_auprc_13_wide_w_count, distance_metric, by = "Organism")
+auprc_and_distance_metric_wAMPcount_9 <- left_join(methods_auprc_9_wide_w_count, distance_metric, by = "Organism")
 ```
 
-**Table 7.1:** The summed inverse distance, summed distance and AMP
-count for each organism and the AUPRC for the classification and BLAST
-methods for 13 organisms
+**Table 7.4:** The distance metric and the AUPRC for the classification
+and BLAST methods for 13 organisms with their respective AMP count
+present in their proteomes
 
-| Organism                  | Classification | BLAST | Total\_AMPs\_in\_test | Inverse\_distance\_sum | Distance\_sum |
-|:--------------------------|---------------:|------:|----------------------:|-----------------------:|--------------:|
-| Mus\_musculus             |          0.365 | 0.305 |                   132 |               6.218183 |       4773364 |
-| Homo\_sapiens             |          0.286 | 0.391 |                   116 |               9.755967 |       4761142 |
-| Bos\_taurus               |          0.370 | 0.299 |                   117 |               7.218126 |       4790223 |
-| Oryctolagus\_cuniculus    |          0.220 | 0.205 |                    83 |               5.391011 |       4796781 |
-| Ornithorhynchus\_anatinus |          0.157 | 0.097 |                    27 |               3.709931 |       4905419 |
-| Gallus\_gallus            |          0.435 | 0.121 |                    30 |               3.239859 |       5038456 |
-| Oncorhynchus\_mykiss      |          0.071 | 0.108 |                    17 |               2.439460 |       5376383 |
-| Drosophila\_melanogaster  |          0.053 | 0.193 |                    33 |               3.136414 |       6237477 |
-| Penaeus\_vannamei         |          0.014 | 0.064 |                     3 |               1.783726 |       6366313 |
-| Bombyx\_mori              |          0.065 | 0.140 |                    25 |               1.953821 |       6250821 |
-| Arabidopsis\_thaliana     |          0.318 | 0.041 |                   296 |               1.966165 |       8043766 |
-| Lithobates\_catesbeianus  |          0.022 | 0.214 |                    12 |               6.894414 |       4792522 |
-| Escherichia\_coli         |          0.227 | 0.500 |                     4 |             148.720591 |      23568582 |
+| Organism                  | Classification | BLAST | Total\_AMPs\_in\_test |       score |
+|:--------------------------|---------------:|------:|----------------------:|------------:|
+| Mus\_musculus             |          0.365 | 0.305 |                   132 |  94.1821476 |
+| Homo\_sapiens             |          0.286 | 0.391 |                   116 | 173.6028581 |
+| Bos\_taurus               |          0.370 | 0.299 |                   117 |  62.5405555 |
+| Oryctolagus\_cuniculus    |          0.220 | 0.205 |                    83 |  46.8024558 |
+| Ornithorhynchus\_anatinus |          0.157 | 0.097 |                    27 |   0.7305478 |
+| Gallus\_gallus            |          0.435 | 0.121 |                    30 |  14.9801548 |
+| Oncorhynchus\_mykiss      |          0.071 | 0.108 |                    17 |   1.1760262 |
+| Drosophila\_melanogaster  |          0.053 | 0.193 |                    33 |  18.8882984 |
+| Penaeus\_vannamei         |          0.014 | 0.064 |                     3 |   5.5749552 |
+| Bombyx\_mori              |          0.065 | 0.140 |                    25 |   2.4862826 |
+| Arabidopsis\_thaliana     |          0.318 | 0.041 |                   296 |  22.6949207 |
+| Lithobates\_catesbeianus  |          0.022 | 0.214 |                    12 | 187.3398440 |
+| Escherichia\_coli         |          0.227 | 0.500 |                     4 |   1.0450033 |
 
-**Table 7.2:** The summed inverse distance, summed distance and AMP
-count for each organism and the AUPRC for the classification and BLAST
-methods for 9 organisms
+**Table 7.5:** The distance metric and the AUPRC for the classification
+and BLAST methods for 9 organisms with their respective AMP count
+present in their proteomes which also overlap with the AMPs in the AMP
+database
 
-| Organism                  | Classification | BLAST | Total\_AMPs\_in\_test | Inverse\_distance\_sum | Distance\_sum |
-|:--------------------------|---------------:|------:|----------------------:|-----------------------:|--------------:|
-| Mus\_musculus             |          0.398 | 0.332 |                    99 |               6.218183 |       4773364 |
-| Homo\_sapiens             |          0.296 | 0.437 |                    95 |               9.755967 |       4761142 |
-| Bos\_taurus               |          0.142 | 0.211 |                    54 |               7.218126 |       4790223 |
-| Oryctolagus\_cuniculus    |          0.043 | 0.087 |                    17 |               5.391011 |       4796781 |
-| Ornithorhynchus\_anatinus |          0.149 | 0.017 |                    11 |               3.709931 |       4905419 |
-| Gallus\_gallus            |          0.439 | 0.078 |                    25 |               3.239859 |       5038456 |
-| Drosophila\_melanogaster  |          0.058 | 0.186 |                    23 |               3.136414 |       6237477 |
-| Bombyx\_mori              |          0.079 | 0.094 |                    13 |               1.953821 |       6250821 |
-| Arabidopsis\_thaliana     |          0.323 | 0.041 |                   291 |               1.966165 |       8043766 |
+| Organism                  | Classification | BLAST | Total\_AMPs\_in\_test |       score |
+|:--------------------------|---------------:|------:|----------------------:|------------:|
+| Mus\_musculus             |          0.398 | 0.332 |                    99 |  94.1821476 |
+| Homo\_sapiens             |          0.296 | 0.437 |                    95 | 173.6028581 |
+| Bos\_taurus               |          0.142 | 0.211 |                    54 |  62.5405555 |
+| Oryctolagus\_cuniculus    |          0.043 | 0.087 |                    17 |  46.8024558 |
+| Ornithorhynchus\_anatinus |          0.149 | 0.017 |                    11 |   0.7305478 |
+| Gallus\_gallus            |          0.439 | 0.078 |                    25 |  14.9801548 |
+| Drosophila\_melanogaster  |          0.058 | 0.186 |                    23 |  18.8882984 |
+| Bombyx\_mori              |          0.079 | 0.094 |                    13 |   2.4862826 |
+| Arabidopsis\_thaliana     |          0.323 | 0.041 |                   291 |  22.6949207 |
 
 Change back to long format for plotting
 
@@ -509,50 +361,50 @@ auprc_and_distance_metric_long_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
 ```
 
 ``` r
-ggplot(auprc_and_distance_metric_long_13, aes(x = Inverse_distance_sum, y = AUPRC)) +
+ggplot(auprc_and_distance_metric_long_13, aes(x = score, y = AUPRC)) +
   geom_line(aes(linetype = Method)) +
   geom_point(aes(colour = Organism, size = Total_AMPs_in_test)) +
-  labs(x = "The sum of the inverse pairwise distance", colour = "", linetype = "") +
+  labs(x = "Taxonomic representation score", colour = "", linetype = "") +
   theme_classic() +
   theme(legend.position = "bottom") +
   scale_colour_manual(values = watlington(13)) +
   guides(colour = guide_legend(label.theme = element_text(face = "italic", size = 9)))
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
-**Figure 7.1:** **A** Scatter and line plot of the summed inverse
+**Figure 7.6:** **A** Scatter and line plot of the summed inverse
 pairwise distance and the AUPRC for each AMP finding method for AMPs in
 different organisms. The size of points depends on the number of AMPs in
 the organism, represented by the AMP\_count.
 
 ``` r
-ggplot(filter(auprc_and_distance_metric_long_13, Organism != "Escherichia_coli"), aes(x = Inverse_distance_sum, y = AUPRC)) +
+ggplot(filter(auprc_and_distance_metric_long_13, Organism != "Escherichia_coli"), aes(x = score, y = AUPRC)) +
   geom_line(aes(linetype = Method)) +
   geom_point(aes(colour = Organism, size = Total_AMPs_in_test)) +
-  labs(x = "The sum of the inverse pairwise distance", colour = "", linetype = "") +
+  labs(x = "Taxonomic representation score", colour = "", linetype = "") +
   theme_classic() +
   theme(legend.position = "bottom") +
   scale_colour_manual(values = watlington(12)) +
   guides(colour = guide_legend(label.theme = element_text(face = "italic", size = 9)))
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
-**Figure 7.2:** Same as Figure 7.1, excluding *E. coli*
+**Figure 7.6.2:** Same as Figure 7.6, excluding *E. coli*
 
 ``` r
-ggplot(auprc_and_distance_metric_long_9, aes(x = Inverse_distance_sum, y = AUPRC)) +
+ggplot(auprc_and_distance_metric_long_9, aes(x = score, y = AUPRC)) +
   geom_line(aes(linetype = Method)) +
   geom_point(aes(colour = Organism, size = Total_AMPs_in_test)) +
-  labs(x = "The sum of the inverse pairwise distance", colour = "", linetype = "") +
+  labs(x = "Taxonomic representation score", colour = "", linetype = "") +
   theme_classic() +
   theme(legend.position = "bottom") +
   scale_colour_manual(values = watlington(9)) +
   guides(colour = guide_legend(label.theme = element_text(face = "italic", size = 9)))
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
 
 Images were obtained from [phylopic.org](http://phylopic.org/) all
 images used were dedicated to the [public
@@ -569,31 +421,30 @@ auprcplot_img_13 <- auprc_and_distance_metric_wAMPcount_13 %>%
   filter(Organism != "Escherichia_coli") %>%
   filter(Organism != "Penaeus_vannamei") %>% 
   pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
-  ggplot(aes(x = Inverse_distance_sum, y = AUPRC, label = images)) +
+  ggplot(aes(x = score, y = AUPRC, label = images)) +
   geom_richtext(fill = NA, label.color = NA) +
   geom_line(aes(linetype = Method)) +
   geom_point(aes(size = Total_AMPs_in_test), colour = "forestgreen", shape = 1) +
   theme_classic() +
   theme(legend.position = "none") +
-  labs(x = "The sum of the inverse pairwise distance", linetype = "") +
-  scale_x_continuous(breaks=c(2, 4, 6, 8, 10))
+  labs(x = "Taxonomic representation score", linetype = "")
 
 
 auprcplot_img_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
   mutate(images = link_to_img(pics9)) %>% 
   pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
-  ggplot(aes(x = Inverse_distance_sum, y = AUPRC, label = images)) +
+  ggplot(aes(x = score, y = AUPRC, label = images)) +
   geom_richtext(fill = NA, label.color = NA) +
   geom_line(aes(linetype = Method)) +
   geom_point(aes(size = Total_AMPs_in_test), colour = "forestgreen", shape = 1) +
   theme_classic() +
   theme(legend.position = "bottom") +
-  labs(x = "The sum of the inverse pairwise distance", linetype = "", size = "AMP count")
+  labs(x = "Taxonomic representation score", linetype = "", size = "AMP count")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
 
-**Figure 7.3** The performance of BLAST and classification models
+**Figure 7.7** The performance of BLAST and classification models
 measured in Area under the Precision-Recall curve (AUPRC) in finding
 AMPs in the proteomes of **A)** 11 organisms where AMPs were labelled as
 AMPs exclusively by using the “Antimicrobial” keyword from UniProt and
@@ -601,8 +452,3 @@ AMPs exclusively by using the “Antimicrobial” keyword from UniProt and
 the UniProt “Antimicrobial” keyword **and** if these AMPs overlapped
 with the AMP database generated from SwissProt and the APD, DRAMP or
 dbAMP databases.
-
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
-
-Figure \#: As figure above but using the sum of the normal pairwise
-distance
