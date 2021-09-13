@@ -262,7 +262,7 @@ plot(x, distance_score(x, 30))
 **Figure 7.2:** Sigmoid curve
 
 ```{r, echo = FALSE}
-organism_strict_selection <- c("Mus_musculus","Homo_sapiens","Bos_taurus","Oryctolagus_cuniculus","Ornithorhynchus_anatinus","Gallus_gallus", "Drosophila_melanogaster","Bombyx_mori","Arabidopsis_thaliana")
+organism_strict_selection <- c("Mus musculus","Homo sapiens","Bos taurus","Oryctolagus_cuniculus","Ornithorhynchus anatinus","Gallus gallus", "Drosophila melanogaster","Bombyx mori","Arabidopsis thaliana")
 ```
 
 ```{r}
@@ -273,18 +273,59 @@ amps_w_distance_sum <- amps_w_distance %>%
   summarise(AMP_count = n(), dscore = sum(distance_score(Distance, 30))) %>% 
   ungroup() 
 
-amps_w_distance_sum %>% group_by(Target) %>% 
-  slice_max(dscore, n = 3) %>% 
-  filter(Target %in% organism_selection) %>% 
-  ggplot(aes(x = Target)) + 
-  geom_col(aes(y = dscore, fill = Organism)) + 
+top_2 <- amps_w_distance_sum %>% group_by(Target) %>% 
+  mutate(Organism = str_replace_all(Organism, "_", " ")) %>% 
+  mutate(Target = str_replace_all(Target, "_", " ")) %>% 
+  filter(Target %in% organism_strict_selection) %>% 
+  slice_max(dscore, n = 2, with_ties = FALSE) %>% 
+  mutate(Organism2 = Organism)
+
+all_rows <- amps_w_distance_sum %>% group_by(Target) %>% 
+  mutate(Organism = str_replace_all(Organism, "_", " ")) %>% 
+  mutate(Target = str_replace_all(Target, "_", " ")) %>% 
+  filter(Target %in% organism_strict_selection) %>% 
+  mutate(Organism2 = Organism)
+
+amps_distance_grouped <- setdiff(all_rows, top_2) %>% 
+  mutate(Organism2 = "Other") %>% 
+  rbind(top_2)
+
+colours = c("Raphanus sativus" = "darkgreen", "Brassica napus" = "chartreuse4", "Manduca sexta" = "grey70", "Antheraea mylitta" = "grey40", "Ovis aries" = "red3", "Sus scrofa" = "pink", "Drosophila simulans" = "sandybrown", "Drosophila sechellia" = "chocolate4", "Meleagris gallopavo" = "blue", "Coturnix japonica" = "steelblue3", "Pan troglodytes" = "yellow4", "Macaca mulatta" = "khaki", "Homo sapiens" = "hotpink3", "Rattus norvegicus" = "magenta", "Mus musculus" = "violetred3", "Tachyglossus aculeatus" = "purple", "Other" = "grey10")
+
+ggplot(amps_distance_grouped, aes(x = Target)) + 
+  geom_col(aes(y = dscore, fill = Organism2)) + 
   coord_flip() +
-  theme(legend.position = "bottom")
+  labs(y = "Taxonomic representation score", x = "Organism", fill = "") +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        axis.text.y = element_text(face = "italic")) +
+  guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 9))) +
+  scale_fill_manual(values = colours)
 ```
 
-**Figure 7.3:** 
+**Figure 7.3:** The contributions of different species to the taxonomic representation score of the selected organisms. Only the two species with the largest contributions are shown. The contribution of the remaining species were amalgamated into the "other" category. 
 
-**what to call this figure /  x axis? the sum of the taxonomic distance score with value 30 -.0**
+```{r, echo = FALSE}
+ggsave("figures/species_contribution_to_score.png", width = 9, height = 5)
+```
+
+
+```{r, echo = FALSE}
+ggplot(filter(amps_distance_grouped, Target == "Ornithorhynchus anatinus"), aes(x = Target)) + 
+  geom_col(aes(y = dscore, fill = Organism2), width = 0.3) + 
+  labs(y = "Taxonomic representation score", x = "", fill = "") +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        axis.text.y = element_text(face = "italic")) +
+  guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 9)))
+```
+
+**Figure 7.3.2:** as above but platypus only
+
+
+```{r, echo = FALSE}
+ggsave("figures/distance_strict_organisms.png", width = 10, height = 7)
+```
 
 ## Taxonomic distance score vs. AUPRC 
 
@@ -489,3 +530,14 @@ auprc_and_distance_metric_wAMPcount_9 %>%
 ```{r, echo=FALSE}
 ggsave(filename = "figures/tax_rep_strict_9_lm.png", height = 6, width = 12)
 ```
+
+
+#### Terminology 
+
+Distance score: it will give a high score when the distance taxonomic distance is low. All taxonomic distances are converted into this score and it is added up to become the taxonomic representation score. Therefore, a high taxonomic representation score means that organism is well represented in the database. 
+
+Taxonomic distance: raw distance
+Distance score: the taxonomic distance that is converted with the sigmoid curve 
+Taxonomic representation score: the sum of the distance score 
+
+Value 30: Width parameter (of the sigmoid curve)

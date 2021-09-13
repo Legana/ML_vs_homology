@@ -264,21 +264,46 @@ amps_w_distance_sum <- amps_w_distance %>%
   summarise(AMP_count = n(), dscore = sum(distance_score(Distance, 30))) %>% 
   ungroup() 
 
-amps_w_distance_sum %>% group_by(Target) %>% 
-  slice_max(dscore, n = 3) %>% 
-  filter(Target %in% organism_selection) %>% 
-  ggplot(aes(x = Target)) + 
-  geom_col(aes(y = dscore, fill = Organism)) + 
+top_2 <- amps_w_distance_sum %>% group_by(Target) %>% 
+  mutate(Organism = str_replace_all(Organism, "_", " ")) %>% 
+  mutate(Target = str_replace_all(Target, "_", " ")) %>% 
+  filter(Target %in% organism_strict_selection) %>% 
+  slice_max(dscore, n = 2, with_ties = FALSE) %>% 
+  mutate(Organism2 = Organism)
+
+all_rows <- amps_w_distance_sum %>% group_by(Target) %>% 
+  mutate(Organism = str_replace_all(Organism, "_", " ")) %>% 
+  mutate(Target = str_replace_all(Target, "_", " ")) %>% 
+  filter(Target %in% organism_strict_selection) %>% 
+  mutate(Organism2 = Organism)
+
+amps_distance_grouped <- setdiff(all_rows, top_2) %>% 
+  mutate(Organism2 = "Other") %>% 
+  rbind(top_2)
+
+colours = c("Raphanus sativus" = "darkgreen", "Brassica napus" = "chartreuse4", "Manduca sexta" = "grey70", "Antheraea mylitta" = "grey40", "Ovis aries" = "red3", "Sus scrofa" = "pink", "Drosophila simulans" = "sandybrown", "Drosophila sechellia" = "chocolate4", "Meleagris gallopavo" = "blue", "Coturnix japonica" = "steelblue3", "Pan troglodytes" = "yellow4", "Macaca mulatta" = "khaki", "Homo sapiens" = "hotpink3", "Rattus norvegicus" = "magenta", "Mus musculus" = "violetred3", "Tachyglossus aculeatus" = "purple", "Other" = "grey10")
+
+ggplot(amps_distance_grouped, aes(x = Target)) + 
+  geom_col(aes(y = dscore, fill = Organism2)) + 
   coord_flip() +
-  theme(legend.position = "bottom")
+  labs(y = "Taxonomic representation score", x = "Organism", fill = "") +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        axis.text.y = element_text(face = "italic")) +
+  guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 9))) +
+  scale_fill_manual(values = colours)
 ```
 
 ![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
-**Figure 7.3:**
+**Figure 7.3:** The contributions of different species to the taxonomic
+representation score of the selected organisms. Only the two species
+with the largest contributions are shown. The contribution of the
+remaining species were amalgamated into the “other” category.
 
-**what to call this figure / x axis? the sum of the taxonomic distance
-score with value 30 -.0**
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+**Figure 7.3.2:** as above but platypus only
 
 ## Taxonomic distance score vs. AUPRC
 
@@ -371,7 +396,7 @@ ggplot(auprc_and_distance_metric_long_13, aes(x = score, y = AUPRC)) +
   guides(colour = guide_legend(label.theme = element_text(face = "italic", size = 9)))
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 **Figure 7.6:** **A** Scatter and line plot of the summed inverse
 pairwise distance and the AUPRC for each AMP finding method for AMPs in
@@ -389,7 +414,7 @@ ggplot(filter(auprc_and_distance_metric_long_13, Organism != "Escherichia_coli")
   guides(colour = guide_legend(label.theme = element_text(face = "italic", size = 9)))
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
 
 **Figure 7.6.2:** Same as Figure 7.6, excluding *E. coli*
 
@@ -404,7 +429,7 @@ ggplot(auprc_and_distance_metric_long_9, aes(x = score, y = AUPRC)) +
   guides(colour = guide_legend(label.theme = element_text(face = "italic", size = 9)))
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
 
 Images were obtained from [phylopic.org](http://phylopic.org/) all
 images used were dedicated to the [public
@@ -442,7 +467,7 @@ auprcplot_img_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
   labs(x = "Taxonomic representation score", linetype = "", size = "AMP count")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 
 **Figure 7.7** The performance of BLAST and classification models
 measured in Area under the Precision-Recall curve (AUPRC) in finding
@@ -521,7 +546,21 @@ auprc_and_distance_metric_wAMPcount_9 %>%
   labs(x = "Taxonomic representation score", linetype = "", size = "AMP count")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
 
 **Figure 7.8:** linear regression lines of the AMP finding methods in a
 range of organisms
+
+#### Terminology
+
+Distance score: it will give a high score when the distance taxonomic
+distance is low. All taxonomic distances are converted into this score
+and it is added up to become the taxonomic representation score.
+Therefore, a high taxonomic representation score means that organism is
+well represented in the database.
+
+Taxonomic distance: raw distance Distance score: the taxonomic distance
+that is converted with the sigmoid curve Taxonomic representation score:
+the sum of the distance score
+
+Value 30: Width parameter (of the sigmoid curve)
