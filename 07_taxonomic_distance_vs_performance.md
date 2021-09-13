@@ -442,7 +442,7 @@ auprcplot_img_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
   labs(x = "Taxonomic representation score", linetype = "", size = "AMP count")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
 
 **Figure 7.7** The performance of BLAST and classification models
 measured in Area under the Precision-Recall curve (AUPRC) in finding
@@ -452,3 +452,76 @@ AMPs exclusively by using the “Antimicrobial” keyword from UniProt and
 the UniProt “Antimicrobial” keyword **and** if these AMPs overlapped
 with the AMP database generated from SwissProt and the APD, DRAMP or
 dbAMP databases.
+
+### Linear regression
+
+For the stricter method with 9 organisms:
+
+``` r
+blast_lm_9 <- lm(BLAST ~ score, auprc_and_distance_metric_wAMPcount_9) 
+classification_lm_9 <- lm(Classification ~ score, auprc_and_distance_metric_wAMPcount_9) 
+
+summary(blast_lm_9)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = BLAST ~ score, data = auprc_and_distance_metric_wAMPcount_9)
+    ## 
+    ## Residuals:
+    ##       Min        1Q    Median        3Q       Max 
+    ## -0.073716 -0.036352 -0.008559  0.036557  0.090334 
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept) 0.0516494  0.0268766   1.922  0.09609 .  
+    ## score       0.0023304  0.0003751   6.213  0.00044 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.05931 on 7 degrees of freedom
+    ## Multiple R-squared:  0.8465, Adjusted R-squared:  0.8246 
+    ## F-statistic:  38.6 on 1 and 7 DF,  p-value: 0.0004396
+
+``` r
+summary(classification_lm_9)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = Classification ~ score, data = auprc_and_distance_metric_wAMPcount_9)
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -0.16961 -0.09546 -0.02577  0.13114  0.25378 
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)  
+    ## (Intercept) 0.1723191  0.0697370   2.471   0.0428 *
+    ## score       0.0008609  0.0009732   0.885   0.4057  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.1539 on 7 degrees of freedom
+    ## Multiple R-squared:  0.1005, Adjusted R-squared:  -0.02795 
+    ## F-statistic: 0.7825 on 1 and 7 DF,  p-value: 0.4057
+
+``` r
+auprc_and_distance_metric_wAMPcount_9 %>%
+  mutate(images = link_to_img(pics9)) %>% 
+  pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
+  ggplot(aes(x = score, y = AUPRC, label = images)) +
+  geom_richtext(fill = NA, label.color = NA) +
+  geom_line(aes(linetype = Method)) +
+  geom_point(aes(size = Total_AMPs_in_test), colour = "forestgreen", shape = 1) +
+  geom_smooth(method = lm, se = FALSE,
+              aes(linetype = Method), colour = "grey") +
+  theme_classic() +
+  theme(legend.position = "bottom") +
+  labs(x = "Taxonomic representation score", linetype = "", size = "AMP count")
+```
+
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+
+**Figure 7.8:** linear regression lines of the AMP finding methods in a
+range of organisms

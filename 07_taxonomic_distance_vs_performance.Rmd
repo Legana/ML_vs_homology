@@ -435,6 +435,14 @@ auprcplot_img_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
   labs(x = "Taxonomic representation score", linetype = "", size = "AMP count")
 ```
 
+```{r, echo=FALSE}
+ggsave(plot = auprcplot_img_13, filename = "figures/tax_rep_13.png", height = 6, width = 12)
+```
+
+```{r, echo=FALSE}
+ggsave(plot = auprcplot_img_9, filename = "figures/tax_rep_strict_9.png", height = 6, width = 12)
+```
+
 ```{r, echo=FALSE, fig.width=13, fig.height=10}
 auprcplot_img_13 / auprcplot_img_9 + plot_annotation(tag_levels = "A")
 ```
@@ -444,4 +452,40 @@ auprcplot_img_13 / auprcplot_img_9 + plot_annotation(tag_levels = "A")
 
 ```{r, echo = FALSE}
 ggsave("figures/taxonomic_representation_performance.png", height = 9, width = 12)
+```
+
+
+
+### Linear regression 
+
+
+For the stricter method with 9 organisms: 
+```{r}
+blast_lm_9 <- lm(BLAST ~ score, auprc_and_distance_metric_wAMPcount_9) 
+classification_lm_9 <- lm(Classification ~ score, auprc_and_distance_metric_wAMPcount_9) 
+
+summary(blast_lm_9)
+
+summary(classification_lm_9)
+```
+
+```{r}
+auprc_and_distance_metric_wAMPcount_9 %>%
+  mutate(images = link_to_img(pics9)) %>% 
+  pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
+  ggplot(aes(x = score, y = AUPRC, label = images)) +
+  geom_richtext(fill = NA, label.color = NA) +
+  geom_line(aes(linetype = Method)) +
+  geom_point(aes(size = Total_AMPs_in_test), colour = "forestgreen", shape = 1) +
+  geom_smooth(method = lm, se = FALSE,
+              aes(linetype = Method), colour = "grey") +
+  theme_classic() +
+  theme(legend.position = "bottom") +
+  labs(x = "Taxonomic representation score", linetype = "", size = "AMP count")
+```
+
+**Figure 7.8:** linear regression lines of the AMP finding methods in a range of organisms 
+
+```{r, echo=FALSE}
+ggsave(filename = "figures/tax_rep_strict_9_lm.png", height = 6, width = 12)
 ```
