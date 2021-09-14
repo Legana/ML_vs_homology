@@ -233,21 +233,31 @@ amps_w_distance %>%
 ggsave("figures/distances_hist_ampdb.png", width = 10, height = 9)
 ```
 
+```{r, echo = FALSE}
+organism_strict_selection <- c("Mus musculus","Homo sapiens","Bos taurus","Oryctolagus cuniculus","Ornithorhynchus anatinus","Gallus gallus", "Drosophila melanogaster","Bombyx mori","Arabidopsis thaliana")
+```
+
 ```{r, echo = FALSE, fig.width=10, fig.height=9}
 amps_w_distance %>% 
-  filter(Target %in% organism_selection) %>%
-  filter(Organism %in% organism_selection) %>%  
+  mutate(Target = str_replace_all(Target, "_", " ")) %>% 
+  mutate(Organism = str_replace_all(Organism, "_", " ")) %>% 
+  filter(Target %in% organism_strict_selection) %>%
+  filter(Organism %in% organism_strict_selection) %>%  
   filter(Target!=Organism) %>% 
-  filter(Organism != "Escherichia_coli") %>% 
   ggplot(aes(x = Distance)) +
   geom_histogram(aes(fill=Organism), bins = 31) +
   facet_wrap(~Target, ncol = 2, scales = "free") +
- theme_classic() +
- theme(strip.text.x = element_text(face = "italic"),
-       strip.background = element_rect(fill = "white", color = "white"))
+  theme_classic() +
+  theme(strip.text.x = element_text(face = "italic"),
+       strip.background = element_rect(fill = "white", color = "white")) +
+  guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 9)))
 ```
 
 **same as Figure 7.1 but excluding E coli**
+
+```{r, echo = FALSE}
+ggsave("figures/distance_strict_organisms.png", width = 10, height = 7)
+```
 
 ## Taxonomic distance score 
 
@@ -260,10 +270,6 @@ x <- 1:300
 plot(x, distance_score(x, 30))
 ```
 **Figure 7.2:** Sigmoid curve
-
-```{r, echo = FALSE}
-organism_strict_selection <- c("Mus musculus","Homo sapiens","Bos taurus","Oryctolagus_cuniculus","Ornithorhynchus anatinus","Gallus gallus", "Drosophila melanogaster","Bombyx mori","Arabidopsis thaliana")
-```
 
 ```{r}
 amps_w_distance_sum <- amps_w_distance %>%  
@@ -291,8 +297,11 @@ amps_distance_grouped <- setdiff(all_rows, top_2) %>%
   rbind(top_2)
 
 colours = c("Raphanus sativus" = "darkgreen", "Brassica napus" = "chartreuse4", "Manduca sexta" = "grey70", "Antheraea mylitta" = "grey40", "Ovis aries" = "red3", "Sus scrofa" = "pink", "Drosophila simulans" = "sandybrown", "Drosophila sechellia" = "chocolate4", "Meleagris gallopavo" = "blue", "Coturnix japonica" = "steelblue3", "Pan troglodytes" = "yellow4", "Macaca mulatta" = "khaki", "Homo sapiens" = "hotpink3", "Rattus norvegicus" = "magenta", "Mus musculus" = "violetred3", "Tachyglossus aculeatus" = "purple", "Other" = "grey10")
+```
 
-ggplot(amps_distance_grouped, aes(x = Target)) + 
+
+```{r}
+all_organisms <- ggplot(amps_distance_grouped, aes(x = Target)) + 
   geom_col(aes(y = dscore, fill = Organism2)) + 
   coord_flip() +
   labs(y = "Taxonomic representation score", x = "Organism", fill = "") +
@@ -301,31 +310,28 @@ ggplot(amps_distance_grouped, aes(x = Target)) +
         axis.text.y = element_text(face = "italic")) +
   guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 9))) +
   scale_fill_manual(values = colours)
-```
 
-**Figure 7.3:** The contributions of different species to the taxonomic representation score of the selected organisms. Only the two species with the largest contributions are shown. The contribution of the remaining species were amalgamated into the "other" category. 
-
-```{r, echo = FALSE}
-ggsave("figures/species_contribution_to_score.png", width = 9, height = 5)
-```
-
-
-```{r, echo = FALSE}
-ggplot(filter(amps_distance_grouped, Target == "Ornithorhynchus anatinus"), aes(x = Target)) + 
+platypus <- ggplot(filter(amps_distance_grouped, Target == "Ornithorhynchus anatinus"), aes(x = Target)) + 
   geom_col(aes(y = dscore, fill = Organism2), width = 0.3) + 
-  labs(y = "Taxonomic representation score", x = "", fill = "") +
+  coord_flip() +
+  labs(y = "", x = "", fill = "") +
   theme_classic() +
-  theme(legend.position = "bottom",
-        axis.text.y = element_text(face = "italic")) +
-  guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 9)))
+  theme(legend.position = "none",
+        axis.text.y = element_text(angle = 90, vjust = 0.5, hjust = 0.5, face = "italic"),
+        axis.ticks.y = element_blank()) +
+  guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 9))) +
+  scale_fill_manual(values = colours[15:17]) +
+  scale_x_discrete(labels = "O. anatinus")
+
+all_organisms + inset_element(platypus, left = 0.7, bottom = 0.01, right = 1, top = 0.37)
 ```
 
-**Figure 7.3.2:** as above but platypus only
-
+**Figure 7.3:** The contributions of different species to the taxonomic representation score of the selected organisms. Only the two species with the largest contributions are shown. The contribution of the remaining species were amalgamated into the "other" category. *Ornithorhynchus anatinus* is displayed as a zoomed in inset plot near the bottom right of the main plot. 
 
 ```{r, echo = FALSE}
-ggsave("figures/distance_strict_organisms.png", width = 10, height = 7)
+ggsave("figures/species_contribution_to_score_plat_inset.png", width = 9, height = 5)
 ```
+
 
 ## Taxonomic distance score vs. AUPRC 
 

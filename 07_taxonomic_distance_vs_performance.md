@@ -238,7 +238,7 @@ amps_w_distance <- amp_database %>%
 faceted organism and 648 out of the 788 other organisms present in the
 AMP dataset
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 **same as Figure 7.1 but excluding E coli**
 
@@ -253,7 +253,7 @@ x <- 1:300
 plot(x, distance_score(x, 30))
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 **Figure 7.2:** Sigmoid curve
 
 ``` r
@@ -282,8 +282,10 @@ amps_distance_grouped <- setdiff(all_rows, top_2) %>%
   rbind(top_2)
 
 colours = c("Raphanus sativus" = "darkgreen", "Brassica napus" = "chartreuse4", "Manduca sexta" = "grey70", "Antheraea mylitta" = "grey40", "Ovis aries" = "red3", "Sus scrofa" = "pink", "Drosophila simulans" = "sandybrown", "Drosophila sechellia" = "chocolate4", "Meleagris gallopavo" = "blue", "Coturnix japonica" = "steelblue3", "Pan troglodytes" = "yellow4", "Macaca mulatta" = "khaki", "Homo sapiens" = "hotpink3", "Rattus norvegicus" = "magenta", "Mus musculus" = "violetred3", "Tachyglossus aculeatus" = "purple", "Other" = "grey10")
+```
 
-ggplot(amps_distance_grouped, aes(x = Target)) + 
+``` r
+all_organisms <- ggplot(amps_distance_grouped, aes(x = Target)) + 
   geom_col(aes(y = dscore, fill = Organism2)) + 
   coord_flip() +
   labs(y = "Taxonomic representation score", x = "Organism", fill = "") +
@@ -292,18 +294,30 @@ ggplot(amps_distance_grouped, aes(x = Target)) +
         axis.text.y = element_text(face = "italic")) +
   guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 9))) +
   scale_fill_manual(values = colours)
+
+platypus <- ggplot(filter(amps_distance_grouped, Target == "Ornithorhynchus anatinus"), aes(x = Target)) + 
+  geom_col(aes(y = dscore, fill = Organism2), width = 0.3) + 
+  coord_flip() +
+  labs(y = "", x = "", fill = "") +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.text.y = element_text(angle = 90, vjust = 0.5, hjust = 0.5, face = "italic"),
+        axis.ticks.y = element_blank()) +
+  guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 9))) +
+  scale_fill_manual(values = colours[15:17]) +
+  scale_x_discrete(labels = "O. anatinus")
+
+all_organisms + inset_element(platypus, left = 0.7, bottom = 0.01, right = 1, top = 0.37)
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 **Figure 7.3:** The contributions of different species to the taxonomic
 representation score of the selected organisms. Only the two species
 with the largest contributions are shown. The contribution of the
 remaining species were amalgamated into the “other” category.
-
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
-
-**Figure 7.3.2:** as above but platypus only
+*Ornithorhynchus anatinus* is displayed as a zoomed in inset plot near
+the bottom right of the main plot.
 
 ## Taxonomic distance score vs. AUPRC
 
