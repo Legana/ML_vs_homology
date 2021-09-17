@@ -249,13 +249,18 @@ amps_w_distance %>%
   filter(Target!=Organism) %>% 
   ggplot(aes(x = Distance)) +
   geom_histogram(aes(fill=Organism), bins = 31) +
-  facet_wrap(~Target, ncol = 2, scales = "free") +
-  theme_classic() +
+  facet_wrap(~Target, ncol = 3, scales = "free_y") +
+  theme_minimal() +
   theme(strip.text.x = element_text(face = "italic"),
-       strip.background = element_rect(fill = "white", color = "white")) +
+       strip.background = element_rect(fill = "white", color = "white"),
+       legend.position = "bottom",
+       panel.grid.minor = element_blank(),
+       plot.background = element_rect(fill = "white", colour = "white")) +
   guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 9))) +
   labs(x = "Pairwise distance", y = "Frequency", fill = "") +
-  scale_fill_manual(values = colours_organisms_strict_selection)
+  scale_fill_manual(values = colours_organisms_strict_selection) +
+  scale_x_continuous(breaks = c(0,250,500,1000,1500,2000,2500,3000))
+
 ```
 
 **Figure 7.1.2** Histogram of pairwise distance between each faceted organism and other selected organisms present in the AMP dataset
