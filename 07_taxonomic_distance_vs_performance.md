@@ -235,12 +235,12 @@ amps_w_distance <- amp_database %>%
 ![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 **Figure 7.1:** **A** Histogram of pairwise distance between each
-faceted organism and 648 out of the 788 other organisms present in the
-AMP dataset
+faceted organism and other selected organisms present in the AMP dataset
 
 ![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
-**same as Figure 7.1 but excluding E coli**
+**Figure 7.1.2** Histogram of pairwise distance between each faceted
+organism and other selected organisms present in the AMP dataset
 
 ## Taxonomic distance score
 

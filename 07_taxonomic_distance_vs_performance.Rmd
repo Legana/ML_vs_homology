@@ -226,7 +226,7 @@ amps_w_distance %>%
        strip.background = element_rect(fill = "white", color = "white"))
 ```
 
-**Figure 7.1:** **A** Histogram of pairwise distance between each faceted organism and 648 out of the 788 other organisms present in the AMP dataset
+**Figure 7.1:** **A** Histogram of pairwise distance between each faceted organism and other selected organisms present in the AMP dataset
 
 
 ```{r, echo = FALSE}
@@ -235,6 +235,9 @@ ggsave("figures/distances_hist_ampdb.png", width = 10, height = 9)
 
 ```{r, echo = FALSE}
 organism_strict_selection <- c("Mus musculus","Homo sapiens","Bos taurus","Oryctolagus cuniculus","Ornithorhynchus anatinus","Gallus gallus", "Drosophila melanogaster","Bombyx mori","Arabidopsis thaliana")
+
+
+colours_organisms_strict_selection = c("Arabidopsis thaliana" = "chartreuse4", "Bombyx mori" = "grey40", "Bos taurus" = "red3", "Drosophila melanogaster" = "sandybrown", "Oryctolagus cuniculus" = "chocolate4", "Gallus gallus" = "blue","Homo sapiens" = "hotpink3", "Mus musculus" = "pink", "Ornithorhynchus anatinus" = "purple")
 ```
 
 ```{r, echo = FALSE, fig.width=10, fig.height=9}
@@ -250,10 +253,12 @@ amps_w_distance %>%
   theme_classic() +
   theme(strip.text.x = element_text(face = "italic"),
        strip.background = element_rect(fill = "white", color = "white")) +
-  guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 9)))
+  guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 9))) +
+  labs(x = "Pairwise distance", y = "Frequency", fill = "") +
+  scale_fill_manual(values = colours_organisms_strict_selection)
 ```
 
-**same as Figure 7.1 but excluding E coli**
+**Figure 7.1.2** Histogram of pairwise distance between each faceted organism and other selected organisms present in the AMP dataset
 
 ```{r, echo = FALSE}
 ggsave("figures/distance_strict_organisms.png", width = 10, height = 7)
