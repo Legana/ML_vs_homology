@@ -6,6 +6,7 @@ library(treeio)
 library(patchwork)
 library(pals)
 library(ggtext)
+library(broom)
 ```
 
 Read in AMP database to extract organisms from to submit to
@@ -244,6 +245,18 @@ organism and other selected organisms present in the AMP dataset
 
 ## Taxonomic distance score
 
+The sigmoid value indicates the weighting of how close or far away an
+AMP is. The parameter can be adjusted to change the inflection point. s
+is the width of the curve The sigmoid curve equation is supposed to
+represent the importance of taxonomic distance and its effect on the
+performance of AMP finding methods. The limits of this is that organisms
+that are taxonomically far away are less valuable. The extreme low end
+of the curve reflects a low weighting, i.e. close to 0, for AMPs and
+AMPs that are very close together, have a high rating. The curve goes
+between those two extremes while still maintaining its sigmoid shape.
+
+the current range is 1:300 which is a fairly close taxonomic distance
+
 ``` r
 distance_score <- function(d, s){
   s/(s + exp(d/s))
@@ -254,7 +267,8 @@ plot(x, distance_score(x, 30))
 ```
 
 ![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
-**Figure 7.2:** Sigmoid curve
+
+**Figure 7.2:** Sigmoid curve with an s parameter of 30
 
 ``` r
 amps_w_distance_sum <- amps_w_distance %>%  
@@ -399,52 +413,6 @@ auprc_and_distance_metric_long_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
   pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC")
 ```
 
-``` r
-ggplot(auprc_and_distance_metric_long_13, aes(x = score, y = AUPRC)) +
-  geom_line(aes(linetype = Method)) +
-  geom_point(aes(colour = Organism, size = Total_AMPs_in_test)) +
-  labs(x = "Taxonomic representation score", colour = "", linetype = "") +
-  theme_classic() +
-  theme(legend.position = "bottom") +
-  scale_colour_manual(values = watlington(13)) +
-  guides(colour = guide_legend(label.theme = element_text(face = "italic", size = 9)))
-```
-
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
-
-**Figure 7.6:** **A** Scatter and line plot of the summed inverse
-pairwise distance and the AUPRC for each AMP finding method for AMPs in
-different organisms. The size of points depends on the number of AMPs in
-the organism, represented by the AMP\_count.
-
-``` r
-ggplot(filter(auprc_and_distance_metric_long_13, Organism != "Escherichia_coli"), aes(x = score, y = AUPRC)) +
-  geom_line(aes(linetype = Method)) +
-  geom_point(aes(colour = Organism, size = Total_AMPs_in_test)) +
-  labs(x = "Taxonomic representation score", colour = "", linetype = "") +
-  theme_classic() +
-  theme(legend.position = "bottom") +
-  scale_colour_manual(values = watlington(12)) +
-  guides(colour = guide_legend(label.theme = element_text(face = "italic", size = 9)))
-```
-
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
-
-**Figure 7.6.2:** Same as Figure 7.6, excluding *E. coli*
-
-``` r
-ggplot(auprc_and_distance_metric_long_9, aes(x = score, y = AUPRC)) +
-  geom_line(aes(linetype = Method)) +
-  geom_point(aes(colour = Organism, size = Total_AMPs_in_test)) +
-  labs(x = "Taxonomic representation score", colour = "", linetype = "") +
-  theme_classic() +
-  theme(legend.position = "bottom") +
-  scale_colour_manual(values = watlington(9)) +
-  guides(colour = guide_legend(label.theme = element_text(face = "italic", size = 9)))
-```
-
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
-
 Images were obtained from [phylopic.org](http://phylopic.org/) all
 images used were dedicated to the [public
 domain](https://creativecommons.org/publicdomain/zero/1.0/) and are not
@@ -481,7 +449,7 @@ auprcplot_img_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
   labs(x = "Taxonomic representation score", linetype = "", size = "AMP count")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
 
 **Figure 7.7** The performance of BLAST and classification models
 measured in Area under the Precision-Recall curve (AUPRC) in finding
@@ -492,58 +460,41 @@ the UniProt “Antimicrobial” keyword **and** if these AMPs overlapped
 with the AMP database generated from SwissProt and the APD, DRAMP or
 dbAMP databases.
 
-### Linear regression
+### Pearson’s Correlation analysis
 
-For the stricter method with 9 organisms:
+For the stricter method with 9 organisms using a sigmoid-value of 30:
 
 ``` r
-blast_lm_9 <- lm(BLAST ~ score, auprc_and_distance_metric_wAMPcount_9) 
-classification_lm_9 <- lm(Classification ~ score, auprc_and_distance_metric_wAMPcount_9) 
-
-summary(blast_lm_9)
+cor.test(~ BLAST + score, data = auprc_and_distance_metric_wAMPcount_9, method = "pearson" )
 ```
 
     ## 
-    ## Call:
-    ## lm(formula = BLAST ~ score, data = auprc_and_distance_metric_wAMPcount_9)
+    ##  Pearson's product-moment correlation
     ## 
-    ## Residuals:
-    ##       Min        1Q    Median        3Q       Max 
-    ## -0.073716 -0.036352 -0.008559  0.036557  0.090334 
-    ## 
-    ## Coefficients:
-    ##              Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept) 0.0516494  0.0268766   1.922  0.09609 .  
-    ## score       0.0023304  0.0003751   6.213  0.00044 ***
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## Residual standard error: 0.05931 on 7 degrees of freedom
-    ## Multiple R-squared:  0.8465, Adjusted R-squared:  0.8246 
-    ## F-statistic:  38.6 on 1 and 7 DF,  p-value: 0.0004396
+    ## data:  BLAST and score
+    ## t = 6.2131, df = 7, p-value = 0.0004396
+    ## alternative hypothesis: true correlation is not equal to 0
+    ## 95 percent confidence interval:
+    ##  0.6579736 0.9833325
+    ## sample estimates:
+    ##       cor 
+    ## 0.9200548
 
 ``` r
-summary(classification_lm_9)
+cor.test(~ Classification + score, data = auprc_and_distance_metric_wAMPcount_9, method = "pearson" )
 ```
 
     ## 
-    ## Call:
-    ## lm(formula = Classification ~ score, data = auprc_and_distance_metric_wAMPcount_9)
+    ##  Pearson's product-moment correlation
     ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -0.16961 -0.09546 -0.02577  0.13114  0.25378 
-    ## 
-    ## Coefficients:
-    ##              Estimate Std. Error t value Pr(>|t|)  
-    ## (Intercept) 0.1723191  0.0697370   2.471   0.0428 *
-    ## score       0.0008609  0.0009732   0.885   0.4057  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## Residual standard error: 0.1539 on 7 degrees of freedom
-    ## Multiple R-squared:  0.1005, Adjusted R-squared:  -0.02795 
-    ## F-statistic: 0.7825 on 1 and 7 DF,  p-value: 0.4057
+    ## data:  Classification and score
+    ## t = 0.88459, df = 7, p-value = 0.4057
+    ## alternative hypothesis: true correlation is not equal to 0
+    ## 95 percent confidence interval:
+    ##  -0.4396060  0.8105264
+    ## sample estimates:
+    ##      cor 
+    ## 0.317091
 
 ``` r
 auprc_and_distance_metric_wAMPcount_9 %>%
@@ -560,10 +511,139 @@ auprc_and_distance_metric_wAMPcount_9 %>%
   labs(x = "Taxonomic representation score", linetype = "", size = "AMP count")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 
 **Figure 7.8:** linear regression lines of the AMP finding methods in a
 range of organisms
+
+### Testing the effect of different sigmoid values on the taxonomic distance score
+
+``` r
+s_5 <- data.frame(x = 1:30, distance_score_value = distance_score(1:30, 5), s = 5)
+s_20 <- data.frame(x = 1:200, distance_score_value = distance_score(1:200, 20), s = 20)
+s_30 <- data.frame(x = 1:300, distance_score_value = distance_score(1:300, 30), s = 30)
+s_50 <- data.frame(x = 1:500, distance_score_value = distance_score(1:500, 50), s = 50)
+s_100 <- data.frame(x = 1:1000, distance_score_value = distance_score(1:1000, 100), s = 100)
+s_1000 <- data.frame(x = 1:15000, distance_score_value = distance_score(1:15000, 1000), s = 1000)
+
+s_curves <- rbind(s_5, s_20, s_30, s_50, s_100, s_1000)
+
+ggplot(s_curves, aes(x = x, y = distance_score_value)) +
+         geom_line() +
+         facet_wrap(~s, scales = "free_x") +
+         labs(x = "Pairwise distance", y = "Distance score") + 
+         theme_minimal() +
+         theme(panel.grid.minor = element_blank(),
+               plot.background = element_rect(fill = "white", colour = "white"))
+```
+
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+
+**Figure 7.9.1:** Sigmoid curves with different s parameters
+
+``` r
+amps_w_distance_s_curves_function <- function(s_value) {
+  amps_w_distance %>%  
+  filter(Organism != Target) %>% 
+  select(Organism, Target, Distance) %>% 
+  group_by(Organism, Target) %>% 
+  summarise(AMP_count = n(), dscore = sum(distance_score(Distance, s_value))) %>% 
+  add_column(s_value) %>% 
+  ungroup() %>% 
+  mutate(Target = str_replace_all(Target, "_", " ")) %>% 
+  filter(Target %in% organism_strict_selection)
+}
+
+amps_w_distance_s5 <- amps_w_distance_s_curves_function(5)
+amps_w_distance_s20 <- amps_w_distance_s_curves_function(20)
+amps_w_distance_s30 <- amps_w_distance_s_curves_function(30)
+amps_w_distance_s50 <- amps_w_distance_s_curves_function(50)
+amps_w_distance_s100 <- amps_w_distance_s_curves_function(100)
+amps_w_distance_s1000 <- amps_w_distance_s_curves_function(1000)
+
+amps_w_distance_all_curves <- rbind(amps_w_distance_s5, amps_w_distance_s20, amps_w_distance_s30, amps_w_distance_s50, amps_w_distance_s100, amps_w_distance_s1000)
+
+
+ggplot(amps_w_distance_all_curves, aes(x = Target)) + 
+  geom_col(aes(y = dscore)) + 
+  coord_flip() +
+  facet_wrap(~s_value, scales = "free_x") +
+  labs(y = "Taxonomic representation score", x = "Organism", fill = "") +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        axis.text.y = element_text(face = "italic"),
+        strip.background = element_rect(fill = NA, color = NA),
+        strip.text.x = element_text(face = "bold", size = 13))
+```
+
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
+
+**Figure 7.9.2:** The effect of different sigmoid values on the
+taxonomic representation score using a selection of organisms
+
+Testing the different sigmoid values to see how it affects the final
+conclusion (based on the p-value of the pearson’s correlation test )
+
+``` r
+performance_results <- methods_auprc_9_wide_w_count %>% 
+  mutate(Organism = str_replace_all(Organism, "_", " "))
+
+p_cor_classification_blast <- function(amps_w_distance_df, method_type1, method_type2) {
+  
+  
+  df_join1 <- amps_w_distance_df %>% 
+  group_by(Target) %>% 
+  summarise(score = sum(dscore,na.rm = TRUE)) %>% 
+  rename(Organism = Target) %>% 
+  left_join(performance_results, by = "Organism") 
+  
+ res1 <- tidy(cor.test(~ Classification + score, data = df_join1, method = "pearson")) %>% 
+  add_column(Method = method_type1)
+
+  df_join2 <- amps_w_distance_df %>% 
+  group_by(Target) %>% 
+  summarise(score = sum(dscore,na.rm = TRUE)) %>% 
+  rename(Organism = Target) %>% 
+  left_join(performance_results, by = "Organism") 
+  
+ res2 <- tidy(cor.test(~ BLAST + score, data = df_join2, method = "pearson")) %>% 
+  add_column(Method = method_type2)
+  
+  rbind(res1, res2) %>% 
+    rename(cor = estimate, df = parameter) %>% 
+    select(-alternative, -method) %>% 
+    mutate(Significant = p.value <= 0.05 )
+
+}
+
+p_cor_5 <- p_cor_classification_blast(amps_w_distance_s5, "Classification_s5", "BLAST_s5" )
+p_cor_20 <- p_cor_classification_blast(amps_w_distance_s20, "Classification_s20", "BLAST_s20")
+p_cor_30 <- p_cor_classification_blast(amps_w_distance_s30, "Classification_s30", "BLAST_s30")
+p_cor_50 <- p_cor_classification_blast(amps_w_distance_s50, "Classification_s50", "BLAST_s50")
+p_cor_100 <- p_cor_classification_blast(amps_w_distance_s100, "Classification_s100", "BLAST_s100")
+p_cor_1000 <- p_cor_classification_blast(amps_w_distance_s100, "Classification_s1000", "BLAST_s1000")
+
+p_cor_all <- rbind(p_cor_5, p_cor_20, p_cor_30, p_cor_50, p_cor_100, p_cor_1000)
+```
+
+**Table 7.1:** The effect of using different s-values on the pearson’s
+correlation tests measuring the relationship between the performance of
+BLAST and Classification methods and the taxonomic representation score
+
+|       cor | statistic |   p.value |  df |   conf.low | conf.high | Method                | Significant |
+|----------:|----------:|----------:|----:|-----------:|----------:|:----------------------|:------------|
+| 0.0334785 | 0.0886255 | 0.9318618 |   7 | -0.6449836 | 0.6824273 | Classification\_s5    | FALSE       |
+| 0.7829625 | 3.3300558 | 0.0125901 |   7 |  0.2475759 | 0.9520401 | BLAST\_s5             | TRUE        |
+| 0.3797999 | 1.0862503 | 0.3133525 |   7 | -0.3802280 | 0.8336478 | Classification\_s20   | FALSE       |
+| 0.9232038 | 6.3557103 | 0.0003831 |   7 |  0.6696699 | 0.9840098 | BLAST\_s20            | TRUE        |
+| 0.3170910 | 0.8845933 | 0.4057335 |   7 | -0.4396060 | 0.8105264 | Classification\_s30   | FALSE       |
+| 0.9200548 | 6.2131182 | 0.0004396 |   7 |  0.6579736 | 0.9833325 | BLAST\_s30            | TRUE        |
+| 0.0577806 | 0.1531290 | 0.8826173 |   7 | -0.6305369 | 0.6952242 | Classification\_s50   | FALSE       |
+| 0.6722483 | 2.4024583 | 0.0472950 |   7 |  0.0146809 | 0.9238934 | BLAST\_s50            | TRUE        |
+| 0.0278012 | 0.0735835 | 0.9434003 |   7 | -0.6482901 | 0.6793793 | Classification\_s100  | FALSE       |
+| 0.3926850 | 1.1296914 | 0.2958259 |   7 | -0.3671987 | 0.8382095 | BLAST\_s100           | FALSE       |
+| 0.0278012 | 0.0735835 | 0.9434003 |   7 | -0.6482901 | 0.6793793 | Classification\_s1000 | FALSE       |
+| 0.3926850 | 1.1296914 | 0.2958259 |   7 | -0.3671987 | 0.8382095 | BLAST\_s1000          | FALSE       |
 
 #### Terminology
 
