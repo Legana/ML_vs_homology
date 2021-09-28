@@ -635,7 +635,7 @@ p_cor_all <- rbind(p_cor_5, p_cor_20, p_cor_30, p_cor_50, p_cor_100, p_cor_1000)
 
 **Table 7.1:** The effect of using different s-values on the pearson's correlation tests measuring the relationship between the performance of BLAST and Classification methods and the taxonomic representation score
 ```{r, echo = FALSE}
-knitr::kable(p_cor_all)
+knitr::kable(p_cor_all, digits = 2)
 ```
 
 

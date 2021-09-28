@@ -451,7 +451,7 @@ auprcplot_img_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
 
 ![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
 
-**Figure 7.7** The performance of BLAST and classification models
+**Figure 7.7** The perforrnce of BLAST and classification models
 measured in Area under the Precision-Recall curve (AUPRC) in finding
 AMPs in the proteomes of **A)** 11 organisms where AMPs were labelled as
 AMPs exclusively by using the “Antimicrobial” keyword from UniProt and
@@ -630,20 +630,20 @@ p_cor_all <- rbind(p_cor_5, p_cor_20, p_cor_30, p_cor_50, p_cor_100, p_cor_1000)
 correlation tests measuring the relationship between the performance of
 BLAST and Classification methods and the taxonomic representation score
 
-|       cor | statistic |   p.value |  df |   conf.low | conf.high | Method                | Significant |
-|----------:|----------:|----------:|----:|-----------:|----------:|:----------------------|:------------|
-| 0.0334785 | 0.0886255 | 0.9318618 |   7 | -0.6449836 | 0.6824273 | Classification\_s5    | FALSE       |
-| 0.7829625 | 3.3300558 | 0.0125901 |   7 |  0.2475759 | 0.9520401 | BLAST\_s5             | TRUE        |
-| 0.3797999 | 1.0862503 | 0.3133525 |   7 | -0.3802280 | 0.8336478 | Classification\_s20   | FALSE       |
-| 0.9232038 | 6.3557103 | 0.0003831 |   7 |  0.6696699 | 0.9840098 | BLAST\_s20            | TRUE        |
-| 0.3170910 | 0.8845933 | 0.4057335 |   7 | -0.4396060 | 0.8105264 | Classification\_s30   | FALSE       |
-| 0.9200548 | 6.2131182 | 0.0004396 |   7 |  0.6579736 | 0.9833325 | BLAST\_s30            | TRUE        |
-| 0.0577806 | 0.1531290 | 0.8826173 |   7 | -0.6305369 | 0.6952242 | Classification\_s50   | FALSE       |
-| 0.6722483 | 2.4024583 | 0.0472950 |   7 |  0.0146809 | 0.9238934 | BLAST\_s50            | TRUE        |
-| 0.0278012 | 0.0735835 | 0.9434003 |   7 | -0.6482901 | 0.6793793 | Classification\_s100  | FALSE       |
-| 0.3926850 | 1.1296914 | 0.2958259 |   7 | -0.3671987 | 0.8382095 | BLAST\_s100           | FALSE       |
-| 0.0278012 | 0.0735835 | 0.9434003 |   7 | -0.6482901 | 0.6793793 | Classification\_s1000 | FALSE       |
-| 0.3926850 | 1.1296914 | 0.2958259 |   7 | -0.3671987 | 0.8382095 | BLAST\_s1000          | FALSE       |
+|  cor | statistic | p.value |  df | conf.low | conf.high | Method                | Significant |
+|-----:|----------:|--------:|----:|---------:|----------:|:----------------------|:------------|
+| 0.03 |      0.09 |    0.93 |   7 |    -0.64 |      0.68 | Classification\_s5    | FALSE       |
+| 0.78 |      3.33 |    0.01 |   7 |     0.25 |      0.95 | BLAST\_s5             | TRUE        |
+| 0.38 |      1.09 |    0.31 |   7 |    -0.38 |      0.83 | Classification\_s20   | FALSE       |
+| 0.92 |      6.36 |    0.00 |   7 |     0.67 |      0.98 | BLAST\_s20            | TRUE        |
+| 0.32 |      0.88 |    0.41 |   7 |    -0.44 |      0.81 | Classification\_s30   | FALSE       |
+| 0.92 |      6.21 |    0.00 |   7 |     0.66 |      0.98 | BLAST\_s30            | TRUE        |
+| 0.06 |      0.15 |    0.88 |   7 |    -0.63 |      0.70 | Classification\_s50   | FALSE       |
+| 0.67 |      2.40 |    0.05 |   7 |     0.01 |      0.92 | BLAST\_s50            | TRUE        |
+| 0.03 |      0.07 |    0.94 |   7 |    -0.65 |      0.68 | Classification\_s100  | FALSE       |
+| 0.39 |      1.13 |    0.30 |   7 |    -0.37 |      0.84 | BLAST\_s100           | FALSE       |
+| 0.03 |      0.07 |    0.94 |   7 |    -0.65 |      0.68 | Classification\_s1000 | FALSE       |
+| 0.39 |      1.13 |    0.30 |   7 |    -0.37 |      0.84 | BLAST\_s1000          | FALSE       |
 
 #### Terminology
 
