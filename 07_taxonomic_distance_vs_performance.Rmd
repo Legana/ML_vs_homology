@@ -484,15 +484,18 @@ ggsave("figures/taxonomic_representation_performance.png", height = 9, width = 1
 
 
 
-### Pearson's Correlation analysis 
+### Correlation analysis 
 
 
 For the stricter method with 9 organisms using a sigmoid-value of 30: 
 
 ```{r}
-cor.test(~ BLAST + score, data = auprc_and_distance_metric_wAMPcount_9, method = "pearson" )
+cor.test(~ BLAST + score, data = auprc_and_distance_metric_wAMPcount_9, method = "spearman" )
 
-cor.test(~ Classification + score, data = auprc_and_distance_metric_wAMPcount_9, method = "pearson" )
+cor.test(~ Classification + score, data = auprc_and_distance_metric_wAMPcount_9, method = "spearman" )
+
+cor.test(~ Classification + score, data = auprc_and_distance_metric_wAMPcount_9, method = "kendall" )
+
 ```
 
 ```{r}
@@ -588,7 +591,7 @@ ggsave("figures/tax_rep_score_and_s_curves.png", width = 9, height = 7)
 
 **Figure 7.9.2:** The effect of different sigmoid values on the taxonomic representation score using a selection of organisms
 
-Testing the different sigmoid values to see how it affects the final conclusion (based on the p-value of the pearson's correlation test )
+Testing the different sigmoid values to see how it affects the final conclusion (based on the p-value of the spearman's correlation test )
 
 
 ```{r}
@@ -604,7 +607,7 @@ p_cor_classification_blast <- function(amps_w_distance_df, method_type1, method_
   rename(Organism = Target) %>% 
   left_join(performance_results, by = "Organism") 
   
- res1 <- tidy(cor.test(~ Classification + score, data = df_join1, method = "pearson")) %>% 
+ res1 <- tidy(cor.test(~ Classification + score, data = df_join1, method = "spearman")) %>% 
   add_column(Method = method_type1)
 
   df_join2 <- amps_w_distance_df %>% 
@@ -613,11 +616,11 @@ p_cor_classification_blast <- function(amps_w_distance_df, method_type1, method_
   rename(Organism = Target) %>% 
   left_join(performance_results, by = "Organism") 
   
- res2 <- tidy(cor.test(~ BLAST + score, data = df_join2, method = "pearson")) %>% 
+ res2 <- tidy(cor.test(~ BLAST + score, data = df_join2, method = "spearman")) %>% 
   add_column(Method = method_type2)
   
   rbind(res1, res2) %>% 
-    rename(cor = estimate, df = parameter) %>% 
+    rename(rho = estimate) %>% 
     select(-alternative, -method) %>% 
     mutate(Significant = p.value <= 0.05 )
 
@@ -633,7 +636,7 @@ p_cor_1000 <- p_cor_classification_blast(amps_w_distance_s100, "Classification_s
 p_cor_all <- rbind(p_cor_5, p_cor_20, p_cor_30, p_cor_50, p_cor_100, p_cor_1000)
 ```
 
-**Table 7.1:** The effect of using different s-values on the pearson's correlation tests measuring the relationship between the performance of BLAST and Classification methods and the taxonomic representation score
+**Table 7.1:** The effect of using different s-values on the spearman's correlation tests measuring the relationship between the performance of BLAST and Classification methods and the taxonomic representation score
 ```{r, echo = FALSE}
 knitr::kable(p_cor_all, digits = 2)
 ```

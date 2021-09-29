@@ -460,41 +460,51 @@ the UniProt “Antimicrobial” keyword **and** if these AMPs overlapped
 with the AMP database generated from SwissProt and the APD, DRAMP or
 dbAMP databases.
 
-### Pearson’s Correlation analysis
+### Correlation analysis
 
 For the stricter method with 9 organisms using a sigmoid-value of 30:
 
 ``` r
-cor.test(~ BLAST + score, data = auprc_and_distance_metric_wAMPcount_9, method = "pearson" )
+cor.test(~ BLAST + score, data = auprc_and_distance_metric_wAMPcount_9, method = "spearman" )
 ```
 
     ## 
-    ##  Pearson's product-moment correlation
+    ##  Spearman's rank correlation rho
     ## 
     ## data:  BLAST and score
-    ## t = 6.2131, df = 7, p-value = 0.0004396
-    ## alternative hypothesis: true correlation is not equal to 0
-    ## 95 percent confidence interval:
-    ##  0.6579736 0.9833325
+    ## S = 26, p-value = 0.01722
+    ## alternative hypothesis: true rho is not equal to 0
     ## sample estimates:
-    ##       cor 
-    ## 0.9200548
+    ##       rho 
+    ## 0.7833333
 
 ``` r
-cor.test(~ Classification + score, data = auprc_and_distance_metric_wAMPcount_9, method = "pearson" )
+cor.test(~ Classification + score, data = auprc_and_distance_metric_wAMPcount_9, method = "spearman" )
 ```
 
     ## 
-    ##  Pearson's product-moment correlation
+    ##  Spearman's rank correlation rho
     ## 
     ## data:  Classification and score
-    ## t = 0.88459, df = 7, p-value = 0.4057
-    ## alternative hypothesis: true correlation is not equal to 0
-    ## 95 percent confidence interval:
-    ##  -0.4396060  0.8105264
+    ## S = 104, p-value = 0.7435
+    ## alternative hypothesis: true rho is not equal to 0
     ## sample estimates:
-    ##      cor 
-    ## 0.317091
+    ##       rho 
+    ## 0.1333333
+
+``` r
+cor.test(~ Classification + score, data = auprc_and_distance_metric_wAMPcount_9, method = "kendall" )
+```
+
+    ## 
+    ##  Kendall's rank correlation tau
+    ## 
+    ## data:  Classification and score
+    ## T = 19, p-value = 0.9195
+    ## alternative hypothesis: true tau is not equal to 0
+    ## sample estimates:
+    ##        tau 
+    ## 0.05555556
 
 ``` r
 auprc_and_distance_metric_wAMPcount_9 %>%
@@ -582,7 +592,7 @@ ggplot(amps_w_distance_all_curves, aes(x = Target)) +
 taxonomic representation score using a selection of organisms
 
 Testing the different sigmoid values to see how it affects the final
-conclusion (based on the p-value of the pearson’s correlation test )
+conclusion (based on the p-value of the spearman’s correlation test )
 
 ``` r
 performance_results <- methods_auprc_9_wide_w_count %>% 
@@ -597,7 +607,7 @@ p_cor_classification_blast <- function(amps_w_distance_df, method_type1, method_
   rename(Organism = Target) %>% 
   left_join(performance_results, by = "Organism") 
   
- res1 <- tidy(cor.test(~ Classification + score, data = df_join1, method = "pearson")) %>% 
+ res1 <- tidy(cor.test(~ Classification + score, data = df_join1, method = "spearman")) %>% 
   add_column(Method = method_type1)
 
   df_join2 <- amps_w_distance_df %>% 
@@ -606,11 +616,11 @@ p_cor_classification_blast <- function(amps_w_distance_df, method_type1, method_
   rename(Organism = Target) %>% 
   left_join(performance_results, by = "Organism") 
   
- res2 <- tidy(cor.test(~ BLAST + score, data = df_join2, method = "pearson")) %>% 
+ res2 <- tidy(cor.test(~ BLAST + score, data = df_join2, method = "spearman")) %>% 
   add_column(Method = method_type2)
   
   rbind(res1, res2) %>% 
-    rename(cor = estimate, df = parameter) %>% 
+    rename(rho = estimate) %>% 
     select(-alternative, -method) %>% 
     mutate(Significant = p.value <= 0.05 )
 
@@ -626,24 +636,24 @@ p_cor_1000 <- p_cor_classification_blast(amps_w_distance_s100, "Classification_s
 p_cor_all <- rbind(p_cor_5, p_cor_20, p_cor_30, p_cor_50, p_cor_100, p_cor_1000)
 ```
 
-**Table 7.1:** The effect of using different s-values on the pearson’s
+**Table 7.1:** The effect of using different s-values on the spearman’s
 correlation tests measuring the relationship between the performance of
 BLAST and Classification methods and the taxonomic representation score
 
-|  cor | statistic | p.value |  df | conf.low | conf.high | Method                | Significant |
-|-----:|----------:|--------:|----:|---------:|----------:|:----------------------|:------------|
-| 0.03 |      0.09 |    0.93 |   7 |    -0.64 |      0.68 | Classification\_s5    | FALSE       |
-| 0.78 |      3.33 |    0.01 |   7 |     0.25 |      0.95 | BLAST\_s5             | TRUE        |
-| 0.38 |      1.09 |    0.31 |   7 |    -0.38 |      0.83 | Classification\_s20   | FALSE       |
-| 0.92 |      6.36 |    0.00 |   7 |     0.67 |      0.98 | BLAST\_s20            | TRUE        |
-| 0.32 |      0.88 |    0.41 |   7 |    -0.44 |      0.81 | Classification\_s30   | FALSE       |
-| 0.92 |      6.21 |    0.00 |   7 |     0.66 |      0.98 | BLAST\_s30            | TRUE        |
-| 0.06 |      0.15 |    0.88 |   7 |    -0.63 |      0.70 | Classification\_s50   | FALSE       |
-| 0.67 |      2.40 |    0.05 |   7 |     0.01 |      0.92 | BLAST\_s50            | TRUE        |
-| 0.03 |      0.07 |    0.94 |   7 |    -0.65 |      0.68 | Classification\_s100  | FALSE       |
-| 0.39 |      1.13 |    0.30 |   7 |    -0.37 |      0.84 | BLAST\_s100           | FALSE       |
-| 0.03 |      0.07 |    0.94 |   7 |    -0.65 |      0.68 | Classification\_s1000 | FALSE       |
-| 0.39 |      1.13 |    0.30 |   7 |    -0.37 |      0.84 | BLAST\_s1000          | FALSE       |
+|   rho | statistic | p.value | Method                | Significant |
+|------:|----------:|--------:|:----------------------|:------------|
+|  0.23 |        92 |    0.55 | Classification\_s5    | FALSE       |
+|  0.67 |        40 |    0.06 | BLAST\_s5             | FALSE       |
+|  0.33 |        80 |    0.39 | Classification\_s20   | FALSE       |
+|  0.77 |        28 |    0.02 | BLAST\_s20            | TRUE        |
+|  0.13 |       104 |    0.74 | Classification\_s30   | FALSE       |
+|  0.78 |        26 |    0.02 | BLAST\_s30            | TRUE        |
+|  0.00 |       120 |    1.00 | Classification\_s50   | FALSE       |
+|  0.60 |        48 |    0.10 | BLAST\_s50            | FALSE       |
+| -0.08 |       130 |    0.84 | Classification\_s100  | FALSE       |
+|  0.30 |        84 |    0.44 | BLAST\_s100           | FALSE       |
+| -0.08 |       130 |    0.84 | Classification\_s1000 | FALSE       |
+|  0.30 |        84 |    0.44 | BLAST\_s1000          | FALSE       |
 
 #### Terminology
 
