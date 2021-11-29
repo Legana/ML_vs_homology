@@ -124,3 +124,5 @@ Add AMP count to plot as point size
 pairwise distance and the AUPRC for each AMP finding method for AMPs in
 different organisms. The size of points depends on the number of AMPs in
 the organism, represented by the AMP\_count.
+
+![](04_compute_taxonomic_distance_metric_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->

@@ -16,7 +16,7 @@ library(patchwork)
 library(cowplot)
 library(pals)
 
-options(dplyr.summarise.inform = FALSE,readr.show_types = FALSE)
+options(dplyr.summarise.inform = FALSE,readr.show_col_types = FALSE)
 ```
 
 ## Prepare AMP and tree datasets
@@ -343,5 +343,33 @@ ggsave("figures/auprc_distance_amps.png", width = 10, height = 5)
 **Figure 4.3:** **A** Scatter and line plot of the summed inverse pairwise distance and the AUPRC for each AMP finding method for AMPs in different organisms. The size of points depends on the number of AMPs in the organism, represented by the AMP_count.
 
 
+```{r}
+
+library(ggtext)
+
+mammal_pics <- data.frame(target = c("Bos_taurus", "Homo_sapiens", "Mus_musculus","Pan_troglodytes",     "Rattus_norvegicus","Rhinolophus_ferrumequinum","Sus_scrofa"),
+           pics = c("http://phylopic.org/assets/images/submissions/938008ab-0501-4c4d-88c5-fee17189ead3.thumb.png",
+          "http://phylopic.org/assets/images/submissions/c089caae-43ef-4e4e-bf26-973dd4cb65c5.thumb.png",
+          "http://phylopic.org/assets/images/submissions/92989e35-4e68-4a2d-b3a2-191ba9da671a.thumb.png",
+          "http://phylopic.org/assets/images/submissions/7133ab33-cc79-4d7c-9656-48717359abb4.thumb.png",
+          "http://phylopic.org/assets/images/submissions/53f8f372-adc0-4247-bc66-0075e241fc95.thumb.png",
+          "http://phylopic.org/assets/images/submissions/18bfd2fc-f184-4c3a-b511-796aafcc70f6.thumb.png",
+          "http://phylopic.org/assets/images/submissions/3d8acaf6-4355-491e-8e86-4a411b53b98b.thumb.png"))
+
+link_to_img <- function(x, size = 25) {
+  paste0("<img src='", x, "' width='", size, "'/>")
+}
+
+auprc_and_distance_metric_wAMPcount %>% 
+  left_join(mammal_pics, by = "target") %>% 
+  mutate(images = link_to_img(pics)) %>% 
+  ggplot(aes(x = score, y = AUPRC, label= images)) +
+  geom_richtext(fill = NA, label.color = NA) +
+  geom_line(aes(linetype = Method)) +
+  geom_point(aes(size = AMP_count), colour = "forestgreen", shape = 1) +
+  labs(x = "Taxonomic representation score", colour = "", linetype = "") +
+  theme_classic() +
+  theme(legend.position = "bottom") 
+```
 
 
