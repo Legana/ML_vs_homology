@@ -348,8 +348,8 @@ distance_metric <- amps_w_distance_sum %>%
 ```
 
 Read in previously calculated AUPRC values (see
-03\_blast\_and\_prediction.Rmd) for the 13 organisms whose AMP count
-refer to AMPs in their respective proteomes found via the UniProt
+03_blast_and_prediction.Rmd) for the 13 organisms whose AMP count refer
+to AMPs in their respective proteomes found via the UniProt
 “Antimicrobial” keyword, and for the nine organisms, whose AMP count
 refer to AMPs in their respective proteomes that overlap with the AMPs
 in the AMP database.
@@ -370,38 +370,38 @@ auprc_and_distance_metric_wAMPcount_9 <- left_join(methods_auprc_9_wide_w_count,
 and BLAST methods for 13 organisms with their respective AMP count
 present in their proteomes
 
-| Organism                  | Classification | BLAST | Total\_AMPs\_in\_test |       score |
-|:--------------------------|---------------:|------:|----------------------:|------------:|
-| Mus\_musculus             |          0.365 | 0.305 |                   132 |  94.1821476 |
-| Homo\_sapiens             |          0.286 | 0.391 |                   116 | 173.6028581 |
-| Bos\_taurus               |          0.370 | 0.299 |                   117 |  62.5405555 |
-| Oryctolagus\_cuniculus    |          0.220 | 0.205 |                    83 |  46.8024558 |
-| Ornithorhynchus\_anatinus |          0.157 | 0.097 |                    27 |   0.7305478 |
-| Gallus\_gallus            |          0.435 | 0.121 |                    30 |  14.9801548 |
-| Oncorhynchus\_mykiss      |          0.071 | 0.108 |                    17 |   1.1760262 |
-| Drosophila\_melanogaster  |          0.053 | 0.193 |                    33 |  18.8882984 |
-| Penaeus\_vannamei         |          0.014 | 0.064 |                     3 |   5.5749552 |
-| Bombyx\_mori              |          0.065 | 0.140 |                    25 |   2.4862826 |
-| Arabidopsis\_thaliana     |          0.318 | 0.041 |                   296 |  22.6949207 |
-| Lithobates\_catesbeianus  |          0.022 | 0.214 |                    12 | 187.3398440 |
-| Escherichia\_coli         |          0.227 | 0.500 |                     4 |   1.0450033 |
+| Organism                 | Classification | BLAST | Total_AMPs_in_test |       score |
+|:-------------------------|---------------:|------:|-------------------:|------------:|
+| Mus_musculus             |          0.365 | 0.305 |                132 |  94.1821476 |
+| Homo_sapiens             |          0.286 | 0.391 |                116 | 173.6028581 |
+| Bos_taurus               |          0.370 | 0.299 |                117 |  62.5405555 |
+| Oryctolagus_cuniculus    |          0.220 | 0.205 |                 83 |  46.8024558 |
+| Ornithorhynchus_anatinus |          0.157 | 0.097 |                 27 |   0.7305478 |
+| Gallus_gallus            |          0.435 | 0.121 |                 30 |  14.9801548 |
+| Oncorhynchus_mykiss      |          0.071 | 0.108 |                 17 |   1.1760262 |
+| Drosophila_melanogaster  |          0.053 | 0.193 |                 33 |  18.8882984 |
+| Penaeus_vannamei         |          0.014 | 0.064 |                  3 |   5.5749552 |
+| Bombyx_mori              |          0.065 | 0.140 |                 25 |   2.4862826 |
+| Arabidopsis_thaliana     |          0.318 | 0.041 |                296 |  22.6949207 |
+| Lithobates_catesbeianus  |          0.022 | 0.214 |                 12 | 187.3398440 |
+| Escherichia_coli         |          0.227 | 0.500 |                  4 |   1.0450033 |
 
 **Table 7.5:** The distance metric and the AUPRC for the classification
 and BLAST methods for 9 organisms with their respective AMP count
 present in their proteomes which also overlap with the AMPs in the AMP
 database
 
-| Organism                  | Classification | BLAST | Total\_AMPs\_in\_test |       score |
-|:--------------------------|---------------:|------:|----------------------:|------------:|
-| Mus\_musculus             |          0.398 | 0.332 |                    99 |  94.1821476 |
-| Homo\_sapiens             |          0.296 | 0.437 |                    95 | 173.6028581 |
-| Bos\_taurus               |          0.142 | 0.211 |                    54 |  62.5405555 |
-| Oryctolagus\_cuniculus    |          0.043 | 0.087 |                    17 |  46.8024558 |
-| Ornithorhynchus\_anatinus |          0.149 | 0.017 |                    11 |   0.7305478 |
-| Gallus\_gallus            |          0.439 | 0.078 |                    25 |  14.9801548 |
-| Drosophila\_melanogaster  |          0.058 | 0.186 |                    23 |  18.8882984 |
-| Bombyx\_mori              |          0.079 | 0.094 |                    13 |   2.4862826 |
-| Arabidopsis\_thaliana     |          0.323 | 0.041 |                   291 |  22.6949207 |
+| Organism                 | Classification | BLAST | Total_AMPs_in_test |       score |
+|:-------------------------|---------------:|------:|-------------------:|------------:|
+| Mus_musculus             |          0.398 | 0.332 |                 99 |  94.1821476 |
+| Homo_sapiens             |          0.296 | 0.437 |                 95 | 173.6028581 |
+| Bos_taurus               |          0.142 | 0.211 |                 54 |  62.5405555 |
+| Oryctolagus_cuniculus    |          0.043 | 0.087 |                 17 |  46.8024558 |
+| Ornithorhynchus_anatinus |          0.149 | 0.017 |                 11 |   0.7305478 |
+| Gallus_gallus            |          0.439 | 0.078 |                 25 |  14.9801548 |
+| Drosophila_melanogaster  |          0.058 | 0.186 |                 23 |  18.8882984 |
+| Bombyx_mori              |          0.079 | 0.094 |                 13 |   2.4862826 |
+| Arabidopsis_thaliana     |          0.323 | 0.041 |                291 |  22.6949207 |
 
 Change back to long format for plotting
 
@@ -509,7 +509,8 @@ cor.test(~ Classification + score, data = auprc_and_distance_metric_wAMPcount_9,
 ``` r
 auprc_and_distance_metric_wAMPcount_9 %>%
   mutate(images = link_to_img(pics9)) %>% 
-  pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
+  rename(ML = Classification) %>% 
+  pivot_longer(cols = c(ML, BLAST), names_to = "Method", values_to = "AUPRC") %>%
   ggplot(aes(x = score, y = AUPRC, label = images)) +
   geom_richtext(fill = NA, label.color = NA) +
   geom_line(aes(linetype = Method)) +
@@ -640,20 +641,60 @@ p_cor_all <- rbind(p_cor_5, p_cor_20, p_cor_30, p_cor_50, p_cor_100, p_cor_1000)
 correlation tests measuring the relationship between the performance of
 BLAST and Classification methods and the taxonomic representation score
 
-|   rho | statistic | p.value | Method                | Significant |
-|------:|----------:|--------:|:----------------------|:------------|
-|  0.23 |        92 |    0.55 | Classification\_s5    | FALSE       |
-|  0.67 |        40 |    0.06 | BLAST\_s5             | FALSE       |
-|  0.33 |        80 |    0.39 | Classification\_s20   | FALSE       |
-|  0.77 |        28 |    0.02 | BLAST\_s20            | TRUE        |
-|  0.13 |       104 |    0.74 | Classification\_s30   | FALSE       |
-|  0.78 |        26 |    0.02 | BLAST\_s30            | TRUE        |
-|  0.00 |       120 |    1.00 | Classification\_s50   | FALSE       |
-|  0.60 |        48 |    0.10 | BLAST\_s50            | FALSE       |
-| -0.08 |       130 |    0.84 | Classification\_s100  | FALSE       |
-|  0.30 |        84 |    0.44 | BLAST\_s100           | FALSE       |
-| -0.08 |       130 |    0.84 | Classification\_s1000 | FALSE       |
-|  0.30 |        84 |    0.44 | BLAST\_s1000          | FALSE       |
+|   rho | statistic | p.value | Method               | Significant |
+|------:|----------:|--------:|:---------------------|:------------|
+|  0.23 |        92 |    0.55 | Classification_s5    | FALSE       |
+|  0.67 |        40 |    0.06 | BLAST_s5             | FALSE       |
+|  0.33 |        80 |    0.39 | Classification_s20   | FALSE       |
+|  0.77 |        28 |    0.02 | BLAST_s20            | TRUE        |
+|  0.13 |       104 |    0.74 | Classification_s30   | FALSE       |
+|  0.78 |        26 |    0.02 | BLAST_s30            | TRUE        |
+|  0.00 |       120 |    1.00 | Classification_s50   | FALSE       |
+|  0.60 |        48 |    0.10 | BLAST_s50            | FALSE       |
+| -0.08 |       130 |    0.84 | Classification_s100  | FALSE       |
+|  0.30 |        84 |    0.44 | BLAST_s100           | FALSE       |
+| -0.08 |       130 |    0.84 | Classification_s1000 | FALSE       |
+|  0.30 |        84 |    0.44 | BLAST_s1000          | FALSE       |
+
+``` r
+cor.test(~ BLAST + score, data = auprc_and_distance_metric_wAMPcount_9, method = "spearman" )
+```
+
+    ## 
+    ##  Spearman's rank correlation rho
+    ## 
+    ## data:  BLAST and score
+    ## S = 26, p-value = 0.01722
+    ## alternative hypothesis: true rho is not equal to 0
+    ## sample estimates:
+    ##       rho 
+    ## 0.7833333
+
+``` r
+library(wCorr)
+
+weightedCorr(auprc_and_distance_metric_wAMPcount_9$BLAST, auprc_and_distance_metric_wAMPcount_9$score, method = "Spearman")
+```
+
+    ## [1] 0.7833333
+
+``` r
+weightedCorr(auprc_and_distance_metric_wAMPcount_9$Classification, auprc_and_distance_metric_wAMPcount_9$score, method = "Spearman")
+```
+
+    ## [1] 0.1333333
+
+``` r
+weightedCorr(auprc_and_distance_metric_wAMPcount_9$BLAST, auprc_and_distance_metric_wAMPcount_9$score,weights = auprc_and_distance_metric_wAMPcount_9$Total_AMPs_in_test, method = "Spearman")
+```
+
+    ## [1] 0.7707004
+
+``` r
+weightedCorr(auprc_and_distance_metric_wAMPcount_9$Classification, auprc_and_distance_metric_wAMPcount_9$score,weights = auprc_and_distance_metric_wAMPcount_9$Total_AMPs_in_test, method = "Spearman")
+```
+
+    ## [1] 0.03584365
 
 #### Terminology
 

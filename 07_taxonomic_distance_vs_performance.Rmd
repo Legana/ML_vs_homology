@@ -501,7 +501,8 @@ cor.test(~ Classification + score, data = auprc_and_distance_metric_wAMPcount_9,
 ```{r}
 auprc_and_distance_metric_wAMPcount_9 %>%
   mutate(images = link_to_img(pics9)) %>% 
-  pivot_longer(cols = c(Classification, BLAST), names_to = "Method", values_to = "AUPRC") %>%
+  rename(ML = Classification) %>% 
+  pivot_longer(cols = c(ML, BLAST), names_to = "Method", values_to = "AUPRC") %>%
   ggplot(aes(x = score, y = AUPRC, label = images)) +
   geom_richtext(fill = NA, label.color = NA) +
   geom_line(aes(linetype = Method)) +
@@ -637,11 +638,26 @@ p_cor_all <- rbind(p_cor_5, p_cor_20, p_cor_30, p_cor_50, p_cor_100, p_cor_1000)
 ```
 
 **Table 7.1:** The effect of using different s-values on the spearman's correlation tests measuring the relationship between the performance of BLAST and Classification methods and the taxonomic representation score
+
 ```{r, echo = FALSE}
 knitr::kable(p_cor_all, digits = 2)
 ```
 
 
+```{r}
+
+cor.test(~ BLAST + score, data = auprc_and_distance_metric_wAMPcount_9, method = "spearman" )
+
+library(wCorr)
+
+weightedCorr(auprc_and_distance_metric_wAMPcount_9$BLAST, auprc_and_distance_metric_wAMPcount_9$score, method = "Spearman")
+
+weightedCorr(auprc_and_distance_metric_wAMPcount_9$Classification, auprc_and_distance_metric_wAMPcount_9$score, method = "Spearman")
+
+weightedCorr(auprc_and_distance_metric_wAMPcount_9$BLAST, auprc_and_distance_metric_wAMPcount_9$score,weights = auprc_and_distance_metric_wAMPcount_9$Total_AMPs_in_test, method = "Spearman")
+
+weightedCorr(auprc_and_distance_metric_wAMPcount_9$Classification, auprc_and_distance_metric_wAMPcount_9$score,weights = auprc_and_distance_metric_wAMPcount_9$Total_AMPs_in_test, method = "Spearman")
+```
 
 
 
