@@ -2,14 +2,14 @@
 ## Prepare AMP and tree datasets
 
 AMPs (3,371 sequences) were obtained from SwissProt on 01 July 2021
-[UniProtKB 2021\_03
+[UniProtKB 2021_03
 results](https://www.uniprot.org/uniprot/?query=keyword%3A%22Antimicrobial%20%5BKW-0929%5D%22%20AND%20reviewed%3Ayes&columns=id%2Centry%20name%2Creviewed%2Cprotein%20names%2Cgenes%2Corganism%2Clength%2Ckeyword-id%2Ckeywords%2Cproteome%2Corganism-id%2Clineage(ORDER)%2Csequence%2Cexistence%2Clineage(ALL)&sort=sequence-modified).
 
 Read in the same SwissProt AMPs used for creating the classification
 models and BLAST datasets. The organism names were tidied up and made
 more compatible to [TimeTree](http://timetree.org/) names where species
 only have two names. Viruses were removed. This resulted in 802 unique
-organisms. Species not fully defined (e.g. "Lactococcus sp) were
+organisms. Species not fully defined (e.g. “Lactococcus sp) were
 additionally removed. This resulted in 769 species.
 
 Add in the unreviewed horseshoe bat AMPs (used in previous analysis)
@@ -68,19 +68,19 @@ database has a large number of AMPs from closely related taxa. To
 capture this effect we propose the following score.
 
 Let
-![A\_i = \\{ a\_i^1,a\_i^2,...,a\_i^{n\_i} \\}](https://latex.codecogs.com/png.latex?A_i%20%3D%20%5C%7B%20a_i%5E1%2Ca_i%5E2%2C...%2Ca_i%5E%7Bn_i%7D%20%5C%7D "A_i = \{ a_i^1,a_i^2,...,a_i^{n_i} \}")
-be the ![n\_i](https://latex.codecogs.com/png.latex?n_i "n_i") known
-AMPs in the proteome of species
+![A_i = \\{ a_i^1,a_i^2,...,a_i^{n_i} \\}](https://latex.codecogs.com/png.latex?A_i%20%3D%20%5C%7B%20a_i%5E1%2Ca_i%5E2%2C...%2Ca_i%5E%7Bn_i%7D%20%5C%7D "A_i = \{ a_i^1,a_i^2,...,a_i^{n_i} \}")
+be the ![n_i](https://latex.codecogs.com/png.latex?n_i "n_i") known AMPs
+in the proteome of species
 ![i](https://latex.codecogs.com/png.latex?i "i"), all of which have the
 same taxonomic distance,
-![d\_i](https://latex.codecogs.com/png.latex?d_i "d_i") to the target
+![d_i](https://latex.codecogs.com/png.latex?d_i "d_i") to the target
 organism. The representation score,
-![S\_t](https://latex.codecogs.com/png.latex?S_t "S_t") for target
+![S_t](https://latex.codecogs.com/png.latex?S_t "S_t") for target
 organism ![t](https://latex.codecogs.com/png.latex?t "t") is then given
 by
 
 ![
-S\_t = \\sum\_{i \\ne t} \\frac{s}{s+e^{\\frac{d\_i}{s}}} n\_i
+S_t = \\sum\_{i \\ne t} \\frac{s}{s+e^{\\frac{d_i}{s}}} n_i
 ](https://latex.codecogs.com/png.latex?%0AS_t%20%3D%20%5Csum_%7Bi%20%5Cne%20t%7D%20%5Cfrac%7Bs%7D%7Bs%2Be%5E%7B%5Cfrac%7Bd_i%7D%7Bs%7D%7D%7D%20n_i%0A "
 S_t = \sum_{i \ne t} \frac{s}{s+e^{\frac{d_i}{s}}} n_i
 ")
@@ -112,7 +112,7 @@ diminishing weight to more distant relatives.
 ## Taxonomic distance score vs. AUPRC
 
 Read in previously calculated AUPRC values (see
-03\_blast\_and\_prediction.Rmd).
+03_blast_and_prediction.Rmd).
 
 Join the AUPRC values and distance metric for each organism
 
@@ -123,6 +123,38 @@ Add AMP count to plot as point size
 **Figure 4.3:** **A** Scatter and line plot of the summed inverse
 pairwise distance and the AUPRC for each AMP finding method for AMPs in
 different organisms. The size of points depends on the number of AMPs in
-the organism, represented by the AMP\_count.
+the organism, represented by the AMP_count.
 
 ![](04_compute_taxonomic_distance_metric_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
+### Correlation analysis
+
+    ## 
+    ##  Spearman's rank correlation rho
+    ## 
+    ## data:  BLAST1 and score
+    ## S = 36, p-value = 0.4444
+    ## alternative hypothesis: true rho is not equal to 0
+    ## sample estimates:
+    ##       rho 
+    ## 0.3571429
+
+    ## 
+    ##  Spearman's rank correlation rho
+    ## 
+    ## data:  BLAST2 and score
+    ## S = 42, p-value = 0.5948
+    ## alternative hypothesis: true rho is not equal to 0
+    ## sample estimates:
+    ##  rho 
+    ## 0.25
+
+    ## 
+    ##  Spearman's rank correlation rho
+    ## 
+    ## data:  Classification and score
+    ## S = 68, p-value = 0.6615
+    ## alternative hypothesis: true rho is not equal to 0
+    ## sample estimates:
+    ##        rho 
+    ## -0.2142857

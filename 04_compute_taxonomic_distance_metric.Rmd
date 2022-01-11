@@ -363,6 +363,7 @@ link_to_img <- function(x, size = 25) {
 auprc_and_distance_metric_wAMPcount %>% 
   left_join(mammal_pics, by = "target") %>% 
   mutate(images = link_to_img(pics)) %>% 
+  mutate(Method = replace(Method, Method == "Classification", "ML")) %>% 
   ggplot(aes(x = score, y = AUPRC, label= images)) +
   geom_richtext(fill = NA, label.color = NA) +
   geom_line(aes(linetype = Method)) +
@@ -372,4 +373,21 @@ auprc_and_distance_metric_wAMPcount %>%
   theme(legend.position = "bottom") 
 ```
 
+```{r, echo=FALSE}
+ggsave(filename = "figures/tax_rep_mammals.png", height = 6, width = 12)
+```
+
+
+### Correlation analysis
+
+```{r}
+auprc_wide <- auprc_and_distance_metric_wAMPcount %>% pivot_wider(names_from = Method, values_from = AUPRC)
+# make into wide format soI can do stat test: auprc_and_distance_metric_wAMPcount
+
+cor.test(~ BLAST1 + score, data = auprc_wide, method = "spearman")
+
+cor.test(~ BLAST2 + score, data = auprc_wide, method = "spearman")
+
+cor.test(~ Classification + score, data = auprc_wide, method = "spearman")
+```
 
