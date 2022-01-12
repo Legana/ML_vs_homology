@@ -14,6 +14,7 @@ library(patchwork)
 library(pals)
 library(ggtext)
 library(broom)
+library(randomcoloR)
 ```
 
 Read in AMP database to extract organisms from to submit to [TimeTree](http://timetree.org/) for phylogenetic data.
@@ -350,6 +351,39 @@ all_organisms + inset_element(platypus, left = 0.7, bottom = 0.01, right = 1, to
 ggsave("figures/species_contribution_to_score_plat_inset.png", width = 9, height = 5)
 ```
 
+
+```{r, echo = FALSE}
+set.seed(4694)
+palette22 <- distinctColorPalette(22)
+
+#pie(rep(1, 22), col=palette22)
+```
+
+
+```{r, echo = FALSE}
+amps_w_distance_sum %>% filter(Target %in% c("Homo_sapiens", "Mus_musculus", "Oryctolagus_cuniculus", "Bos_taurus", "Ornithorhynchus_anatinus")) %>% 
+  group_by(Target) %>% 
+  mutate(Organism = str_replace_all(Organism, "_", " ")) %>% 
+  mutate(Target = str_replace_all(Target, "_", " ")) %>% 
+  slice_max(dscore, n = 10, with_ties = FALSE) %>% 
+  ggplot(aes(x = Target)) + 
+  geom_col(aes(y = dscore, fill = Organism)) +
+  coord_flip() +
+  facet_wrap(~Target, scales = "free", nrow = 5) +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        strip.text = element_text(face = "bold.italic", size = 10),
+        strip.background = element_blank()) +
+  labs(y = "Taxonomic representation score", x = "Organism", fill = "") +
+ guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 9))) +
+  scale_fill_manual(values = palette22) 
+
+ggsave("figures/species_contributions_to_mammals.png", width = 9, height = 8)
+```
+
+**Figure 7.3.2:** The contributions of different species to the taxonomic representation score of the mammals in the selected organisms. Only the ten species with the largest contributions are shown.
 
 ## Taxonomic distance score vs. AUPRC 
 

@@ -7,6 +7,7 @@ library(patchwork)
 library(pals)
 library(ggtext)
 library(broom)
+library(randomcoloR)
 ```
 
 Read in AMP database to extract organisms from to submit to
@@ -333,6 +334,12 @@ remaining species were amalgamated into the “other” category.
 *Ornithorhynchus anatinus* is displayed as a zoomed in inset plot near
 the bottom right of the main plot.
 
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+
+**Figure 7.3.2:** The contributions of different species to the
+taxonomic representation score of the mammals in the selected organisms.
+Only the ten species with the largest contributions are shown.
+
 ## Taxonomic distance score vs. AUPRC
 
 Sum the distance score and filter out the selected organisms. The sum of
@@ -449,7 +456,7 @@ auprcplot_img_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
   labs(x = "Taxonomic representation score", linetype = "", size = "AMP count")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
 
 **Figure 7.7** The perforrnce of BLAST and classification models
 measured in Area under the Precision-Recall curve (AUPRC) in finding
@@ -522,7 +529,7 @@ auprc_and_distance_metric_wAMPcount_9 %>%
   labs(x = "Taxonomic representation score", linetype = "", size = "AMP count")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
 **Figure 7.8:** linear regression lines of the AMP finding methods in a
 range of organisms
@@ -548,7 +555,7 @@ ggplot(s_curves, aes(x = x, y = distance_score_value)) +
                plot.background = element_rect(fill = "white", colour = "white"))
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
 
 **Figure 7.9.1:** Sigmoid curves with different s parameters
 
@@ -587,7 +594,7 @@ ggplot(amps_w_distance_all_curves, aes(x = Target)) +
         strip.text.x = element_text(face = "bold", size = 13))
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
 
 **Figure 7.9.2:** The effect of different sigmoid values on the
 taxonomic representation score using a selection of organisms
