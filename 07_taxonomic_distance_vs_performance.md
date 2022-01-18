@@ -8,6 +8,7 @@ library(pals)
 library(ggtext)
 library(broom)
 library(randomcoloR)
+library(ggtree)
 ```
 
 Read in AMP database to extract organisms from to submit to
@@ -186,7 +187,7 @@ AMPs_notintreelabel %>% count(Order, sort = TRUE)
     ##    Order               n
     ##    <chr>           <int>
     ##  1 Scorpiones         98
-    ##  2 Hymenoptera        91
+    ##  2 Hymenoptera        94
     ##  3 Anura              83
     ##  4 Araneae            67
     ##  5 Lepidoptera        15
@@ -340,6 +341,47 @@ the bottom right of the main plot.
 taxonomic representation score of the mammals in the selected organisms.
 Only the ten species with the largest contributions are shown.
 
+Using the mammal species that contribute to the taxonomic representation
+score of *H.sapiens*, *M. musculus*, *O. cuniculus*, *B. taurus* and *O.
+anatinus*
+
+``` r
+mammals <- amps_w_distance_sum %>% 
+  filter(Target %in% c("Homo_sapiens", "Mus_musculus", "Oryctolagus_cuniculus", "Bos_taurus", "Ornithorhynchus_anatinus")) %>% 
+  group_by(Target) %>% 
+  slice_max(dscore, n = 10, with_ties = FALSE)
+
+write_lines(unique(c(mammals$Organism, mammals$Target)), "cache/mammals.txt")
+
+mammal_tree <- read.tree("data/mammals.nwk") %>% 
+  as_tibble(mammal_tree) %>% 
+  mutate(label = str_replace_all(label, "_", " ")) %>% 
+  as.phylo()
+
+
+`%notin%` <- Negate(`%in%`)
+
+
+mammal_tree_plot <- ggtree(mammal_tree) +
+  geom_tiplab(aes(subset = node %notin% c(19, 11, 8, 3, 22)), offset = 0.9, size= 4, color ="black", fontface = "italic") +
+ # geom_text(aes(label=node)) +
+  geom_cladelab(node = 37, label = "Primates", offset = 45, offset.text = 1, textcolour = "navy", barsize = 0.5, fontface = 2) +
+  geom_cladelab(node = 34, label = "Rodentia", offset = 45, offset.text = 1, textcolour = "navy", barsize = 0.5, fontface = 2) +
+  geom_cladelab(node = 27, label = "Artiodactyla", offset = 45, offset.text = 1, textcolour = "navy", barsize = 0.5, fontface = 2) +
+  geom_cladelab(node = 45, label = "Monotremata", offset = 45, offset.text = 1, textcolour = "navy", barsize = 0.5, fontface = 2) +
+  geom_cladelab(node = 8, label = "Lagomorpha", offset = 45, offset.text = 1, textcolour = "navy", fontface = 2) +
+  geom_cladelab(node = 1, label = "Perissodactyla", offset = 45, offset.text = 1, textcolour = "navy", fontface = 2) +
+  labs(caption = "Divergence time (million years ago)") +
+  theme_tree2() +
+  hexpand(.1, direction = 1) +
+  geom_tiplab(aes(subset = node %in% c(19,11, 8, 3, 22)), offset = 0.9, size = 4, fontface = "bold.italic") 
+
+
+mammal_tree_plot
+```
+
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+
 ## Taxonomic distance score vs. AUPRC
 
 Sum the distance score and filter out the selected organisms. The sum of
@@ -456,7 +498,7 @@ auprcplot_img_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
   labs(x = "Taxonomic representation score", linetype = "", size = "AMP count")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
 **Figure 7.7** The perforrnce of BLAST and classification models
 measured in Area under the Precision-Recall curve (AUPRC) in finding
@@ -529,7 +571,7 @@ auprc_and_distance_metric_wAMPcount_9 %>%
   labs(x = "Taxonomic representation score", linetype = "", size = "AMP count")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
 
 **Figure 7.8:** linear regression lines of the AMP finding methods in a
 range of organisms
@@ -555,7 +597,7 @@ ggplot(s_curves, aes(x = x, y = distance_score_value)) +
                plot.background = element_rect(fill = "white", colour = "white"))
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
 
 **Figure 7.9.1:** Sigmoid curves with different s parameters
 
@@ -594,7 +636,7 @@ ggplot(amps_w_distance_all_curves, aes(x = Target)) +
         strip.text.x = element_text(face = "bold", size = 13))
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
 
 **Figure 7.9.2:** The effect of different sigmoid values on the
 taxonomic representation score using a selection of organisms

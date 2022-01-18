@@ -15,6 +15,7 @@ library(pals)
 library(ggtext)
 library(broom)
 library(randomcoloR)
+library(ggtree)
 ```
 
 Read in AMP database to extract organisms from to submit to [TimeTree](http://timetree.org/) for phylogenetic data.
@@ -259,7 +260,7 @@ amps_w_distance %>%
        panel.grid.minor = element_blank(),
        plot.background = element_rect(fill = "white", colour = "white")) +
   guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 9))) +
-  labs(x = "Pairwise distance", y = "Number of antimicrobial peptides (AMPs)", fill = "") +
+  labs(x = "Pairwise distance (million years)", y = "Number of antimicrobial peptides (AMPs)", fill = "") +
   scale_fill_manual(values = colours_organisms_strict_selection) +
   scale_x_continuous(breaks = c(0,250,500,1000,1500,2000,2500,3000))
 
@@ -384,6 +385,52 @@ ggsave("figures/species_contributions_to_mammals.png", width = 9, height = 8)
 ```
 
 **Figure 7.3.2:** The contributions of different species to the taxonomic representation score of the mammals in the selected organisms. Only the ten species with the largest contributions are shown.
+
+Using the mammal species that contribute to the taxonomic representation score of *H.sapiens*, *M. musculus*, *O. cuniculus*, *B. taurus* and *O. anatinus*  
+
+```{r}
+mammals <- amps_w_distance_sum %>% 
+  filter(Target %in% c("Homo_sapiens", "Mus_musculus", "Oryctolagus_cuniculus", "Bos_taurus", "Ornithorhynchus_anatinus")) %>% 
+  group_by(Target) %>% 
+  slice_max(dscore, n = 10, with_ties = FALSE)
+
+write_lines(unique(c(mammals$Organism, mammals$Target)), "cache/mammals.txt")
+
+mammal_tree <- read.tree("data/mammals.nwk") %>% 
+  as_tibble(mammal_tree) %>% 
+  mutate(label = str_replace_all(label, "_", " ")) %>% 
+  as.phylo()
+
+
+`%notin%` <- Negate(`%in%`)
+
+
+mammal_tree_plot <- ggtree(mammal_tree) +
+  geom_tiplab(aes(subset = node %notin% c(19, 11, 8, 3, 22)), offset = 0.9, size= 4, color ="black", fontface = "italic") +
+ # geom_text(aes(label=node)) +
+  geom_cladelab(node = 37, label = "Primates", offset = 45, offset.text = 1, textcolour = "navy", barsize = 0.5, fontface = 2) +
+  geom_cladelab(node = 34, label = "Rodentia", offset = 45, offset.text = 1, textcolour = "navy", barsize = 0.5, fontface = 2) +
+  geom_cladelab(node = 27, label = "Artiodactyla", offset = 45, offset.text = 1, textcolour = "navy", barsize = 0.5, fontface = 2) +
+  geom_cladelab(node = 45, label = "Monotremata", offset = 45, offset.text = 1, textcolour = "navy", barsize = 0.5, fontface = 2) +
+  geom_cladelab(node = 8, label = "Lagomorpha", offset = 45, offset.text = 1, textcolour = "navy", fontface = 2) +
+  geom_cladelab(node = 1, label = "Perissodactyla", offset = 45, offset.text = 1, textcolour = "navy", fontface = 2) +
+  labs(caption = "Divergence time (million years ago)") +
+  theme_tree2() +
+  hexpand(.1, direction = 1) +
+  geom_tiplab(aes(subset = node %in% c(19,11, 8, 3, 22)), offset = 0.9, size = 4, fontface = "bold.italic") 
+
+
+mammal_tree_plot
+```
+
+
+```{r, echo = FALSE}
+ggsave(plot = mammal_tree_plot, "figures/mammal_tree.png", width = 12, height = 7)
+```
+
+```{r}
+
+```
 
 ## Taxonomic distance score vs. AUPRC 
 
