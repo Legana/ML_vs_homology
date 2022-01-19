@@ -362,7 +362,7 @@ palette22 <- distinctColorPalette(22)
 
 
 ```{r, echo = FALSE}
-amps_w_distance_sum %>% filter(Target %in% c("Homo_sapiens", "Mus_musculus", "Oryctolagus_cuniculus", "Bos_taurus", "Ornithorhynchus_anatinus")) %>% 
+mammal_contribution_plot <- amps_w_distance_sum %>% filter(Target %in% c("Homo_sapiens", "Mus_musculus", "Oryctolagus_cuniculus", "Bos_taurus", "Ornithorhynchus_anatinus")) %>% 
   group_by(Target) %>% 
   mutate(Organism = str_replace_all(Organism, "_", " ")) %>% 
   mutate(Target = str_replace_all(Target, "_", " ")) %>% 
@@ -375,18 +375,15 @@ amps_w_distance_sum %>% filter(Target %in% c("Homo_sapiens", "Mus_musculus", "Or
   theme(legend.position = "bottom",
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        strip.text = element_text(face = "bold.italic", size = 10),
+        strip.text = element_text(face = "bold.italic", size = 11),
         strip.background = element_blank()) +
   labs(y = "Taxonomic representation score", x = "Organism", fill = "") +
- guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 9))) +
+  guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 12), nrow = 3)) +
   scale_fill_manual(values = palette22) 
-
-ggsave("figures/species_contributions_to_mammals.png", width = 9, height = 8)
 ```
 
-**Figure 7.3.2:** The contributions of different species to the taxonomic representation score of the mammals in the selected organisms. Only the ten species with the largest contributions are shown.
 
-Using the mammal species that contribute to the taxonomic representation score of *H.sapiens*, *M. musculus*, *O. cuniculus*, *B. taurus* and *O. anatinus*  
+Using the mammals in the selected organisms *H.sapiens*, *M. musculus*, *O. cuniculus*, *B. taurus* and *O. anatinus* and the respective mammal species that contribute to their taxonomic representation score in TimeTree to make a phylogenetic tree based on the TimeTree database. 
 
 ```{r}
 mammals <- amps_w_distance_sum %>% 
@@ -418,18 +415,17 @@ mammal_tree_plot <- ggtree(mammal_tree) +
   theme_tree2() +
   hexpand(.1, direction = 1) +
   geom_tiplab(aes(subset = node %in% c(19,11, 8, 3, 22)), offset = 0.9, size = 4, fontface = "bold.italic") 
-
-
-mammal_tree_plot
 ```
 
+
+```{r, fig.height=10, fig.width=15}
+(mammal_tree_plot / mammal_contribution_plot) + plot_annotation(tag_levels = "A")
+```
+
+**Figure 7.3.2:** A) A phylogenetic tree from the five mammals present in the selected organisms (*Homo sapiens*, *Mus. musculus*, *Oryctolagus cuniculus*, *Bos taurus* and *Ornithorhynchus anatinus*, marked in bold), and the mammal species that contribute most to the taxonomic representation score of these mammals. The respective taxonomic orders of the mammals are marked in dark blue bold. B) The contributions of the different mammal species to the taxonomic representation score of the mammals in the selected organisms. Only the ten species with the largest contributions are shown.
 
 ```{r, echo = FALSE}
-ggsave(plot = mammal_tree_plot, "figures/mammal_tree.png", width = 12, height = 7)
-```
-
-```{r}
-
+ggsave("figures/mammal_tree_contribution.png", width = 13, height = 12)
 ```
 
 ## Taxonomic distance score vs. AUPRC 
@@ -556,7 +552,7 @@ ggsave(plot = auprcplot_img_9, filename = "figures/tax_rep_strict_9.png", height
 auprcplot_img_13 / auprcplot_img_9 + plot_annotation(tag_levels = "A")
 ```
 
-**Figure 7.7** The perforrnce of BLAST and classification models measured in Area under the Precision-Recall curve (AUPRC) in finding AMPs in the proteomes of **A)** 11 organisms where AMPs were labelled as AMPs exclusively by using the "Antimicrobial" keyword from UniProt and **B** nine organisms where AMPs were labelled as AMPs if annotated with the UniProt "Antimicrobial" keyword **and** if these AMPs overlapped with the AMP database generated from SwissProt and the APD, DRAMP or dbAMP databases.
+**Figure 7.7** The performance of BLAST and classification models measured in Area under the Precision-Recall curve (AUPRC) in finding AMPs in the proteomes of **A)** 11 organisms where AMPs were labelled as AMPs exclusively by using the "Antimicrobial" keyword from UniProt and **B** nine organisms where AMPs were labelled as AMPs if annotated with the UniProt "Antimicrobial" keyword **and** if these AMPs overlapped with the AMP database generated from SwissProt and the APD, DRAMP or dbAMP databases.
 
 
 ```{r, echo = FALSE}

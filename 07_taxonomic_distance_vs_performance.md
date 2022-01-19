@@ -335,15 +335,10 @@ remaining species were amalgamated into the “other” category.
 *Ornithorhynchus anatinus* is displayed as a zoomed in inset plot near
 the bottom right of the main plot.
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
-
-**Figure 7.3.2:** The contributions of different species to the
-taxonomic representation score of the mammals in the selected organisms.
-Only the ten species with the largest contributions are shown.
-
-Using the mammal species that contribute to the taxonomic representation
-score of *H.sapiens*, *M. musculus*, *O. cuniculus*, *B. taurus* and *O.
-anatinus*
+Using the mammals in the selected organisms *H.sapiens*, *M. musculus*,
+*O. cuniculus*, *B. taurus* and *O. anatinus* and the respective mammal
+species that contribute to their taxonomic representation score in
+TimeTree to make a phylogenetic tree based on the TimeTree database.
 
 ``` r
 mammals <- amps_w_distance_sum %>% 
@@ -375,12 +370,23 @@ mammal_tree_plot <- ggtree(mammal_tree) +
   theme_tree2() +
   hexpand(.1, direction = 1) +
   geom_tiplab(aes(subset = node %in% c(19,11, 8, 3, 22)), offset = 0.9, size = 4, fontface = "bold.italic") 
-
-
-mammal_tree_plot
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+``` r
+(mammal_tree_plot / mammal_contribution_plot) + plot_annotation(tag_levels = "A")
+```
+
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+
+**Figure 7.3.2:** A) A phylogenetic tree from the five mammals present
+in the selected organisms (*Homo sapiens*, *Mus. musculus*, *Oryctolagus
+cuniculus*, *Bos taurus* and *Ornithorhynchus anatinus*, marked in
+bold), and the mammal species that contribute most to the taxonomic
+representation score of these mammals. The respective taxonomic orders
+of the mammals are marked in dark blue bold. B) The contributions of the
+different mammal species to the taxonomic representation score of the
+mammals in the selected organisms. Only the ten species with the largest
+contributions are shown.
 
 ## Taxonomic distance score vs. AUPRC
 
@@ -500,7 +506,7 @@ auprcplot_img_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
 
 ![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
-**Figure 7.7** The perforrnce of BLAST and classification models
+**Figure 7.7** The performance of BLAST and classification models
 measured in Area under the Precision-Recall curve (AUPRC) in finding
 AMPs in the proteomes of **A)** 11 organisms where AMPs were labelled as
 AMPs exclusively by using the “Antimicrobial” keyword from UniProt and
