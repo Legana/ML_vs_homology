@@ -378,7 +378,7 @@ mammal_contribution_plot <- amps_w_distance_sum %>% filter(Target %in% c("Homo_s
         strip.text = element_text(face = "bold.italic", size = 11),
         strip.background = element_blank()) +
   labs(y = "Taxonomic representation score", x = "Organism", fill = "") +
-  guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 12), nrow = 3)) +
+  guides(fill = guide_legend(label.theme = element_text(face = "italic", size = 10), nrow = 3)) +
   scale_fill_manual(values = palette22) 
 ```
 
@@ -422,7 +422,7 @@ mammal_tree_plot <- ggtree(mammal_tree) +
 (mammal_tree_plot / mammal_contribution_plot) + plot_annotation(tag_levels = "A")
 ```
 
-**Figure 7.3.2:** A) A phylogenetic tree from the five mammals present in the selected organisms (*Homo sapiens*, *Mus. musculus*, *Oryctolagus cuniculus*, *Bos taurus* and *Ornithorhynchus anatinus*, marked in bold), and the mammal species that contribute most to the taxonomic representation score of these mammals. The respective taxonomic orders of the mammals are marked in dark blue bold. B) The contributions of the different mammal species to the taxonomic representation score of the mammals in the selected organisms. Only the ten species with the largest contributions are shown.
+**Figure 7.3.2:** A) A phylogenetic tree from the five mammals present in the selected organisms (*Homo sapiens*, *Mus musculus*, *Oryctolagus cuniculus*, *Bos taurus* and *Ornithorhynchus anatinus*, marked in bold), and the mammal species that contribute most to the taxonomic representation score of these mammals. The respective taxonomic orders of the mammals are marked in dark blue bold. B) The contributions of the different mammal species to the taxonomic representation score of the mammals in the selected organisms. Only the ten species with the largest contributions are shown.
 
 ```{r, echo = FALSE}
 ggsave("figures/mammal_tree_contribution.png", width = 13, height = 12)

@@ -379,7 +379,7 @@ mammal_tree_plot <- ggtree(mammal_tree) +
 ![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 **Figure 7.3.2:** A) A phylogenetic tree from the five mammals present
-in the selected organisms (*Homo sapiens*, *Mus. musculus*, *Oryctolagus
+in the selected organisms (*Homo sapiens*, *Mus musculus*, *Oryctolagus
 cuniculus*, *Bos taurus* and *Ornithorhynchus anatinus*, marked in
 bold), and the mammal species that contribute most to the taxonomic
 representation score of these mammals. The respective taxonomic orders
