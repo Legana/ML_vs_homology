@@ -329,3 +329,38 @@ save_training_and_query_data("Escherichia_coli")
 
 ```
 
+## Mammals only
+
+```{r}
+uniprot_and_amp_dbs_amps %>%
+  mutate(in_90 = Entry_name %in% amps_standardaa90$seq_name) %>% 
+  filter(Class == "Mammalia") %>% 
+  group_by(Organism, Order) %>%
+  summarise(AMP_count = n(), AMP_standardaa_90 = sum(in_90)) %>% 
+  arrange(desc(AMP_count)) %>% 
+  head(14)
+  
+  
+```
+
+Mammals with more than 10 AMPs and a proteome:
+
+
+- *Mus musculus* (mouse, rodent, 104 AMPs)
+- *Rattus norvegicus* (rat, rodent, 66 AMPs)
+
+- *Homo sapiens* (human, primate, 96 AMPs)
+- *Pan troglodytes* (chimp, primate, 33 AMPs)
+- *Macaca mulatta* (monkey, primate, 28 AMPs)
+- *Gorilla gorilla gorilla* (ape, primate, 15 AMPs)
+- *Macaca fascicularis* (monkey, primate, 13 AMPs)
+
+- *Bos taurus* (cow, ungulate, 58 AMPs)
+- *Sus scrofa* (pig, ungulate, 29 AMPs)
+- *Ovis aries* (sheep, ungulate, 12 AMPs)
+
+- *Oryctolagus cuniculus* (rabbit, lagomorph, 17 AMPs)
+
+- *Ornithorhynchus anatinus* (platypus, monotreme, 11 AMPs)
+
+

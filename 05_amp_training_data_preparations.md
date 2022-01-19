@@ -73,7 +73,7 @@ uniprot_and_amp_dbs_amps %>%
   arrange(.by_group = TRUE, desc(AMP_count))
 ```
 
-    ## # A tibble: 14 x 3
+    ## # A tibble: 14 × 3
     ##    Phylum                AMP_count AMP_standardaa_90
     ##    <chr>                     <int>             <int>
     ##  1 Chordata                   1747               690
@@ -115,20 +115,20 @@ uniprot_and_amp_dbs_amps %>%
   arrange(desc(AMP_count)) 
 ```
 
-    ## # A tibble: 10 x 5
+    ## # A tibble: 10 × 5
     ## # Groups:   Class [10]
-    ##    Order         Organism            Class            AMP_count AMP_standardaa_…
-    ##    <chr>         <chr>               <chr>                <int>            <int>
-    ##  1 Rodentia      Mus_musculus        Mammalia               104               77
-    ##  2 Anura         Bombina_maxima      Amphibia                50                9
-    ##  3 Galliformes   Gallus_gallus       Aves                    25               19
-    ##  4 Salmoniformes Oncorhynchus_mykiss Actinopteri             12                5
-    ##  5 Stolidobranc… Styela_clava        Ascidiacea              11                4
-    ##  6 Squamata      Crotalus_durissus_… Lepidosauria (l…        10                2
-    ##  7 Testudines    Pelodiscus_sinensis <NA>                     2                1
-    ##  8 Myliobatifor… Potamotrygon_cf._h… Chondrichthyes           1                0
-    ##  9 Petromyzonti… Petromyzon_marinus  Hyperoartia              1                0
-    ## 10 Amphioxiform… Branchiostoma_belc… Leptocardii              1                1
+    ##    Order              Organism          Class         AMP_count AMP_standardaa_…
+    ##    <chr>              <chr>             <chr>             <int>            <int>
+    ##  1 Rodentia           Mus_musculus      Mammalia            104               77
+    ##  2 Anura              Bombina_maxima    Amphibia             50                9
+    ##  3 Galliformes        Gallus_gallus     Aves                 25               19
+    ##  4 Salmoniformes      Oncorhynchus_myk… Actinopteri          12                5
+    ##  5 Stolidobranchia    Styela_clava      Ascidiacea           11                4
+    ##  6 Squamata           Crotalus_durissu… Lepidosauria…        10                2
+    ##  7 Testudines         Pelodiscus_sinen… <NA>                  2                1
+    ##  8 Myliobatiformes    Potamotrygon_cf.… Chondrichthy…         1                0
+    ##  9 Petromyzontiformes Petromyzon_marin… Hyperoartia           1                0
+    ## 10 Amphioxiformes     Branchiostoma_be… Leptocardii           1                1
 
 If taking the top organisms per **Order**, where each organism has at
 least 10 AMPs, the following organisms would be candidates:
@@ -163,7 +163,7 @@ uniprot_and_amp_dbs_amps %>%
   head(18)
 ```
 
-    ## # A tibble: 18 x 4
+    ## # A tibble: 18 × 4
     ## # Groups:   Organism [18]
     ##    Organism                   Order AMP_count AMP_standardaa_90
     ##    <chr>                      <chr>     <int>             <int>
@@ -211,20 +211,20 @@ uniprot_and_amp_dbs_amps %>%
   head(10)
 ```
 
-    ## # A tibble: 10 x 5
+    ## # A tibble: 10 × 5
     ## # Groups:   Order [10]
-    ##    Order       Organism             Class             AMP_count AMP_standardaa_…
-    ##    <chr>       <chr>                <chr>                 <int>            <int>
-    ##  1 Rodentia    Mus_musculus         Mammalia                104               77
-    ##  2 Primates    Homo_sapiens         Mammalia                 96               58
-    ##  3 Artiodacty… Bos_taurus           Mammalia                 58               37
-    ##  4 Anura       Bombina_maxima       Amphibia                 50                9
-    ##  5 Galliformes Gallus_gallus        Aves                     25               19
-    ##  6 Lagomorpha  Oryctolagus_cunicul… Mammalia                 17               10
-    ##  7 Salmonifor… Oncorhynchus_mykiss  Actinopteri              12                5
-    ##  8 Monotremata Ornithorhynchus_ana… Mammalia                 11               11
-    ##  9 Stolidobra… Styela_clava         Ascidiacea               11                4
-    ## 10 Squamata    Crotalus_durissus_t… Lepidosauria (le…        10                2
+    ##    Order           Organism                     Class AMP_count AMP_standardaa_…
+    ##    <chr>           <chr>                        <chr>     <int>            <int>
+    ##  1 Rodentia        Mus_musculus                 Mamm…       104               77
+    ##  2 Primates        Homo_sapiens                 Mamm…        96               58
+    ##  3 Artiodactyla    Bos_taurus                   Mamm…        58               37
+    ##  4 Anura           Bombina_maxima               Amph…        50                9
+    ##  5 Galliformes     Gallus_gallus                Aves         25               19
+    ##  6 Lagomorpha      Oryctolagus_cuniculus        Mamm…        17               10
+    ##  7 Salmoniformes   Oncorhynchus_mykiss          Acti…        12                5
+    ##  8 Monotremata     Ornithorhynchus_anatinus     Mamm…        11               11
+    ##  9 Stolidobranchia Styela_clava                 Asci…        11                4
+    ## 10 Squamata        Crotalus_durissus_terrificus Lepi…        10                2
 
 ## Arthropoda
 
@@ -257,20 +257,20 @@ uniprot_and_amp_dbs_amps %>%
   head(10)
 ```
 
-    ## # A tibble: 10 x 5
+    ## # A tibble: 10 × 5
     ## # Groups:   Order [9]
-    ##    Order     Organism           Class                 AMP_count AMP_standardaa_…
-    ##    <chr>     <chr>              <chr>                     <int>            <int>
-    ##  1 Araneae   Lachesana_tarabae… Arachnida                    28               11
-    ##  2 Diptera   Drosophila_melano… Insecta                      23               16
-    ##  3 Decapoda  Penaeus_vannamei   Malacostraca                 18                4
-    ##  4 Hymenopt… Neoponera_goeldii  Insecta                      15                0
-    ##  5 Lepidopt… Bombyx_mori        Insecta                      13                9
-    ##  6 Xiphosura Tachypleus_triden… Merostomata (horsesh…        11                6
-    ##  7 Scorpion… Chaerilus_tricost… Arachnida                    10                8
-    ##  8 Hemiptera Palomena_prasina   Insecta                       5                0
-    ##  9 Coleopte… Acrocinus_longima… Insecta                       3                0
-    ## 10 Coleopte… Holotrichia_diomp… Insecta                       3                2
+    ##    Order       Organism                Class          AMP_count AMP_standardaa_…
+    ##    <chr>       <chr>                   <chr>              <int>            <int>
+    ##  1 Araneae     Lachesana_tarabaevi     Arachnida             28               11
+    ##  2 Diptera     Drosophila_melanogaster Insecta               23               16
+    ##  3 Decapoda    Penaeus_vannamei        Malacostraca          18                4
+    ##  4 Hymenoptera Neoponera_goeldii       Insecta               15                0
+    ##  5 Lepidoptera Bombyx_mori             Insecta               13                9
+    ##  6 Xiphosura   Tachypleus_tridentatus  Merostomata (…        11                6
+    ##  7 Scorpiones  Chaerilus_tricostatus   Arachnida             10                8
+    ##  8 Hemiptera   Palomena_prasina        Insecta                5                0
+    ##  9 Coleoptera  Acrocinus_longimanus    Insecta                3                0
+    ## 10 Coleoptera  Holotrichia_diomphalia  Insecta                3                2
 
 ## Streptophyta
 
@@ -291,7 +291,7 @@ uniprot_and_amp_dbs_amps %>%
   head(10)
 ```
 
-    ## # A tibble: 10 x 5
+    ## # A tibble: 10 × 5
     ## # Groups:   Order [10]
     ##    Order          Organism               Class        AMP_count AMP_standardaa_…
     ##    <chr>          <chr>                  <chr>            <int>            <int>
@@ -432,3 +432,60 @@ save_training_and_query_data("Lithobates_catesbeianus")
 
 save_training_and_query_data("Escherichia_coli")
 ```
+
+## Mammals only
+
+``` r
+uniprot_and_amp_dbs_amps %>%
+  mutate(in_90 = Entry_name %in% amps_standardaa90$seq_name) %>% 
+  filter(Class == "Mammalia") %>% 
+  group_by(Organism, Order) %>%
+  summarise(AMP_count = n(), AMP_standardaa_90 = sum(in_90)) %>% 
+  arrange(desc(AMP_count)) %>% 
+  head(14)
+```
+
+    ## # A tibble: 14 × 4
+    ## # Groups:   Organism [14]
+    ##    Organism                 Order        AMP_count AMP_standardaa_90
+    ##    <chr>                    <chr>            <int>             <int>
+    ##  1 Mus_musculus             Rodentia           104                77
+    ##  2 Homo_sapiens             Primates            96                58
+    ##  3 Rattus_norvegicus        Rodentia            66                58
+    ##  4 Bos_taurus               Artiodactyla        58                37
+    ##  5 Pan_troglodytes          Primates            33                14
+    ##  6 Sus_scrofa               Artiodactyla        29                19
+    ##  7 Macaca_mulatta           Primates            28                13
+    ##  8 Oryctolagus_cuniculus    Lagomorpha          17                10
+    ##  9 Pongo_pygmaeus           Primates            16                 5
+    ## 10 Gorilla_gorilla_gorilla  Primates            15                 1
+    ## 11 Macaca_fascicularis      Primates            13                 8
+    ## 12 Ovis_aries               Artiodactyla        12                 6
+    ## 13 Hylobates_lar            Primates            11                 4
+    ## 14 Ornithorhynchus_anatinus Monotremata         11                11
+
+Mammals with more than 10 AMPs and a proteome:
+
+-   *Mus musculus* (mouse, rodent, 104 AMPs)
+
+-   *Rattus norvegicus* (rat, rodent, 66 AMPs)
+
+-   *Homo sapiens* (human, primate, 96 AMPs)
+
+-   *Pan troglodytes* (chimp, primate, 33 AMPs)
+
+-   *Macaca mulatta* (monkey, primate, 28 AMPs)
+
+-   *Gorilla gorilla gorilla* (ape, primate, 15 AMPs)
+
+-   *Macaca fascicularis* (monkey, primate, 13 AMPs)
+
+-   *Bos taurus* (cow, ungulate, 58 AMPs)
+
+-   *Sus scrofa* (pig, ungulate, 29 AMPs)
+
+-   *Ovis aries* (sheep, ungulate, 12 AMPs)
+
+-   *Oryctolagus cuniculus* (rabbit, lagomorph, 17 AMPs)
+
+-   *Ornithorhynchus anatinus* (platypus, monotreme, 11 AMPs)
