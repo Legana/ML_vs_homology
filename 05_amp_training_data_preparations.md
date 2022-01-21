@@ -198,7 +198,7 @@ subsequently have different characteristics [(Deakin, Graves and Rens
 2012)](https://www.karger.com/Article/Fulltext/339433)
 
 ``` r
-uniprot_and_amp_dbs_amps %>%
+chordata_amps_per_order <- uniprot_and_amp_dbs_amps %>%
   mutate(in_90 = Entry_name %in% amps_standardaa90$seq_name) %>%
   filter(!grepl("Bacteria", Taxonomic_lineage)) %>% 
   filter(Phylum == "Chordata") %>%
@@ -208,23 +208,27 @@ uniprot_and_amp_dbs_amps %>%
   group_by(Order) %>%
   slice_max(AMP_count, n = 1) %>%
   arrange(desc(AMP_count)) %>%
-  head(10)
+  head(10) %>% 
+  mutate(Organism = str_replace_all(Organism, "_", " ")) %>% 
+  add_column(Proteome = c("Yes", "Yes", "Yes", "No", "Yes", "Yes", "Yes", "Yes", "No", "No"))
+
+chordata_amps_per_order
 ```
 
-    ## # A tibble: 10 × 5
+    ## # A tibble: 10 × 6
     ## # Groups:   Order [10]
-    ##    Order           Organism                     Class AMP_count AMP_standardaa_…
-    ##    <chr>           <chr>                        <chr>     <int>            <int>
-    ##  1 Rodentia        Mus_musculus                 Mamm…       104               77
-    ##  2 Primates        Homo_sapiens                 Mamm…        96               58
-    ##  3 Artiodactyla    Bos_taurus                   Mamm…        58               37
-    ##  4 Anura           Bombina_maxima               Amph…        50                9
-    ##  5 Galliformes     Gallus_gallus                Aves         25               19
-    ##  6 Lagomorpha      Oryctolagus_cuniculus        Mamm…        17               10
-    ##  7 Salmoniformes   Oncorhynchus_mykiss          Acti…        12                5
-    ##  8 Monotremata     Ornithorhynchus_anatinus     Mamm…        11               11
-    ##  9 Stolidobranchia Styela_clava                 Asci…        11                4
-    ## 10 Squamata        Crotalus_durissus_terrificus Lepi…        10                2
+    ##    Order           Organism       Class      AMP_count AMP_standardaa_… Proteome
+    ##    <chr>           <chr>          <chr>          <int>            <int> <chr>   
+    ##  1 Rodentia        Mus musculus   Mammalia         104               77 Yes     
+    ##  2 Primates        Homo sapiens   Mammalia          96               58 Yes     
+    ##  3 Artiodactyla    Bos taurus     Mammalia          58               37 Yes     
+    ##  4 Anura           Bombina maxima Amphibia          50                9 No      
+    ##  5 Galliformes     Gallus gallus  Aves              25               19 Yes     
+    ##  6 Lagomorpha      Oryctolagus c… Mammalia          17               10 Yes     
+    ##  7 Salmoniformes   Oncorhynchus … Actinopte…        12                5 Yes     
+    ##  8 Monotremata     Ornithorhynch… Mammalia          11               11 Yes     
+    ##  9 Stolidobranchia Styela clava   Ascidiacea        11                4 No      
+    ## 10 Squamata        Crotalus duri… Lepidosau…        10                2 No
 
 ## Arthropoda
 
@@ -239,12 +243,12 @@ organisms would be chosen:
 -   *Tachypleus tridentatus* (horseshoe crab, 11 AMPs)
 -   *Chaerilus_tricostatus* (scorpion, arachnid, 10 AMPs)
 
-*Neoponera goeldii*, *Tachypleus tridentatus* and *Chaerilus
-tricostatus* do not have a reference proteome and therefore could not be
-included.
+*Lachesana tarabaevi*, *Neoponera goeldii*, *Tachypleus tridentatus* and
+*Chaerilus tricostatus* do not have a reference proteome and therefore
+could not be included.
 
 ``` r
-uniprot_and_amp_dbs_amps %>%
+arthropoda_amps_per_order <- uniprot_and_amp_dbs_amps %>%
   mutate(in_90 = Entry_name %in% amps_standardaa90$seq_name) %>%
   filter(!grepl("Bacteria", Taxonomic_lineage)) %>% 
   filter(Phylum == "Arthropoda") %>%
@@ -254,23 +258,24 @@ uniprot_and_amp_dbs_amps %>%
   group_by(Order) %>%
   slice_max(AMP_count, n = 1) %>%
   arrange(desc(AMP_count)) %>%
-  head(10)
+  head(7) %>% 
+  mutate(Organism = str_replace_all(Organism, "_", " ")) %>% 
+  add_column(Proteome = c("No", "Yes", "Yes", "No", "Yes", "No", "No"))
+
+arthropoda_amps_per_order 
 ```
 
-    ## # A tibble: 10 × 5
-    ## # Groups:   Order [9]
-    ##    Order       Organism                Class          AMP_count AMP_standardaa_…
-    ##    <chr>       <chr>                   <chr>              <int>            <int>
-    ##  1 Araneae     Lachesana_tarabaevi     Arachnida             28               11
-    ##  2 Diptera     Drosophila_melanogaster Insecta               23               16
-    ##  3 Decapoda    Penaeus_vannamei        Malacostraca          18                4
-    ##  4 Hymenoptera Neoponera_goeldii       Insecta               15                0
-    ##  5 Lepidoptera Bombyx_mori             Insecta               13                9
-    ##  6 Xiphosura   Tachypleus_tridentatus  Merostomata (…        11                6
-    ##  7 Scorpiones  Chaerilus_tricostatus   Arachnida             10                8
-    ##  8 Hemiptera   Palomena_prasina        Insecta                5                0
-    ##  9 Coleoptera  Acrocinus_longimanus    Insecta                3                0
-    ## 10 Coleoptera  Holotrichia_diomphalia  Insecta                3                2
+    ## # A tibble: 7 × 6
+    ## # Groups:   Order [7]
+    ##   Order       Organism                Class  AMP_count AMP_standardaa_… Proteome
+    ##   <chr>       <chr>                   <chr>      <int>            <int> <chr>   
+    ## 1 Araneae     Lachesana tarabaevi     Arach…        28               11 No      
+    ## 2 Diptera     Drosophila melanogaster Insec…        23               16 Yes     
+    ## 3 Decapoda    Penaeus vannamei        Malac…        18                4 Yes     
+    ## 4 Hymenoptera Neoponera goeldii       Insec…        15                0 No      
+    ## 5 Lepidoptera Bombyx mori             Insec…        13                9 Yes     
+    ## 6 Xiphosura   Tachypleus tridentatus  Meros…        11                6 No      
+    ## 7 Scorpiones  Chaerilus tricostatus   Arach…        10                8 No
 
 ## Streptophyta
 
@@ -288,23 +293,26 @@ uniprot_and_amp_dbs_amps %>%
   group_by(Order) %>%
   slice_max(AMP_count, n = 1) %>%
   arrange(desc(AMP_count)) %>%
-  head(10)
+  head(5)
 ```
 
-    ## # A tibble: 10 × 5
-    ## # Groups:   Order [10]
-    ##    Order          Organism               Class        AMP_count AMP_standardaa_…
-    ##    <chr>          <chr>                  <chr>            <int>            <int>
-    ##  1 Brassicales    Arabidopsis_thaliana   Magnoliopsi…       294              282
-    ##  2 Poales         Triticum_kiharae       Magnoliopsi…         9                1
-    ##  3 Caryophyllales Spinacia_oleracea      Magnoliopsi…         7                1
-    ##  4 Fabales        Clitoria_ternatea      Magnoliopsi…         7                1
-    ##  5 Malvales       Malva_parviflora       Magnoliopsi…         7                0
-    ##  6 Asterales      Taraxacum_officinale   Magnoliopsi…         5                0
-    ##  7 Ranunculales   Nigella_sativa         Magnoliopsi…         5                1
-    ##  8 Solanales      Solanum_tuberosum      Magnoliopsi…         5                3
-    ##  9 Proteales      Macadamia_integrifolia Magnoliopsi…         4                1
-    ## 10 Arecales       Cocos_nucifera         Magnoliopsi…         3                0
+    ## # A tibble: 5 × 5
+    ## # Groups:   Order [5]
+    ##   Order          Organism             Class         AMP_count AMP_standardaa_90
+    ##   <chr>          <chr>                <chr>             <int>             <int>
+    ## 1 Brassicales    Arabidopsis_thaliana Magnoliopsida       294               282
+    ## 2 Poales         Triticum_kiharae     Magnoliopsida         9                 1
+    ## 3 Caryophyllales Spinacia_oleracea    Magnoliopsida         7                 1
+    ## 4 Fabales        Clitoria_ternatea    Magnoliopsida         7                 1
+    ## 5 Malvales       Malva_parviflora     Magnoliopsida         7                 0
+
+![](05_amp_training_data_preparations_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+Figure 5.1: The number of described antimicrobial peptides (AMPs) in
+organisms that had the most number of AMPs in their respective taxonomic
+orders (marked in bold) from the eukaryotic phyla A) Streptophyta, B)
+Chordata and C) Arthropoda within the AMP database. Organisms were only
+included if they had more than 10 described AMPs.
 
 ## Bacteria
 

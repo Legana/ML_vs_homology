@@ -9,6 +9,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```{r, echo=FALSE}
 library(tidyverse)
 library(ampir)
+library(patchwork)
 ```
 
 ## Starting over with a new AMP database
@@ -137,7 +138,7 @@ The majority of this list are mammals. The platypus however, is a monotreme, and
 
 
 ```{r}
-uniprot_and_amp_dbs_amps %>%
+chordata_amps_per_order <- uniprot_and_amp_dbs_amps %>%
   mutate(in_90 = Entry_name %in% amps_standardaa90$seq_name) %>%
   filter(!grepl("Bacteria", Taxonomic_lineage)) %>% 
   filter(Phylum == "Chordata") %>%
@@ -147,23 +148,12 @@ uniprot_and_amp_dbs_amps %>%
   group_by(Order) %>%
   slice_max(AMP_count, n = 1) %>%
   arrange(desc(AMP_count)) %>%
-  head(10)
+  head(10) %>% 
+  mutate(Organism = str_replace_all(Organism, "_", " ")) %>% 
+  add_column(Proteome = c("Yes", "Yes", "Yes", "No", "Yes", "Yes", "Yes", "Yes", "No", "No"))
+
+chordata_amps_per_order
 ```
-
-
-
-```{r, eval = FALSE, echo = FALSE}
-#initial look grouped by Order (top organism with most AMPs for each order)
-uniprot_and_amp_dbs_amps %>%
-  filter(!grepl("Bacteria", Taxonomic_lineage)) %>% 
-  filter(Phylum == "Chordata") %>%
-  count(Order, Organism, Class, sort = TRUE, name = "AMP_count") %>%
-  group_by(Order) %>%
-  slice_max(AMP_count, n = 1) %>%
-  arrange(desc(AMP_count)) %>%
-  head(51)
-```
-
 
 ## Arthropoda 
 
@@ -178,10 +168,10 @@ If choosing the organism with the most AMPs per **Order**, the following organis
 - *Chaerilus_tricostatus* (scorpion, arachnid, 10 AMPs)
 
 
-*Neoponera goeldii*, *Tachypleus tridentatus* and *Chaerilus tricostatus* do not have a reference proteome and therefore could not be included. 
+*Lachesana tarabaevi*, *Neoponera goeldii*, *Tachypleus tridentatus* and *Chaerilus tricostatus* do not have a reference proteome and therefore could not be included. 
 
 ```{r}
-uniprot_and_amp_dbs_amps %>%
+arthropoda_amps_per_order <- uniprot_and_amp_dbs_amps %>%
   mutate(in_90 = Entry_name %in% amps_standardaa90$seq_name) %>%
   filter(!grepl("Bacteria", Taxonomic_lineage)) %>% 
   filter(Phylum == "Arthropoda") %>%
@@ -191,8 +181,13 @@ uniprot_and_amp_dbs_amps %>%
   group_by(Order) %>%
   slice_max(AMP_count, n = 1) %>%
   arrange(desc(AMP_count)) %>%
-  head(10)
+  head(7) %>% 
+  mutate(Organism = str_replace_all(Organism, "_", " ")) %>% 
+  add_column(Proteome = c("No", "Yes", "Yes", "No", "Yes", "No", "No"))
+
+arthropoda_amps_per_order 
 ```
+
 
 ## Streptophyta
 
@@ -210,9 +205,70 @@ uniprot_and_amp_dbs_amps %>%
   group_by(Order) %>%
   slice_max(AMP_count, n = 1) %>%
   arrange(desc(AMP_count)) %>%
-  head(10)
-
+  head(5)
 ```
+
+
+```{r, echo = FALSE, fig.height=11, fig.width=20}
+streptophyta_plot <- uniprot_and_amp_dbs_amps %>%
+  mutate(in_90 = Entry_name %in% amps_standardaa90$seq_name) %>%
+  filter(!grepl("Bacteria", Taxonomic_lineage)) %>% 
+  filter(Phylum == "Streptophyta") %>%
+  group_by(Order, Organism, Class) %>%
+  summarise(AMP_count = n(), AMP_standardaa_90 = sum(in_90)) %>%
+  ungroup() %>%
+  group_by(Order) %>%
+  slice_max(AMP_count, n = 1) %>%
+  arrange(desc(AMP_count)) %>%
+  head(1) %>% 
+  mutate(Organism = str_replace_all(Organism, "_", " ")) %>% 
+  ggplot(aes(x=Organism, y = AMP_count)) +
+   geom_col(width = 0.1, fill = "#5D3A9B") +
+   coord_flip() +
+   geom_text(aes(label = Order), hjust = -0.05, size = 5, fontface = "bold") +
+   theme_classic() +
+   labs(title = "Streptophyta", y = "", x = "") +
+   theme(axis.text.y = element_text(face = "italic", size = 18),
+         axis.text.x = element_text(size = 16),
+         plot.title = element_text(hjust = 0.5, face = "bold", size = 20)) +
+   ylim(0,310)
+
+chordata_plot <- ggplot(chordata_amps_per_order, aes(x = reorder(Organism, AMP_count), y = AMP_count, fill = Proteome)) +
+  geom_col(width = 0.7) +
+  coord_flip() +
+  geom_text(aes(label = Order), hjust = -0.05, size = 5, fontface = "bold") +
+  ylim(0,105) +
+  labs(title = "Chordata", x = "Organism", y = "") +
+  theme_classic() +
+  theme(axis.text.y = element_text(face = "italic", size = 18),
+        axis.text.x = element_text(size = 16),
+        axis.title = element_text(size = 20),
+        legend.position = "none",
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 20)) +
+  scale_fill_manual(values = c("Yes" = "#5D3A9B", "No" = "#E66100"))
+
+arthropoda_plot <- ggplot(arthropoda_amps_per_order, aes(x = reorder(Organism, AMP_count), y = AMP_count, fill = Proteome)) +
+  geom_col(width = 0.5) +
+  coord_flip() +
+  geom_text(aes(label = Order), hjust = -0.05, size = 5, fontface = "bold") +
+  ylim(0,30) +
+  labs(title = "Arthropoda", y = "Number of described antimicrobial peptides", x = "") +
+  theme_classic() +
+  theme(axis.text.y = element_text(face = "italic", size = 18),
+        axis.text.x = element_text(size = 16),
+        axis.title = element_text(size = 20),
+        legend.position = "bottom",
+        legend.text = element_text(size = 16),
+        legend.title = element_text(size = 18),
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 20)) +
+  scale_fill_manual(values = c("Yes" = "#5D3A9B", "No" = "#E66100")) 
+
+streptophyta_plot / chordata_plot / arthropoda_plot + plot_annotation(tag_levels = "A")
+
+ggsave("figures/amps_in_ampdb_3_phyla.png", width = 20, height = 12, dpi = 500)
+```
+
+Figure 5.1: The number of described antimicrobial peptides (AMPs) in organisms that had the most number of AMPs in their respective taxonomic orders (marked in bold) from the eukaryotic phyla A) Streptophyta, B) Chordata and C) Arthropoda within the AMP database. Organisms were only included if they had more than 10 described AMPs. 
 
 ## Bacteria
 
