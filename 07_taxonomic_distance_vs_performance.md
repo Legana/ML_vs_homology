@@ -593,19 +593,7 @@ s_100 <- data.frame(x = 1:1000, distance_score_value = distance_score(1:1000, 10
 s_1000 <- data.frame(x = 1:15000, distance_score_value = distance_score(1:15000, 1000), s = 1000)
 
 s_curves <- rbind(s_5, s_20, s_30, s_50, s_100, s_1000)
-
-ggplot(s_curves, aes(x = x, y = distance_score_value)) +
-         geom_line() +
-         facet_wrap(~s, scales = "free_x") +
-         labs(x = "Pairwise distance", y = "Distance score") + 
-         theme_minimal() +
-         theme(panel.grid.minor = element_blank(),
-               plot.background = element_rect(fill = "white", colour = "white"))
 ```
-
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
-
-**Figure 7.9.1:** Sigmoid curves with different s parameters
 
 ``` r
 amps_w_distance_s_curves_function <- function(s_value) {
@@ -628,27 +616,39 @@ amps_w_distance_s100 <- amps_w_distance_s_curves_function(100)
 amps_w_distance_s1000 <- amps_w_distance_s_curves_function(1000)
 
 amps_w_distance_all_curves <- rbind(amps_w_distance_s5, amps_w_distance_s20, amps_w_distance_s30, amps_w_distance_s50, amps_w_distance_s100, amps_w_distance_s1000)
+```
 
+``` r
+effect_of_s_on_distance <- ggplot(s_curves, aes(x = x, y = distance_score_value)) +
+         geom_line() +
+         facet_wrap(~s, scales = "free_x") +
+         labs(x = "Pairwise distance (million years)", y = "Distance score") + 
+         theme_minimal() +
+         theme(panel.grid.minor = element_blank(),
+               plot.background = element_rect(fill = "white", colour = "white"),
+               strip.text.x = element_text(face = "bold", size = 13))
 
-ggplot(amps_w_distance_all_curves, aes(x = Target)) + 
+effect_of_s_on_score <- ggplot(amps_w_distance_all_curves, aes(x = Target)) + 
   geom_col(aes(y = dscore)) + 
   coord_flip() +
   facet_wrap(~s_value, scales = "free_x") +
   labs(y = "Taxonomic representation score", x = "Organism", fill = "") +
   theme_classic() +
-  theme(legend.position = "bottom",
-        axis.text.y = element_text(face = "italic"),
+  theme(axis.text.y = element_text(face = "italic"),
         strip.background = element_rect(fill = NA, color = NA),
         strip.text.x = element_text(face = "bold", size = 13))
+
+effect_of_s_on_distance / effect_of_s_on_score + plot_annotation(tag_levels = "A")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
+![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
 
-**Figure 7.9.2:** The effect of different sigmoid values on the
-taxonomic representation score using a selection of organisms
+**Figure 7.9.2:** A) Theoretical sigmoid curves between the raw pairwise
+distance and calculated distance score with various sigmoid-values B)
+The effect of different sigmoid values on the taxonomic representation
+score using a selection of organisms
 
-Testing the different sigmoid values to see how it affects the final
-conclusion (based on the p-value of the spearman’s correlation test )
+### Testing the different sigmoid values to see how it affects the final conclusion (based on the p-value of the spearman’s correlation test )
 
 ``` r
 performance_results <- methods_auprc_9_wide_w_count %>% 

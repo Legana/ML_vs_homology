@@ -609,22 +609,12 @@ s_100 <- data.frame(x = 1:1000, distance_score_value = distance_score(1:1000, 10
 s_1000 <- data.frame(x = 1:15000, distance_score_value = distance_score(1:15000, 1000), s = 1000)
 
 s_curves <- rbind(s_5, s_20, s_30, s_50, s_100, s_1000)
-
-ggplot(s_curves, aes(x = x, y = distance_score_value)) +
-         geom_line() +
-         facet_wrap(~s, scales = "free_x") +
-         labs(x = "Pairwise distance", y = "Distance score") + 
-         theme_minimal() +
-         theme(panel.grid.minor = element_blank(),
-               plot.background = element_rect(fill = "white", colour = "white"))
 ```
 
 
 ```{r, echo = FALSE}
 ggsave("figures/s_curves.png", width = 9, height = 7)
 ```
-
-**Figure 7.9.1:** Sigmoid curves with different s parameters
 
 
 ```{r}
@@ -648,18 +638,6 @@ amps_w_distance_s100 <- amps_w_distance_s_curves_function(100)
 amps_w_distance_s1000 <- amps_w_distance_s_curves_function(1000)
 
 amps_w_distance_all_curves <- rbind(amps_w_distance_s5, amps_w_distance_s20, amps_w_distance_s30, amps_w_distance_s50, amps_w_distance_s100, amps_w_distance_s1000)
-
-
-ggplot(amps_w_distance_all_curves, aes(x = Target)) + 
-  geom_col(aes(y = dscore)) + 
-  coord_flip() +
-  facet_wrap(~s_value, scales = "free_x") +
-  labs(y = "Taxonomic representation score", x = "Organism", fill = "") +
-  theme_classic() +
-  theme(legend.position = "bottom",
-        axis.text.y = element_text(face = "italic"),
-        strip.background = element_rect(fill = NA, color = NA),
-        strip.text.x = element_text(face = "bold", size = 13))
 ```
 
 
@@ -667,9 +645,39 @@ ggplot(amps_w_distance_all_curves, aes(x = Target)) +
 ggsave("figures/tax_rep_score_and_s_curves.png", width = 9, height = 7)
 ```
 
-**Figure 7.9.2:** The effect of different sigmoid values on the taxonomic representation score using a selection of organisms
 
-Testing the different sigmoid values to see how it affects the final conclusion (based on the p-value of the spearman's correlation test )
+```{r, fig.height=9}
+effect_of_s_on_distance <- ggplot(s_curves, aes(x = x, y = distance_score_value)) +
+         geom_line() +
+         facet_wrap(~s, scales = "free_x") +
+         labs(x = "Pairwise distance (million years)", y = "Distance score") + 
+         theme_minimal() +
+         theme(panel.grid.minor = element_blank(),
+               plot.background = element_rect(fill = "white", colour = "white"),
+               strip.text.x = element_text(face = "bold", size = 13))
+
+effect_of_s_on_score <- ggplot(amps_w_distance_all_curves, aes(x = Target)) + 
+  geom_col(aes(y = dscore)) + 
+  coord_flip() +
+  facet_wrap(~s_value, scales = "free_x") +
+  labs(y = "Taxonomic representation score", x = "Organism", fill = "") +
+  theme_classic() +
+  theme(axis.text.y = element_text(face = "italic"),
+        strip.background = element_rect(fill = NA, color = NA),
+        strip.text.x = element_text(face = "bold", size = 13))
+
+effect_of_s_on_distance / effect_of_s_on_score + plot_annotation(tag_levels = "A")
+```
+
+**Figure 7.9.2:** A) Theoretical sigmoid curves between the raw pairwise distance and calculated distance score with various sigmoid-values B) The effect of different sigmoid values on the taxonomic representation score using a selection of organisms
+
+
+```{r, echo=FALSE}
+ggsave("figures/s_curves_effect.png", width = 10, height = 8)
+```
+
+
+### Testing the different sigmoid values to see how it affects the final conclusion (based on the p-value of the spearman's correlation test )
 
 
 ```{r}
