@@ -83,6 +83,9 @@ echo cache/methods_auprc9_w_totalAMPs_wide.rds >> data_list
 echo data/amp_db_organism_list.nwk >> data_list
 echo data/mammals.nwk >> data_list
 
+# Add organism icons in case the links break for 03_taxonomic_distance_vs_performance
+echo figures/images >> data_list
+
 tar -zcvf data_ml_blast.tgz -T data_list
 
 rm data_list
