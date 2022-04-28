@@ -18,6 +18,8 @@ library(randomcoloR)
 library(ggtree)
 ```
 
+# Generate taxonomic representation score and use this and the AUPRC to compare ML and BLAST 
+
 Read in AMP database to extract organisms from to submit to [TimeTree](http://timetree.org/) for phylogenetic data.
 
 ```{r}

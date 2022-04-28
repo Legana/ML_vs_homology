@@ -11,6 +11,8 @@ library(randomcoloR)
 library(ggtree)
 ```
 
+# Generate taxonomic representation score and use this and the AUPRC to compare ML and BLAST
+
 Read in AMP database to extract organisms from to submit to
 [TimeTree](http://timetree.org/) for phylogenetic data.
 
@@ -235,12 +237,12 @@ amps_w_distance <- amp_database %>%
   left_join(timetree_dm_df, by = "Organism")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](03_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 **Figure 7.1:** **A** Histogram of pairwise distance between each
 faceted organism and other selected organisms present in the AMP dataset
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](03_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 **Figure 7.1.2** Histogram of pairwise distance between each faceted
 organism and other selected organisms present in the AMP dataset
@@ -268,7 +270,7 @@ x <- 1:300
 plot(x, distance_score(x, 30))
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](03_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 **Figure 7.2:** Sigmoid curve with an s parameter of 30
 
@@ -326,7 +328,7 @@ platypus <- ggplot(filter(amps_distance_grouped, Target == "Ornithorhynchus anat
 all_organisms + inset_element(platypus, left = 0.7, bottom = 0.01, right = 1, top = 0.37)
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](03_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 **Figure 7.3:** The contributions of different species to the taxonomic
 representation score of the selected organisms. Only the two species
@@ -376,7 +378,7 @@ mammal_tree_plot <- ggtree(mammal_tree) +
 (mammal_tree_plot / mammal_contribution_plot) + plot_annotation(tag_levels = "A")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](03_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 **Figure 7.3.2:** A) A phylogenetic tree from the five mammals present
 in the selected organisms (*Homo sapiens*, *Mus musculus*, *Oryctolagus
@@ -504,7 +506,7 @@ auprcplot_img_9 <- auprc_and_distance_metric_wAMPcount_9 %>%
   labs(x = "Taxonomic representation score", linetype = "", size = "AMP count")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+![](03_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
 **Figure 7.7** The performance of BLAST and classification models
 measured in Area under the Precision-Recall curve (AUPRC) in finding
@@ -577,7 +579,7 @@ auprc_and_distance_metric_wAMPcount_9 %>%
   labs(x = "Taxonomic representation score", linetype = "", size = "AMP count")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
+![](03_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
 
 **Figure 7.8:** linear regression lines of the AMP finding methods in a
 range of organisms
@@ -641,7 +643,7 @@ effect_of_s_on_score <- ggplot(amps_w_distance_all_curves, aes(x = Target)) +
 effect_of_s_on_distance / effect_of_s_on_score + plot_annotation(tag_levels = "A")
 ```
 
-![](07_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
+![](03_taxonomic_distance_vs_performance_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
 
 **Figure 7.9.2:** A) Theoretical sigmoid curves between the raw pairwise
 distance and calculated distance score with various sigmoid-values B)

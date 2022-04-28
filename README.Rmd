@@ -6,22 +6,11 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# ML vs. homology
+# Machine learning AMP prediction models vs. homology (BLAST) to find AMPs in proteomes
 
-Effectiveness of AMP prediction using machine learning versus sequence similarity 
-
-
-- [Find species represented with the most AMPs in UniProt](01_species_represented_with_most_amps_uniprot.md) : Rmd file [01_species_represented_with_most_amps_uniprot.Rmd](01_species_represented_with_most_amps_uniprot.Rmd)
-- [Create databases for model training and homology searches](02_create_databases.md) : Rmd file [02_create_databases.Rmd](02_create_databases.Rmd)
-- [Execute BLAST searches and AMP predictions](03_blast_and_prediction.md) : Rmd file [03_blast_and_prediction.Rmd](03_blast_and_prediction.Rmd)
-- [Compute a taxonomic distance metric](04_compute_taxonomic_distance_metric.md) : Rmd file
-[04_compute_taxonomic_distance_metric.Rmd](04_compute_taxonomic_distance_metric.Rmd)
-
-### The above workflow was repeated for a different AMP database with different organisms
-
-- [Find species represented with the most AMPs in a constructed AMP database and construct positive datasets](05_amp_training_data_preparations.md) : Rmd file [05_amp_training_data_preparations.Rmd](05_amp_training_data_preparations.Rmd)
-- [Test BLAST and classification methods](06_method_evaluation_on_proteomes.md) : Rmd file [06_method_evaluation_on_proteomes.Rmd](06_method_evaluation_on_proteomes.Rmd)
-- [Use phylogenetic data to assess performance over a taxonomic scale](07_taxonomic_distance_vs_performance.md) : Rmd file [07_taxonomic_distance_vs_performance.Rmd](07_taxonomic_distance_vs_performance.Rmd)
+- [Find species represented with the most AMPs in a constructed AMP database and construct positive datasets](01_amp_training_data_preparations.md) : Rmd file [01_amp_training_data_preparations.Rmd](01_amp_training_data_preparations.Rmd)
+- [Test BLAST and classification methods](02_method_evaluation_on_proteomes.md) : Rmd file [02_method_evaluation_on_proteomes.Rmd](02_method_evaluation_on_proteomes.Rmd)
+- [Use phylogenetic data to assess performance over a taxonomic scale](03_taxonomic_distance_vs_performance.md) : Rmd file [03_taxonomic_distance_vs_performance.Rmd](03_taxonomic_distance_vs_performance.Rmd)
 
 The files required to run the code in these Rmd files can be obtained by clicking [here](https://cloudstor.aarnet.edu.au/plus/s/0QxalNJhHcbUIqk) or by using the command:
 

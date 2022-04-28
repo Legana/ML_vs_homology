@@ -727,13 +727,13 @@ methods_auprc_9_wide_w_count
     ## 8 Bombyx_mori                       0.079 0.094                 13
     ## 9 Arabidopsis_thaliana              0.323 0.041                291
 
-![](06_method_evaluation_on_proteomes_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
+![](02_method_evaluation_on_proteomes_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
 
 **Figure 6.1:** The precision-recall curve (A) and the area under the
 precision-recall curve (B) for each organism and AMP finding method
 (BLAST and classification models)
 
-![](06_method_evaluation_on_proteomes_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
+![](02_method_evaluation_on_proteomes_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
 
 **Figure 6.2:** The precision-recall curve (A) and the area under the
 precision-recall curve (B) for each organism and AMP finding method

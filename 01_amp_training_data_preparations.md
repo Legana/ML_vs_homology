@@ -1,7 +1,7 @@
 
-## Starting over with a new AMP database
+## Generating training datasets from organisms with most AMPs in an AMP database
 
-A new AMP database was constructed which included:
+An AMP database was constructed which included:
 
 -   the reviewed AMPs from UniProt (accessed 07 July 2021) - 3,242 AMPs
 -   the unreviewed AMPs in the UniProt database, if present in the AMP
@@ -306,7 +306,7 @@ uniprot_and_amp_dbs_amps %>%
     ## 4 Fabales        Clitoria_ternatea    Magnoliopsida         7                 1
     ## 5 Malvales       Malva_parviflora     Magnoliopsida         7                 0
 
-![](05_amp_training_data_preparations_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](01_amp_training_data_preparations_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 Figure 5.1: The number of described antimicrobial peptides (AMPs) in
 organisms that had the most number of AMPs in their respective taxonomic
@@ -355,12 +355,41 @@ Table 5.1: Final organism selection
 
 ## Extracting data for model training and query searches
 
-Read in the negative dataset containing non-AMPs from SwissProt prepared
-in 02_create_databases.Rmd
+### Generate negative dataset
+
+Read in the non-AMPs from SwissProt (accessed on 24 May 2021). The
+nonAMPs dataset was filtered with a sequence threshold of 5 to 500 and
+contained 452,046 sequences and the NOT operator with Antimicrobial
+keyword. The AMPs dataset (unfiltered) contained 3,350 sequences.
 
 ``` r
-swissprot_nonamps_standardaa90 <- readRDS("cache/negative_dataset.rds")
+swissprot_nonamps <- read_tsv("data/uniprot-NOT+keyword_Antimicrobial+[KW-0929]+length[5+TO+500]24May21.tab") %>% rename(Entry_name = `Entry name`) %>% mutate(Organism = str_remove(Organism, " \\(.*")) %>% mutate(Organism = str_replace_all(Organism, " ", "_"))
 ```
+
+Sequences that contained non standard amino acids were removed and the
+remaining sequences were saved as FASTA files to process with CD-HIT to
+remove sequences with 90% similarity
+
+``` r
+swissprot_nonamps_standardaa <- swissprot_nonamps %>% select("Entry_name", "Sequence") %>% as.data.frame() %>% remove_nonstandard_aa()
+
+df_to_faa(swissprot_nonamps_standardaa, "cache/swissprot_nonamps_standardaa.fasta")
+```
+
+This command was used on the HPC as the nonAMPs file contained many
+sequences.
+
+``` bash
+cd-hit -i swissprot_nonamps_standardaa.fasta -o swissprot_nonamps_standardaa_90.fasta -c 0.90 -g 1 -T 32 -M 300000
+```
+
+Read the CD-HIT results back in and label the sequences
+
+``` r
+swissprot_nonamps_standardaa90 <- read_faa("cache/swissprot_nonamps_standardaa_90.fasta") %>% left_join(swissprot_nonamps, by = c("seq_name" = "Entry_name")) %>% add_column(Label = "Neg") %>% filter(between(Length, 50, 500))
+```
+
+## Generate training datasets for ML models and query datasets for BLAST
 
 The effectiveness of statistical learning (or machine learning)
 classification models on finding AMPs was compared with homology. To do
