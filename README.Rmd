@@ -12,9 +12,9 @@ knitr::opts_chunk$set(echo = TRUE)
 - [Test BLAST and classification methods](02_method_evaluation_on_proteomes.md) : Rmd file [02_method_evaluation_on_proteomes.Rmd](02_method_evaluation_on_proteomes.Rmd)
 - [Use phylogenetic data to assess performance over a taxonomic scale](03_taxonomic_distance_vs_performance.md) : Rmd file [03_taxonomic_distance_vs_performance.Rmd](03_taxonomic_distance_vs_performance.Rmd)
 
-The files required to run the code in these Rmd files can be obtained by clicking [here](https://cloudstor.aarnet.edu.au/plus/s/0QxalNJhHcbUIqk) or by using the command:
+The files required to run the code in these Rmd files can be obtained by clicking [here](https://cloudstor.aarnet.edu.au/plus/s/yXYa5zVk5rrvRpz) or by using the command:
 
 ``` bash
-wget 'https://cloudstor.aarnet.edu.au/plus/s/0QxalNJhHcbUIqk/download' -O data.tgz
+wget 'https://cloudstor.aarnet.edu.au/plus/s/yXYa5zVk5rrvRpz/download' -O data.tgz
 tar -zxvf data.tgz 
 ```

@@ -13,10 +13,10 @@
     [03_taxonomic_distance_vs_performance.Rmd](03_taxonomic_distance_vs_performance.Rmd)
 
 The files required to run the code in these Rmd files can be obtained by
-clicking [here](https://cloudstor.aarnet.edu.au/plus/s/0QxalNJhHcbUIqk)
+clicking [here](https://cloudstor.aarnet.edu.au/plus/s/yXYa5zVk5rrvRpz)
 or by using the command:
 
 ``` bash
-wget 'https://cloudstor.aarnet.edu.au/plus/s/0QxalNJhHcbUIqk/download' -O data.tgz
+wget 'https://cloudstor.aarnet.edu.au/plus/s/yXYa5zVk5rrvRpz/download' -O data.tgz
 tar -zxvf data.tgz 
 ```
